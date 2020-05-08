@@ -1,5 +1,5 @@
 import React, { useReducer, useRef } from "react";
-import cx from "classnames";
+import useScroll, { SCROLL_START_END } from "./use-scroll";
 import ColumnGroupHeader from "./column-group-header";
 import modelReducer, { initModel } from "./grid-model-reducer";
 
@@ -7,42 +7,13 @@ import Viewport from "./viewport";
 
 import "./grid.css";
 
-export function getScrollHandler(scrollPos, callback) {
-  let timeoutHandle = null;
-  const pos = { current: 0 };
-  const onScrollEnd = () => {
-    callback("scroll-end", pos.current);
-    timeoutHandle = null;
-  };
-  return e => {
-    // important for the horizontal scroll on Canvas
-    console.log(`scroll event ${e.target.className}`);
-    e.stopPropagation();
-    pos.current = e.target[scrollPos];
-    if (timeoutHandle === null) {
-      callback("scroll-start", pos.current);
-    } else {
-      clearTimeout(timeoutHandle);
-    }
-    timeoutHandle = setTimeout(onScrollEnd, 200);
-  };
-}
-
-export default ({ columns, dataSource, headerHeight, height, width }) => {
+export default props => {
   console.log(`[Grid]`);
   const gridEl = useRef(null);
   const viewport = useRef(null);
   const scrollableHeader = useRef(null);
 
-  const handleVerticalScroll = getScrollHandler("scrollTop", scrollEvent => {
-    if (scrollEvent === "scroll-start") {
-      viewport.current.beginVerticalScroll();
-    } else {
-      viewport.current.endVerticalScroll();
-    }
-  });
-
-  const handleHorizontalScroll = getScrollHandler(
+  const handleHorizontalScroll = useScroll(
     "scrollLeft",
     (scrollEvent, scrollLeft) => {
       if (scrollEvent === "scroll-start") {
@@ -53,19 +24,18 @@ export default ({ columns, dataSource, headerHeight, height, width }) => {
         gridEl.current.classList.remove("scrolling-x");
         scrollableHeader.current.endHorizontalScroll(scrollLeft);
       }
-    }
-  );
-
-  const [gridModel, dispatchGridModel] = useReducer(
-    modelReducer,
-    {
-      columns,
-      width
     },
+    SCROLL_START_END
+  );
+  // test
+
+  const [gridModel /*, dispatchGridModel*/] = useReducer(
+    modelReducer,
+    props,
     initModel
   );
 
-  console.log(gridModel);
+  const { dataSource, headerHeight, height, width } = props;
 
   const getColumnHeaders = scrollingHeaders => {
     return gridModel.columnGroups.map((columnGroup, idx) => (
@@ -86,12 +56,10 @@ export default ({ columns, dataSource, headerHeight, height, width }) => {
       </div>
       <Viewport
         columnHeaders={getColumnHeaders(true)}
+        dataSource={dataSource}
         gridModel={gridModel}
-        ref={viewport}
-        headerHeight={headerHeight}
-        contentHeight={1200}
         onHorizontalScroll={handleHorizontalScroll}
-        onVerticalScroll={handleVerticalScroll}
+        ref={viewport}
       />
     </div>
   );

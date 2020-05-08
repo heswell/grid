@@ -1,0 +1,10 @@
+.GridRow {
+  border-bottom: solid 1px #ccc;
+  box-sizing: border-box;
+  left: 0;
+  outline: 0;
+  position: absolute;
+  top: 0;
+  white-space: nowrap;
+  width: 100%;
+}

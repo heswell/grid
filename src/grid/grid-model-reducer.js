@@ -1,3 +1,5 @@
+import { metaData } from "@heswell/utils";
+
 const DEFAULT_COLUMN_WIDTH = 100;
 
 const DEFAULT_STATE = {
@@ -13,9 +15,15 @@ export default (state, _action) => {
 };
 
 function initialize(initialState, options) {
-  const { columns, width } = options;
+  const { columns, headerHeight = 32, height, rowHeight = 24, width } = options;
   return {
-    columnGroups: buildColumnGroups(columns, width)
+    columnGroups: buildColumnGroups(columns, width),
+    columns,
+    headerHeight,
+    height,
+    meta: metaData(columns),
+    rowHeight,
+    viewportRowCount: Math.ceil((height - headerHeight) / rowHeight) + 1
   };
 }
 
