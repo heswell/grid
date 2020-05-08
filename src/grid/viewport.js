@@ -1,5 +1,6 @@
 import React, {
   forwardRef,
+  useCallback,
   useImperativeHandle,
   useEffect,
   useReducer,
@@ -50,14 +51,15 @@ const Viewport = forwardRef(
       }
     }));
 
-    const setRange = (lo, hi) => {
-      console.log(`setRange ===>  ${lo} : ${hi}`);
-      dispatchData({ type: "range", range: { lo, hi } });
-      dataSource.setRange(lo, hi);
-    };
+    const setRange = useCallback(
+      (lo, hi) => {
+        dispatchData({ type: "range", range: { lo, hi } });
+        dataSource.setRange(lo, hi);
+      },
+      [dataSource]
+    );
 
-    const handleVerticalScroll = useScroll(
-      "scrollTop",
+    const scrollCallback = useCallback(
       (scrollEvent, scrollTop) => {
         if (scrollEvent === "scroll") {
           const firstRow = Math.floor(scrollTop / gridModel.rowHeight);
@@ -76,8 +78,11 @@ const Viewport = forwardRef(
           fixedCanvas.current.endVerticalScroll(scrollTop);
           scrollableCanvas.current.endVerticalScroll(scrollTop);
         }
-      }
+      },
+      [gridModel.rowHeight, gridModel.viewportRowCount, setRange]
     );
+
+    const handleVerticalScroll = useScroll("scrollTop", scrollCallback);
 
     const [data, dispatchData] = useReducer(
       dataReducer(gridModel),
@@ -85,7 +90,6 @@ const Viewport = forwardRef(
     );
 
     useEffect(() => {
-      console.log(`subscribe to dataSource ${gridModel.viewportRowCount}`);
       dataSource.subscribe(
         {
           columns: gridModel.columns,
@@ -93,7 +97,6 @@ const Viewport = forwardRef(
         },
         /* postMessageToClient */
         msg => {
-          console.log(msg);
           if (msg.rows) {
             contentHeight.current = msg.size * gridModel.rowHeight;
             dispatchData({

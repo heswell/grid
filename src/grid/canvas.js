@@ -62,8 +62,6 @@ const Canvas = forwardRef(function Canvas(
     })
     .sort(byKey);
 
-  console.log(rowPositions);
-
   const cellKeys = [];
 
   return (

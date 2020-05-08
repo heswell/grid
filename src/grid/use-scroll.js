@@ -1,39 +1,44 @@
+import { useCallback, useRef } from "react";
 export const SCROLL_START = 1;
 export const SCROLL_END = 2;
 export const SCROLL = 4;
 export const SCROLL_START_END = 3;
 const ALL_SCROLL_EVENTS = 7;
 
-export default function scrollHook(
+export default function useScroll(
   scrollPos,
   callback,
   scrollEvents = ALL_SCROLL_EVENTS
 ) {
-  let timeoutHandle = null;
-  const pos = { current: 0 };
-  const onScrollEnd = () => {
+  const timeoutHandle = useRef(null);
+  const pos = useRef(0);
+  const onScrollEnd = useCallback(() => {
     if (scrollEvents & SCROLL_END) {
       callback("scroll-end", pos.current);
     }
-    timeoutHandle = null;
-  };
-  return e => {
-    // important for the horizontal scroll on Canvas
-    e.stopPropagation();
-    const position = e.target[scrollPos];
-    if (position !== pos.current) {
-      pos.current = position;
-      if (timeoutHandle === null) {
-        if (scrollEvents & SCROLL_START) {
-          callback("scroll-start", position);
+    timeoutHandle.current = null;
+  }, [callback, scrollEvents]);
+
+  return useCallback(
+    e => {
+      // important for the horizontal scroll on Canvas
+      e.stopPropagation();
+      const scrollPosition = e.target[scrollPos];
+      if (scrollPosition !== pos.current) {
+        pos.current = scrollPosition;
+        if (timeoutHandle.current === null) {
+          if (scrollEvents & SCROLL_START) {
+            callback("scroll-start", scrollPosition);
+          }
+        } else {
+          clearTimeout(timeoutHandle.current);
         }
-      } else {
-        clearTimeout(timeoutHandle);
+        if (scrollEvents & SCROLL) {
+          callback("scroll", scrollPosition);
+        }
+        timeoutHandle.current = setTimeout(onScrollEnd, 200);
       }
-      timeoutHandle = setTimeout(onScrollEnd, 200);
-      if (scrollEvents & SCROLL) {
-        callback("scroll", position);
-      }
-    }
-  };
+    },
+    [callback, onScrollEnd, scrollEvents, scrollPos]
+  );
 }
