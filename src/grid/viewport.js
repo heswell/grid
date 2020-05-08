@@ -7,6 +7,7 @@ const Viewport = forwardRef(
     {
       columnHeaders,
       contentHeight,
+      gridModel,
       headerHeight,
       onVerticalScroll,
       onHorizontalScroll
@@ -56,25 +57,17 @@ const Viewport = forwardRef(
           ref={scrollingEl}
           style={{ height: contentHeight }}
         >
-          <Canvas
-            className="fixed"
-            columnHeader={columnHeaders[0]}
-            contentWidth={200}
-            contentHeight={1200}
-            height={568}
-            ref={fixedCanvas}
-            width={200}
-          />
-          <Canvas
-            className="scrollable"
-            columnHeader={columnHeaders[1]}
-            contentHeight={1200}
-            contentWidth={1270}
-            height={568}
-            onScroll={onHorizontalScroll}
-            ref={scrollableCanvas}
-            width={585}
-          />
+          {gridModel.columnGroups.map((columnGroup, idx) => (
+            <Canvas
+              columnGroup={columnGroup}
+              columnHeader={columnHeaders[idx]}
+              contentHeight={1200}
+              height={568}
+              key={idx}
+              onScroll={onHorizontalScroll}
+              ref={columnGroup.locked ? fixedCanvas : scrollableCanvas}
+            />
+          ))}
         </div>
       </div>
     );

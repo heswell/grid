@@ -2,27 +2,20 @@ body {
   background-color: gainsboro;
 }
 .Grid {
+  --grid-heading-border-color: #bbb;
+  --grid-cell-border-color: #d4d4d4;
+
   position: absolute;
+  font-family: "Roboto";
+  font-size: 0.825em;
 }
 
 .header-container {
   white-space: nowrap;
 }
 
-.header-container .ColumnGroupHeader {
-  display: inline-block;
-}
-
 .Grid.scrolling-x > .header-container {
   display: none;
-}
-
-.ColumnGroupHeader .header-cells {
-  height: 100%;
-}
-
-.header-container .scrollable.ColumnGroupHeader {
-  overflow: hidden;
 }
 
 .Viewport {
@@ -52,16 +45,6 @@ body {
   vertical-align: top;
 }
 
-.Canvas .ColumnGroupHeader {
-  display: none;
-  position: absolute;
-  top: 0;
-}
-
-.Grid.scrolling-x .Canvas .ColumnGroupHeader {
-  display: block;
-}
-
 .Canvas.scrollable {
   overflow-x: auto;
   overflow-y: hidden;
@@ -86,49 +69,13 @@ body {
 .Grid {
   background-color: white;
 }
-.Viewport {
-  background-color: rgba(255, 0, 0, 0.1);
-}
 
-.header-container .ColumnGroupHeader {
-  display: inline-block;
-}
-
-.header-cells {
-  background-color: burlywood;
-  background-image: linear-gradient(
-      rgba(255, 255, 255, 02) 2px,
-      transparent 2px
-    ),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.2) 2px, transparent 2px),
-    linear-gradient(rgba(255, 255, 255, 0.2) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
-  background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
-  background-position: -2px -2px, -2px -2px, -1px -1px, -1px -1px;
-}
-
-.header-container {
-  background-color: red;
-  font-size: 0;
-}
-
-.scrolling-canvas-container {
-  background-color: rgba(0, 0, 255, 0.1);
-}
-
-.Canvas.fixed {
-  background-color: rgba(0, 255, 0, 0.2);
-}
-
-.Canvas.scrollable {
-  background-color: rgba(255, 0, 255, 0.1);
-}
 .canvas-content {
   background-color: var(--content-bg);
-  background-image: linear-gradient(white 2px, transparent 2px),
-    linear-gradient(90deg, white 2px, transparent 2px),
-    linear-gradient(rgba(255, 255, 255, 0.3) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.3) 1px, transparent 1px);
+  background-image: linear-gradient(rgba(0, 0, 0, 0.075) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.05) 2px, transparent 2px),
+    linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
   background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
   background-position: -2px -2px, -2px -2px, -1px -1px, -1px -1px;
 }

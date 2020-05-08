@@ -1,63 +1,59 @@
 import React, { forwardRef, useImperativeHandle, useRef } from "react";
 import cx from "classnames";
 
-const Canvas = forwardRef(
-  (
-    {
-      columnHeader,
-      className,
-      contentHeight,
-      contentWidth,
-      height,
-      onScroll,
-      width
+const Canvas = forwardRef(function Canvas(
+  { columnGroup, columnHeader, className, contentHeight, height, onScroll },
+  ref
+) {
+  const canvasEl = useRef(null);
+  const contentEl = useRef(null);
+
+  useImperativeHandle(ref, () => ({
+    beginVerticalScroll: () => {
+      canvasEl.current.style.height = `${contentHeight}px`;
+      contentEl.current.style.transform = "translate3d(0px, 0px, 0px)";
     },
-    ref
-  ) => {
-    const canvasEl = useRef(null);
-    const contentEl = useRef(null);
+    endVerticalScroll: scrollTop => {
+      canvasEl.current.style.height = `${height}px`;
+      contentEl.current.style.transform = `translate3d(0px, -${scrollTop}px, 0px)`;
+    },
+    beginHorizontalScroll: (scrollTop, headerHeight) => {
+      canvasEl.current.style.height = `${height + headerHeight}px`;
+      scrollTop = -(scrollTop - headerHeight);
+      contentEl.current.style.transform = `translate3d(0px, ${scrollTop}px, 0px)`;
+    },
+    endHorizontalScroll: (scrollTop, headerHeight) => {
+      canvasEl.current.style.height = `${height}px`;
+      contentEl.current.style.transform = `translate3d(0px, -${Math.min(
+        scrollTop,
+        height + 2 * headerHeight
+      )}px, 0px)`;
+    }
+  }));
 
-    useImperativeHandle(ref, () => ({
-      beginVerticalScroll: () => {
-        canvasEl.current.style.height = `${contentHeight}px`;
-        contentEl.current.style.transform = "translate3d(0px, 0px, 0px)";
-      },
-      endVerticalScroll: scrollTop => {
-        canvasEl.current.style.height = `${height}px`;
-        contentEl.current.style.transform = `translate3d(0px, -${scrollTop}px, 0px)`;
-      },
-      beginHorizontalScroll: (scrollTop, headerHeight) => {
-        canvasEl.current.style.height = `${height + headerHeight}px`;
-        scrollTop = -(scrollTop - headerHeight);
-        contentEl.current.style.transform = `translate3d(0px, ${scrollTop}px, 0px)`;
-      },
-      endHorizontalScroll: (scrollTop, headerHeight) => {
-        canvasEl.current.style.height = `${height}px`;
-        contentEl.current.style.transform = `translate3d(0px, -${Math.min(
-          scrollTop,
-          height + 2 * headerHeight
-        )}px, 0px)`;
-      }
-    }));
+  const { contentWidth, width } = columnGroup;
+  const rootClassName = cx("Canvas", className, {
+    fixed: columnGroup.locked,
+    scrollable: !columnGroup.locked
+  });
 
-    return (
-      <div
-        className={cx("Canvas", className)}
-        ref={canvasEl}
-        style={{ height, width }}
-        onScroll={onScroll}
-      >
-        <div className="canvas-content-wrapper" style={{ width: contentWidth }}>
-          <div
-            className="canvas-content"
-            ref={contentEl}
-            style={{ width: contentWidth, height: contentHeight }}
-          />
-        </div>
-        {columnHeader}
+  return (
+    <div
+      className={rootClassName}
+      ref={canvasEl}
+      style={{ height, width }}
+      onScroll={onScroll}
+    >
+      <div className="canvas-content-wrapper" style={{ width: contentWidth }}>
+        <div
+          className="canvas-content"
+          ref={contentEl}
+          style={{ width: contentWidth, height: contentHeight }}
+        />
       </div>
-    );
-  }
-);
+      {columnHeader}
+    </div>
+  );
+});
 
 export default Canvas;

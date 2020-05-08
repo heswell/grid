@@ -1,5 +1,8 @@
-import React, { useRef } from "react";
+import React, { useReducer, useRef } from "react";
+import cx from "classnames";
 import ColumnGroupHeader from "./column-group-header";
+import modelReducer, { initModel } from "./grid-model-reducer";
+
 import Viewport from "./viewport";
 
 import "./grid.css";
@@ -24,7 +27,8 @@ export function getScrollHandler(scrollPos, callback) {
   };
 }
 
-export default ({ width, headerHeight, height }) => {
+export default ({ columns, dataSource, headerHeight, height, width }) => {
+  console.log(`[Grid]`);
   const gridEl = useRef(null);
   const viewport = useRef(null);
   const scrollableHeader = useRef(null);
@@ -51,31 +55,36 @@ export default ({ width, headerHeight, height }) => {
     }
   );
 
+  const [gridModel, dispatchGridModel] = useReducer(
+    modelReducer,
+    {
+      columns,
+      width
+    },
+    initModel
+  );
+
+  console.log(gridModel);
+
   const getColumnHeaders = withRef => {
-    return [
+    return gridModel.columnGroups.map((columnGroup, idx) => (
       <ColumnGroupHeader
-        className="fixed"
+        columnGroup={columnGroup}
         height={headerHeight}
-        key="fixed"
-        width={200}
-        contentWidth={200}
-      />,
-      <ColumnGroupHeader
-        className="scrollable"
-        height={headerHeight}
-        key="scrollable"
-        ref={withRef ? scrollableHeader : null}
-        width={600}
-        contentWidth={1270}
+        key={idx}
+        ref={withRef && !columnGroup.fixed ? scrollableHeader : null}
       />
-    ];
+    ));
   };
 
   return (
     <div className="Grid" ref={gridEl} style={{ width, height }}>
-      <div className="header-container">{getColumnHeaders(true)}</div>
+      <div className="header-container" style={{ height: headerHeight }}>
+        {getColumnHeaders(true)}
+      </div>
       <Viewport
         columnHeaders={getColumnHeaders()}
+        gridModel={gridModel}
         ref={viewport}
         headerHeight={headerHeight}
         contentHeight={1200}

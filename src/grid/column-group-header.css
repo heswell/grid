@@ -1,0 +1,25 @@
+.ColumnGroupHeader {
+  vertical-align: top;
+}
+
+.ColumnGroupHeader .header-cells {
+  height: 100%;
+}
+
+.header-container .ColumnGroupHeader {
+  display: inline-block;
+}
+
+.header-container .scrollable.ColumnGroupHeader {
+  overflow: hidden;
+}
+
+.Canvas .ColumnGroupHeader {
+  display: none;
+  position: absolute;
+  top: 0;
+}
+
+.Grid.scrolling-x .Canvas .ColumnGroupHeader {
+  display: block;
+}
