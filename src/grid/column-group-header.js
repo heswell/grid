@@ -5,7 +5,7 @@ import cx from "classnames";
 import "./column-group-header.css";
 
 const ColumnGroupHeader = forwardRef(
-  ({ className, columnGroup, height }, ref) => {
+  ({ className, columnGroup, height, width }, ref) => {
     const headerCells = useRef(null);
 
     useImperativeHandle(ref, () => ({
@@ -14,11 +14,8 @@ const ColumnGroupHeader = forwardRef(
       }
     }));
 
-    const { columns, width, contentWidth } = columnGroup;
-    const rootClassName = cx("ColumnGroupHeader", className, {
-      fixed: columnGroup.locked,
-      scrollable: !columnGroup.locked
-    });
+    const { columns, contentWidth } = columnGroup;
+    const rootClassName = cx("ColumnGroupHeader", className);
     return (
       <div className={rootClassName} style={{ height, width }}>
         <div

@@ -1,17 +1,15 @@
 .ColumnGroupHeader {
   vertical-align: top;
-}
-
-.ColumnGroupHeader .header-cells {
-  height: 100%;
+  overflow: hidden;
 }
 
 .header-container .ColumnGroupHeader {
   display: inline-block;
 }
 
-.header-container .scrollable.ColumnGroupHeader {
-  overflow: hidden;
+.ColumnGroupHeader .header-cells {
+  height: 100%;
+  display: flex;
 }
 
 .Canvas .ColumnGroupHeader {

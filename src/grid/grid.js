@@ -16,6 +16,7 @@ export function getScrollHandler(scrollPos, callback) {
   };
   return e => {
     // important for the horizontal scroll on Canvas
+    console.log(`scroll event ${e.target.className}`);
     e.stopPropagation();
     pos.current = e.target[scrollPos];
     if (timeoutHandle === null) {
@@ -66,13 +67,14 @@ export default ({ columns, dataSource, headerHeight, height, width }) => {
 
   console.log(gridModel);
 
-  const getColumnHeaders = withRef => {
+  const getColumnHeaders = scrollingHeaders => {
     return gridModel.columnGroups.map((columnGroup, idx) => (
       <ColumnGroupHeader
         columnGroup={columnGroup}
         height={headerHeight}
         key={idx}
-        ref={withRef && !columnGroup.fixed ? scrollableHeader : null}
+        ref={scrollingHeaders || columnGroup.locked ? null : scrollableHeader}
+        width={scrollingHeaders ? columnGroup.contentWidth : columnGroup.width}
       />
     ));
   };
@@ -80,10 +82,10 @@ export default ({ columns, dataSource, headerHeight, height, width }) => {
   return (
     <div className="Grid" ref={gridEl} style={{ width, height }}>
       <div className="header-container" style={{ height: headerHeight }}>
-        {getColumnHeaders(true)}
+        {getColumnHeaders()}
       </div>
       <Viewport
-        columnHeaders={getColumnHeaders()}
+        columnHeaders={getColumnHeaders(true)}
         gridModel={gridModel}
         ref={viewport}
         headerHeight={headerHeight}
