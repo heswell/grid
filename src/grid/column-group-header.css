@@ -1,6 +1,7 @@
 .ColumnGroupHeader {
   vertical-align: top;
   overflow: hidden;
+  background-color: white;
 }
 
 .header-container .ColumnGroupHeader {

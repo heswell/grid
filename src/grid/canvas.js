@@ -21,8 +21,6 @@ const Canvas = forwardRef(function Canvas(
   const canvasEl = useRef(null);
   const contentEl = useRef(null);
 
-  console.log(`[Canvas] ${rows.length} rows`);
-
   useImperativeHandle(ref, () => ({
     beginVerticalScroll: () => {
       canvasEl.current.style.height = `${contentHeight}px`;

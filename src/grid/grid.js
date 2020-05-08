@@ -8,7 +8,6 @@ import Viewport from "./viewport";
 import "./grid.css";
 
 export default function Grid(props) {
-  console.log(`[Grid]`);
   const gridEl = useRef(null);
   const viewport = useRef(null);
   const scrollableHeader = useRef(null);

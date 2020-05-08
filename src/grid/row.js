@@ -1,8 +1,8 @@
 import React, { memo } from "react";
+import Cell from "./grid-cell";
 import cx from "classnames";
 import "./row.css";
-const Row = memo(function Row({ gridModel, idx }) {
-  console.log("[Row]");
+const Row = memo(function Row({ columns, gridModel, idx, row }) {
   const rootClassName = cx("GridRow");
   return (
     <div
@@ -11,7 +11,16 @@ const Row = memo(function Row({ gridModel, idx }) {
         transform: `translate3d(0px, ${idx * gridModel.rowHeight}px, 0px)`,
         height: gridModel.rowHeight
       }}
-    />
+    >
+      {columns.map(column => (
+        <Cell
+          key={column.key}
+          column={column}
+          meta={gridModel.meta}
+          row={row}
+        />
+      ))}
+    </div>
   );
 });
 

@@ -1,0 +1,22 @@
+.GridCell {
+  --border-color: #d4d4d4;
+  --border-color-selected: rgb(46, 100, 139);
+
+  align-items: center;
+  box-sizing: border-box;
+  border-color: var(--border-color);
+  border-style: solid;
+  border-width: 0 1px 1px 0;
+  cursor: default;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: normal;
+  height: 100%;
+  padding: 0 12px;
+  position: relative;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: top;
+  white-space: nowrap;
+  z-index: 0;
+}

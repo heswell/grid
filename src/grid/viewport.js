@@ -23,8 +23,6 @@ const Viewport = forwardRef(function Viewport(
   const contentHeight = useRef(0);
   const firstVisibleRow = useRef(0);
 
-  console.log("[Viewport]");
-
   useImperativeHandle(ref, () => ({
     beginHorizontalScroll: () => {
       const scrollTop = viewportEl.current.scrollTop;
@@ -65,9 +63,6 @@ const Viewport = forwardRef(function Viewport(
     (scrollEvent, scrollTop) => {
       if (scrollEvent === "scroll") {
         const firstRow = Math.floor(scrollTop / gridModel.rowHeight);
-        console.log(
-          `Vertical scroll scrollTop=${scrollTop} firstRow=${firstRow}`
-        );
         if (firstRow !== firstVisibleRow.current) {
           firstVisibleRow.current = firstRow;
           setRange(firstRow, firstRow + gridModel.viewportRowCount);
