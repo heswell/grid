@@ -7,7 +7,7 @@ import Viewport from "./viewport";
 
 import "./grid.css";
 
-export default props => {
+export default function Grid(props) {
   console.log(`[Grid]`);
   const gridEl = useRef(null);
   const viewport = useRef(null);
@@ -63,4 +63,4 @@ export default props => {
       />
     </div>
   );
-};
+}

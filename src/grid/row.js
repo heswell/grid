@@ -1,7 +1,8 @@
-import React from "react";
+import React, { memo } from "react";
 import cx from "classnames";
 import "./row.css";
-const Row = ({ gridModel, idx }) => {
+const Row = memo(function Row({ gridModel, idx }) {
+  console.log("[Row]");
   const rootClassName = cx("GridRow");
   return (
     <div
@@ -12,6 +13,6 @@ const Row = ({ gridModel, idx }) => {
       }}
     />
   );
-};
+});
 
 export default Row;

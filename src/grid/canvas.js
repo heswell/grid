@@ -62,7 +62,7 @@ const Canvas = forwardRef(function Canvas(
     })
     .sort(byKey);
 
-  const cellKeys = [];
+  const cellKeys = useRef([]);
 
   return (
     <div
@@ -84,7 +84,7 @@ const Canvas = forwardRef(function Canvas(
                 columns={columns}
                 gridModel={gridModel}
                 idx={absIdx}
-                keys={cellKeys}
+                keys={cellKeys.current}
                 row={row}
               />
             );
