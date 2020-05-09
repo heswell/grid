@@ -7,10 +7,10 @@ import React, {
   useRef
 } from "react";
 import useScroll from "./use-scroll";
+import useStyles from './use-styles';
 import dataReducer, { initialData } from "./grid-data-reducer";
 
 import Canvas from "./canvas";
-import cx from "classnames";
 
 const Viewport = forwardRef(function Viewport(
   { columnHeaders, dataSource, gridModel },
@@ -110,15 +110,17 @@ const Viewport = forwardRef(function Viewport(
     gridModel.viewportRowCount
   ]);
 
+  const classes = useStyles();
+
   return (
     <div
-      className={cx("Viewport")}
+      className={classes.Viewport}
       ref={viewportEl}
       style={{ top: gridModel.headerHeight }}
       onScroll={handleVerticalScroll}
     >
       <div
-        className="scrolling-canvas-container"
+        className={classes.scrollingCanvasContainer}
         ref={scrollingEl}
         style={{ height: contentHeight.current }}
       >

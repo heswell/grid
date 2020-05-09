@@ -1,14 +1,15 @@
 import React from "react";
-import "./header-cell.css";
+import useStyles from './use-styles';
 
 export default ({ column }) => {
   const { name, width } = column;
+  const classes = useStyles();
   return (
-    <div className="HeaderCell" style={{ width }}>
-      <div className="inner-header-cell">
-        <div className="cell-wrapper">{name}</div>
+    <div className={classes.HeaderCell} style={{ width }}>
+      <div className={classes.innerHeaderCell}>
+        <div className={classes.cellWrapper}>{name}</div>
       </div>
-      <div className="resize-handle" />
+      <div className={classes.resizeHandle} />
     </div>
   );
 };

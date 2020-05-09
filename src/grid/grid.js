@@ -3,10 +3,8 @@ import ColumnGroupHeader from "./column-group-header";
 import GridContext from "./grid-context";
 import modelReducer, { initModel } from "./grid-model-reducer";
 import actionReducer from "./grid-action-reducer";
-
+import useStyles from './use-styles';
 import Viewport from "./viewport";
-
-import "./grid.css";
 
 export default function Grid(props) {
   const gridEl = useRef(null);
@@ -55,10 +53,12 @@ export default function Grid(props) {
     ));
   };
 
+  const classes = useStyles();
+
   return (
     <GridContext.Provider value={{ dispatchGridAction }}>
-      <div className="Grid" ref={gridEl} style={{ width, height }}>
-        <div className="header-container" style={{ height: headerHeight }}>
+      <div className={classes.Grid} ref={gridEl} style={{ width, height }}>
+        <div className={classes.headerContainer} style={{ height: headerHeight }}>
           {getColumnHeaders()}
         </div>
         <Viewport

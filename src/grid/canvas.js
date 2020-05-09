@@ -6,11 +6,12 @@ import React, {
   useReducer,
   useRef
 } from "react";
+import cx from "classnames";
 import GridContext from "./grid-context";
 import useScroll from "./use-scroll";
+import useStyles from "./use-styles";
 import canvasReducer, { initCanvasReducer } from "./canvas-reducer";
 import Row from "./row";
-import cx from "classnames";
 
 const byKey = ([key1], [key2]) => key1 - key2;
 
@@ -18,7 +19,6 @@ const Canvas = forwardRef(function Canvas(
   {
     columnGroup,
     columnHeader,
-    className,
     contentHeight,
     firstVisibleRow,
     gridModel,
@@ -59,10 +59,6 @@ const Canvas = forwardRef(function Canvas(
   }));
 
   const { contentWidth, width } = columnGroup;
-  const rootClassName = cx("Canvas", className, {
-    fixed: columnGroup.locked,
-    scrollable: !columnGroup.locked
-  });
 
   const scrollCallback = useCallback(
     (scrollEvent, scrollLeft) => {
@@ -89,6 +85,12 @@ const Canvas = forwardRef(function Canvas(
     })
     .sort(byKey);
 
+  const classes = useStyles();
+  const rootClassName = cx(classes.Canvas, {
+    [classes.fixed]: columnGroup.locked,
+    [classes.scrollable]: !columnGroup.locked
+  });
+
   return (
     <div
       className={rootClassName}
@@ -96,9 +98,9 @@ const Canvas = forwardRef(function Canvas(
       style={{ height, width }}
       onScroll={handleHorizontalScroll}
     >
-      <div className="canvas-content-wrapper" style={{ width: contentWidth }}>
+      <div className={classes.canvasContentWrapper} style={{ width: contentWidth }}>
         <div
-          className="canvas-content"
+          className={classes.canvasContent}
           ref={contentEl}
           style={{ width: contentWidth, height: contentHeight }}
         >

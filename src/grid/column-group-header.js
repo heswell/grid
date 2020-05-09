@@ -1,11 +1,9 @@
 import React, { forwardRef, useImperativeHandle, useRef } from "react";
 import HeaderCell from "./header-cell";
-import cx from "classnames";
-
-import "./column-group-header.css";
+import useStyles from './use-styles';
 
 export default forwardRef(function ColumnGroupHeader(
-  { className, columnGroup, height, width },
+  { columnGroup, height, width },
   ref
 ) {
   const headerCells = useRef(null);
@@ -17,11 +15,12 @@ export default forwardRef(function ColumnGroupHeader(
   }));
 
   const { columns, contentWidth } = columnGroup;
-  const rootClassName = cx("ColumnGroupHeader", className);
+  const classes = useStyles();
+
   return (
-    <div className={rootClassName} style={{ height, width }}>
+    <div className={classes.ColumnGroupHeader} style={{ height, width }}>
       <div
-        className="header-cells"
+        className={classes.headerCells}
         ref={headerCells}
         style={{ width: contentWidth }}
       >

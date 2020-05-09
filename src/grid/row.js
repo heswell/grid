@@ -1,15 +1,14 @@
 import React, { memo } from "react";
 import Cell from "./grid-cell";
-import cx from "classnames";
-import "./row.css";
+import useStyles from './use-styles';
 
 export const PADDING_CELL = "virtual-padding";
 
 export default memo(function Row({ columns, gridModel, idx, row }) {
-  const rootClassName = cx("GridRow");
+  const classes = useStyles();  
   return (
     <div
-      className={rootClassName}
+      className={classes.GridRow}
       style={{
         transform: `translate3d(0px, ${idx * gridModel.rowHeight}px, 0px)`,
         height: gridModel.rowHeight
@@ -19,7 +18,7 @@ export default memo(function Row({ columns, gridModel, idx, row }) {
         column.name === PADDING_CELL ? (
           <div
             key="virtual-padding"
-            className="virtual-padding"
+            className={classes.virtualPadding}
             style={{ width: column.width }}
           />
         ) : (
