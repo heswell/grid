@@ -13,7 +13,7 @@ import Canvas from "./canvas";
 import cx from "classnames";
 
 const Viewport = forwardRef(function Viewport(
-  { columnHeaders, dataSource, gridModel, onHorizontalScroll },
+  { columnHeaders, dataSource, gridModel },
   ref
 ) {
   const viewportEl = useRef(null);
@@ -39,14 +39,8 @@ const Viewport = forwardRef(function Viewport(
     },
     endHorizontalScroll: () => {
       const scrollTop = viewportEl.current.scrollTop;
-      fixedCanvas.current.endHorizontalScroll(
-        scrollTop,
-        gridModel.headerHeight
-      );
-      scrollableCanvas.current.endHorizontalScroll(
-        scrollTop,
-        gridModel.headerHeight
-      );
+      fixedCanvas.current.endHorizontalScroll(scrollTop);
+      scrollableCanvas.current.endHorizontalScroll(scrollTop);
       scrollingEl.current.style.height = `${contentHeight.current}px`;
     }
   }));
@@ -137,7 +131,6 @@ const Viewport = forwardRef(function Viewport(
             gridModel={gridModel}
             height={568}
             key={idx}
-            onScroll={onHorizontalScroll}
             ref={columnGroup.locked ? fixedCanvas : scrollableCanvas}
             rows={data.rows}
           />

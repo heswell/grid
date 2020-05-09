@@ -11,13 +11,13 @@ const columns = [
 ];
 
 const start = performance.now();
-for (let i = 2; i < 20; i++) {
+for (let i = 2; i < 25; i++) {
   columns.push({ name: `${i - 1}M`, width: 100 });
 }
 
 for (let i = 0; i < 100; i++) {
   const row = { id: i, ccy: "USDGBP" };
-  for (let j = 2; j < 20; j++) {
+  for (let j = 2; j < 25; j++) {
     row[`${j - 1}M`] = `${i},${j - 1}`;
   }
   data.push(row);

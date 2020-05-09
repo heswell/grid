@@ -1,4 +1,14 @@
-import React, { forwardRef, useImperativeHandle, useRef } from "react";
+import React, {
+  forwardRef,
+  useCallback,
+  useContext,
+  useImperativeHandle,
+  useReducer,
+  useRef
+} from "react";
+import GridContext from "./grid-context";
+import useScroll from "./use-scroll";
+import canvasReducer, { initCanvasReducer } from "./canvas-reducer";
 import Row from "./row";
 import cx from "classnames";
 
@@ -13,13 +23,19 @@ const Canvas = forwardRef(function Canvas(
     firstVisibleRow,
     gridModel,
     height,
-    onScroll,
     rows
   },
   ref
 ) {
   const canvasEl = useRef(null);
   const contentEl = useRef(null);
+  const { dispatchGridAction } = useContext(GridContext);
+
+  const [[columns, cellKeys], dispatchCanvasAction] = useReducer(
+    canvasReducer,
+    columnGroup,
+    initCanvasReducer
+  );
 
   useImperativeHandle(ref, () => ({
     beginVerticalScroll: () => {
@@ -30,25 +46,38 @@ const Canvas = forwardRef(function Canvas(
       canvasEl.current.style.height = `${height}px`;
       contentEl.current.style.transform = `translate3d(0px, -${scrollTop}px, 0px)`;
     },
+    // Should only be invoked on scrollable Canvas
     beginHorizontalScroll: (scrollTop, headerHeight) => {
       canvasEl.current.style.height = `${height + headerHeight}px`;
       scrollTop = -(scrollTop - headerHeight);
       contentEl.current.style.transform = `translate3d(0px, ${scrollTop}px, 0px)`;
     },
-    endHorizontalScroll: (scrollTop, headerHeight) => {
+    endHorizontalScroll: scrollTop => {
       canvasEl.current.style.height = `${height}px`;
-      contentEl.current.style.transform = `translate3d(0px, -${Math.min(
-        scrollTop,
-        height + 2 * headerHeight
-      )}px, 0px)`;
+      contentEl.current.style.transform = `translate3d(0px, -${scrollTop}px, 0px)`;
     }
   }));
 
-  const { columns, contentWidth, width } = columnGroup;
+  const { contentWidth, width } = columnGroup;
   const rootClassName = cx("Canvas", className, {
     fixed: columnGroup.locked,
     scrollable: !columnGroup.locked
   });
+
+  const scrollCallback = useCallback(
+    (scrollEvent, scrollLeft) => {
+      if (scrollEvent === "scroll") {
+        dispatchCanvasAction(scrollLeft);
+      } else if (scrollEvent === "scroll-start") {
+        dispatchGridAction({ type: "scroll-start-horizontal", scrollLeft });
+      } else {
+        dispatchGridAction({ type: "scroll-end-horizontal", scrollLeft });
+      }
+    },
+    [dispatchCanvasAction, dispatchGridAction]
+  );
+
+  const handleHorizontalScroll = useScroll("scrollLeft", scrollCallback, 100);
 
   const {
     meta: { RENDER_IDX }
@@ -60,14 +89,12 @@ const Canvas = forwardRef(function Canvas(
     })
     .sort(byKey);
 
-  const cellKeys = useRef([]);
-
   return (
     <div
       className={rootClassName}
       ref={canvasEl}
       style={{ height, width }}
-      onScroll={onScroll}
+      onScroll={handleHorizontalScroll}
     >
       <div className="canvas-content-wrapper" style={{ width: contentWidth }}>
         <div
@@ -82,7 +109,7 @@ const Canvas = forwardRef(function Canvas(
                 columns={columns}
                 gridModel={gridModel}
                 idx={absIdx}
-                keys={cellKeys.current}
+                keys={cellKeys}
                 row={row}
               />
             );

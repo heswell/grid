@@ -1,7 +1,8 @@
-import React, { useReducer, useRef } from "react";
-import useScroll, { SCROLL_START_END } from "./use-scroll";
+import React, { useCallback, useReducer, useRef } from "react";
 import ColumnGroupHeader from "./column-group-header";
+import GridContext from "./grid-context";
 import modelReducer, { initModel } from "./grid-model-reducer";
+import actionReducer from "./grid-action-reducer";
 
 import Viewport from "./viewport";
 
@@ -12,26 +13,32 @@ export default function Grid(props) {
   const viewport = useRef(null);
   const scrollableHeader = useRef(null);
 
-  const handleHorizontalScroll = useScroll(
-    "scrollLeft",
-    (scrollEvent, scrollLeft) => {
-      if (scrollEvent === "scroll-start") {
-        viewport.current.beginHorizontalScroll();
-        gridEl.current.classList.add("scrolling-x");
-      } else {
-        viewport.current.endHorizontalScroll();
-        gridEl.current.classList.remove("scrolling-x");
-        scrollableHeader.current.endHorizontalScroll(scrollLeft);
-      }
-    },
-    SCROLL_START_END
-  );
-  // test
+  const handleHorizontalScrollStart = _scrollLeft => {
+    viewport.current.beginHorizontalScroll();
+    gridEl.current.classList.add("scrolling-x");
+  };
+
+  const handleHorizontalScrollEnd = scrollLeft => {
+    viewport.current.endHorizontalScroll();
+    gridEl.current.classList.remove("scrolling-x");
+    scrollableHeader.current.endHorizontalScroll(scrollLeft);
+  };
 
   const [gridModel /*, dispatchGridModel*/] = useReducer(
     modelReducer,
     props,
     initModel
+  );
+
+  const [, dispatchGridAction] = useReducer(
+    useCallback(
+      actionReducer({
+        "scroll-end-horizontal": handleHorizontalScrollEnd,
+        "scroll-start-horizontal": handleHorizontalScrollStart
+      }),
+      []
+    ),
+    null
   );
 
   const { dataSource, headerHeight, height, width } = props;
@@ -49,17 +56,18 @@ export default function Grid(props) {
   };
 
   return (
-    <div className="Grid" ref={gridEl} style={{ width, height }}>
-      <div className="header-container" style={{ height: headerHeight }}>
-        {getColumnHeaders()}
+    <GridContext.Provider value={{ dispatchGridAction }}>
+      <div className="Grid" ref={gridEl} style={{ width, height }}>
+        <div className="header-container" style={{ height: headerHeight }}>
+          {getColumnHeaders()}
+        </div>
+        <Viewport
+          columnHeaders={getColumnHeaders(true)}
+          dataSource={dataSource}
+          gridModel={gridModel}
+          ref={viewport}
+        />
       </div>
-      <Viewport
-        columnHeaders={getColumnHeaders(true)}
-        dataSource={dataSource}
-        gridModel={gridModel}
-        onHorizontalScroll={handleHorizontalScroll}
-        ref={viewport}
-      />
-    </div>
+    </GridContext.Provider>
   );
 }

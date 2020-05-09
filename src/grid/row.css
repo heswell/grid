@@ -1,5 +1,4 @@
 .GridRow {
-  border-bottom: solid 1px #ccc;
   box-sizing: border-box;
   left: 0;
   outline: 0;
@@ -7,4 +6,9 @@
   top: 0;
   white-space: nowrap;
   width: 100%;
+}
+
+.GridRow .virtual-padding {
+  display: inline-block;
+  height: 100%;
 }

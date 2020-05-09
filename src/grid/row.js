@@ -2,7 +2,10 @@ import React, { memo } from "react";
 import Cell from "./grid-cell";
 import cx from "classnames";
 import "./row.css";
-const Row = memo(function Row({ columns, gridModel, idx, row }) {
+
+export const PADDING_CELL = "virtual-padding";
+
+export default memo(function Row({ columns, gridModel, idx, row }) {
   const rootClassName = cx("GridRow");
   return (
     <div
@@ -12,16 +15,22 @@ const Row = memo(function Row({ columns, gridModel, idx, row }) {
         height: gridModel.rowHeight
       }}
     >
-      {columns.map(column => (
-        <Cell
-          key={column.key}
-          column={column}
-          meta={gridModel.meta}
-          row={row}
-        />
-      ))}
+      {columns.map(column =>
+        column.name === PADDING_CELL ? (
+          <div
+            key="virtual-padding"
+            className="virtual-padding"
+            style={{ width: column.width }}
+          />
+        ) : (
+          <Cell
+            key={column.key}
+            column={column}
+            meta={gridModel.meta}
+            row={row}
+          />
+        )
+      )}
     </div>
   );
 });
-
-export default Row;
