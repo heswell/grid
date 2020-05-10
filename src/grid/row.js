@@ -4,14 +4,14 @@ import useStyles from './use-styles';
 
 export const PADDING_CELL = "virtual-padding";
 
-export default memo(function Row({ columns, gridModel, idx, row }) {
+export default memo(function Row({ columns, height, idx, meta, row }) {
   const classes = useStyles();  
   return (
     <div
       className={classes.GridRow}
       style={{
-        transform: `translate3d(0px, ${idx * gridModel.rowHeight}px, 0px)`,
-        height: gridModel.rowHeight
+        transform: `translate3d(0px, ${idx * height}px, 0px)`,
+        height
       }}
     >
       {columns.map(column =>
@@ -25,7 +25,7 @@ export default memo(function Row({ columns, gridModel, idx, row }) {
           <Cell
             key={column.key}
             column={column}
-            meta={gridModel.meta}
+            meta={meta}
             row={row}
           />
         )

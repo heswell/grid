@@ -21,27 +21,23 @@ const Viewport = forwardRef(function Viewport(
   const fixedCanvas = useRef(null);
   const scrollableCanvas = useRef(null);
   const contentHeight = useRef(0);
+  const horizontalScrollbarHeight = useRef(gridModel.horizontalScrollbarHeight);
+  const verticalScrollbarWidth = useRef(0);
   const firstVisibleRow = useRef(0);
 
   useImperativeHandle(ref, () => ({
     beginHorizontalScroll: () => {
       const scrollTop = viewportEl.current.scrollTop;
       scrollingEl.current.style.height = `${contentHeight.current +
-        gridModel.headerHeight}px`;
-      fixedCanvas.current.beginHorizontalScroll(
-        scrollTop,
-        gridModel.headerHeight
-      );
-      scrollableCanvas.current.beginHorizontalScroll(
-        scrollTop,
-        gridModel.headerHeight
-      );
+        gridModel.headerHeight + horizontalScrollbarHeight.current}px`;
+      fixedCanvas.current.beginHorizontalScroll( scrollTop );
+      scrollableCanvas.current.beginHorizontalScroll( scrollTop );
     },
     endHorizontalScroll: () => {
       const scrollTop = viewportEl.current.scrollTop;
       fixedCanvas.current.endHorizontalScroll(scrollTop);
       scrollableCanvas.current.endHorizontalScroll(scrollTop);
-      scrollingEl.current.style.height = `${contentHeight.current}px`;
+      scrollingEl.current.style.height = `${contentHeight.current + horizontalScrollbarHeight.current}px`;
     }
   }));
 
@@ -85,6 +81,13 @@ const Viewport = forwardRef(function Viewport(
       },
       /* postMessageToClient */
       msg => {
+        if (msg.size !== undefined){
+          if (msg.size >= gridModel.viewportRowCount && verticalScrollbarWidth.current === 0){
+            verticalScrollbarWidth.current = 15;
+          } else if (msg.size < gridModel.viewportRowCount && verticalScrollbarWidth.current === 15){
+            verticalScrollbarWidth.current = 0;
+          }
+        }
         if (msg.rows) {
           contentHeight.current = msg.size * gridModel.rowHeight;
           dispatchData({
@@ -98,7 +101,9 @@ const Viewport = forwardRef(function Viewport(
       }
     );
 
-    // shouldn't be necessary
+    // shouldn't be necessary if range was included in subscribe
+
+
     dataSource.setRange(0, gridModel.viewportRowCount);
 
     return () => dataSource.unsubscribe();
@@ -109,6 +114,7 @@ const Viewport = forwardRef(function Viewport(
     gridModel.rowHeight,
     gridModel.viewportRowCount
   ]);
+  // TODO need a destroy method on dataSource to be called when appropriate
 
   const classes = useStyles();
 
@@ -122,7 +128,7 @@ const Viewport = forwardRef(function Viewport(
       <div
         className={classes.scrollingCanvasContainer}
         ref={scrollingEl}
-        style={{ height: contentHeight.current }}
+        style={{ height: contentHeight.current + horizontalScrollbarHeight.current }}
       >
         {gridModel.columnGroups.map((columnGroup, idx) => (
           <Canvas
@@ -130,10 +136,13 @@ const Viewport = forwardRef(function Viewport(
             columnHeader={columnHeaders[idx]}
             contentHeight={contentHeight.current}
             firstVisibleRow={firstVisibleRow.current}
-            gridModel={gridModel}
-            height={568}
+            headerHeight={gridModel.headerHeight}
+            height={gridModel.height - gridModel.headerHeight}
+            horizontalScrollbarHeight={horizontalScrollbarHeight.current}
             key={idx}
+            meta={gridModel.meta}
             ref={columnGroup.locked ? fixedCanvas : scrollableCanvas}
+            rowHeight={gridModel.rowHeight}
             rows={data.rows}
           />
         ))}

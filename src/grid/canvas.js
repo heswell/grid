@@ -21,8 +21,11 @@ const Canvas = forwardRef(function Canvas(
     columnHeader,
     contentHeight,
     firstVisibleRow,
-    gridModel,
+    headerHeight,
     height,
+    horizontalScrollbarHeight,
+    meta,
+    rowHeight,
     rows
   },
   ref
@@ -39,7 +42,7 @@ const Canvas = forwardRef(function Canvas(
 
   useImperativeHandle(ref, () => ({
     beginVerticalScroll: () => {
-      canvasEl.current.style.height = `${contentHeight}px`;
+      canvasEl.current.style.height = `${contentHeight + horizontalScrollbarHeight}px`;
       contentEl.current.style.transform = "translate3d(0px, 0px, 0px)";
     },
     endVerticalScroll: scrollTop => {
@@ -47,14 +50,11 @@ const Canvas = forwardRef(function Canvas(
       contentEl.current.style.transform = `translate3d(0px, -${scrollTop}px, 0px)`;
     },
     // Should only be invoked on scrollable Canvas
-    beginHorizontalScroll: (scrollTop, headerHeight) => {
+    beginHorizontalScroll: () => {
       canvasEl.current.style.height = `${height + headerHeight}px`;
-      scrollTop = -(scrollTop - headerHeight);
-      contentEl.current.style.transform = `translate3d(0px, ${scrollTop}px, 0px)`;
     },
-    endHorizontalScroll: scrollTop => {
+    endHorizontalScroll: () => {
       canvasEl.current.style.height = `${height}px`;
-      contentEl.current.style.transform = `translate3d(0px, -${scrollTop}px, 0px)`;
     }
   }));
 
@@ -75,13 +75,10 @@ const Canvas = forwardRef(function Canvas(
 
   const handleHorizontalScroll = useScroll("scrollLeft", scrollCallback, 100);
 
-  const {
-    meta: { RENDER_IDX }
-  } = gridModel;
   const rowPositions = rows
     .map((row, idx) => {
       const absIdx = firstVisibleRow + idx;
-      return [row[RENDER_IDX], absIdx, row];
+      return [row[meta.RENDER_IDX], absIdx, row];
     })
     .sort(byKey);
 
@@ -98,20 +95,21 @@ const Canvas = forwardRef(function Canvas(
       style={{ height, width }}
       onScroll={handleHorizontalScroll}
     >
-      <div className={classes.canvasContentWrapper} style={{ width: contentWidth }}>
+      <div className={classes.canvasContentWrapper} style={{ top: headerHeight,  width: contentWidth }}>
         <div
           className={classes.canvasContent}
           ref={contentEl}
-          style={{ width: contentWidth, height: contentHeight }}
+          style={{ width: contentWidth, height: Math.max(contentHeight+horizontalScrollbarHeight,height) }}
         >
           {rowPositions.map(([rowKey, absIdx, row]) => {
             return (
               <Row
                 key={rowKey}
                 columns={columns}
-                gridModel={gridModel}
+                height={rowHeight}
                 idx={absIdx}
                 keys={cellKeys}
+                meta={meta}
                 row={row}
               />
             );

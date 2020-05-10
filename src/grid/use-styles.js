@@ -24,6 +24,9 @@ export default createUseStyles({
       },
       '& $Canvas $ColumnGroupHeader': {
         display: 'block'
+      },
+      '& $canvasContentWrapper': {
+        position: 'relative'
       }
     } 
   },
@@ -53,14 +56,6 @@ export default createUseStyles({
     right: 0,
     overflowX: 'hidden',
     overflowY: 'auto',
-    '&.scrolling': {
-      '& $Canvas': {
-        position: 'static',
-        '&.fixed $canvasContent': {
-          transform: 'none !important'
-        }
-      },
-    }
    },
 
    scrollingCanvasContainer: {

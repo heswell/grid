@@ -2,8 +2,6 @@ import React from "react";
 import { Grid } from "./grid";
 import { LocalDataSource } from "@heswell/data-source";
 
-import "./styles.css";
-
 const data = [];
 const columns = [
   { name: "id", width: 100, locked: true },

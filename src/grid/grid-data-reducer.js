@@ -202,9 +202,13 @@ function mergeAndPurge(
   }
   // 3) assign empty row to any free slots in results
   // TODO make this more efficient
-  for (let i = 0, freeIdx = 0; i < rowCount; i++) {
+  // TODO how do we determine this -2
+  for (let i = 0, freeIdx = 0; i < rowCount-2; i++) {
     if (results[i] === undefined) {
       const row = (results[i] = emptyRow(i + low, meta));
+      if (free[freeIdx] === undefined){
+        free[freeIdx] = i;
+      }
       rowKey = free[freeIdx++]; // don't remove from free
       row[RENDER_IDX] = rowKey;
       used[rowKey] = 3;

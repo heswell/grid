@@ -16,11 +16,16 @@ export default (state, _action) => {
 
 function initialize(initialState, options) {
   const { columns, headerHeight = 32, height, rowHeight = 24, width } = options;
+  const columnGroups = buildColumnGroups(columns, width);
+  const horizontalScrollbarHeight = columnGroups.some(({width, contentWidth}) => width < contentWidth)
+    ? 15
+    : 0;
   return {
-    columnGroups: buildColumnGroups(columns, width),
+    columnGroups,
     columns,
     headerHeight,
     height,
+    horizontalScrollbarHeight,
     meta: metaData(columns),
     rowHeight,
     viewportRowCount: Math.ceil((height - headerHeight) / rowHeight) + 1
@@ -50,6 +55,8 @@ function buildColumnGroups(columns, gridWidth) {
       width
     });
     columnGroup.contentWidth += width;
+    // TODO fixed width may exceed available width. This assumes single fixed width followed by
+    // sinfle scrollable
     if (columnGroup.locked) {
       columnGroup.width = columnGroup.contentWidth;
       availableWidth -= width;
