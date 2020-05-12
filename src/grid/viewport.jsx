@@ -12,6 +12,7 @@ import dataReducer, { initialData } from "./grid-data-reducer";
 
 import Canvas from "./canvas";
 
+/** @type {ViewportType} */
 const Viewport = forwardRef(function Viewport(
   { columnHeaders, dataSource, gridModel },
   ref
@@ -40,6 +41,8 @@ const Viewport = forwardRef(function Viewport(
       scrollingEl.current.style.height = `${contentHeight.current + horizontalScrollbarHeight.current}px`;
     }
   }));
+
+  const [data, dispatchData] = useReducer(dataReducer(gridModel), initialData);
 
   const setRange = useCallback(
     (lo, hi) => {
@@ -70,8 +73,6 @@ const Viewport = forwardRef(function Viewport(
   );
 
   const handleVerticalScroll = useScroll("scrollTop", scrollCallback);
-
-  const [data, dispatchData] = useReducer(dataReducer(gridModel), initialData);
 
   useEffect(() => {
     dataSource.subscribe(

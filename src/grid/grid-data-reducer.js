@@ -16,6 +16,7 @@ export const initialData = {
 
 // This assumes model.meta never changes. If it does (columns etc)
 // we will need additional action types to update
+/** @type {DataReducerFactory} */
 export default function(model) {
   return (state, action) => {
     if (action.type === "range") {

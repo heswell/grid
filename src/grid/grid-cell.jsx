@@ -1,7 +1,8 @@
 import React from "react";
 import useStyles from './use-styles';
 
-export default function GridCell({ column, row }) {
+/** @type {CellType} */
+const GridCell = ({ column, row }) => {
   const {GridCell} = useStyles();
   return (
     <div className={GridCell} style={{ width: column.width }}>
@@ -9,3 +10,4 @@ export default function GridCell({ column, row }) {
     </div>
   );
 }
+export default GridCell;

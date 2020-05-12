@@ -4,7 +4,8 @@ import useStyles from './use-styles';
 
 export const PADDING_CELL = "virtual-padding";
 
-export default memo(function Row({ columns, height, idx, meta, row }) {
+/** @type {RowType} */
+const Row =  memo(function Row({ columns, height, idx, meta, row }) {
   const classes = useStyles();  
   return (
     <div
@@ -33,3 +34,5 @@ export default memo(function Row({ columns, height, idx, meta, row }) {
     </div>
   );
 });
+
+export default Row;

@@ -6,10 +6,12 @@ const DEFAULT_STATE = {
   defaultColumnWidth: DEFAULT_COLUMN_WIDTH
 };
 
+/** @type {GridModelReducerInitializer} */
 export const initModel = options => {
   return initialize(DEFAULT_STATE, options);
 };
 
+/** @type {GridModelReducer} */
 export default (state, _action) => {
   return state;
 };

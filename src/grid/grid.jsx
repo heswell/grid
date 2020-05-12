@@ -6,7 +6,8 @@ import actionReducer from "./grid-action-reducer";
 import useStyles from './use-styles';
 import Viewport from "./viewport";
 
-export default function Grid(props) {
+/** @type {GridComponent} */
+const Grid = (props) => {
   const gridEl = useRef(null);
   const viewport = useRef(null);
   const scrollableHeader = useRef(null);
@@ -71,3 +72,5 @@ export default function Grid(props) {
     </GridContext.Provider>
   );
 }
+
+export default Grid;

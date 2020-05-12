@@ -1,4 +1,5 @@
-export default handlerMap => (state, action) => {
+/** @type {GridActionReducerFactory} */
+const reducerFactory = handlerMap => (state, action) => {
   if (handlerMap[action.type]) {
     switch (action.type) {
       case "scroll-start-horizontal":
@@ -9,11 +10,10 @@ export default handlerMap => (state, action) => {
         handlerMap[action.type](action.scrollLeft);
         break;
 
-      default:
-        throw Error(
-          `GridActionReducer does not recognize action type ${action.type}`
-        );
+      default:  
     }
   }
   return state;
 };
+
+export default reducerFactory;

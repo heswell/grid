@@ -3,6 +3,8 @@ import { Grid } from "./grid";
 import { LocalDataSource } from "@heswell/data-source";
 
 const data = [];
+
+/** @type {Column[]} */
 const columns = [
   { name: "id", width: 100, locked: true },
   { name: "ccy", width: 100, locked: true }

@@ -2,7 +2,8 @@ import React, { forwardRef, useImperativeHandle, useRef } from "react";
 import HeaderCell from "./header-cell";
 import useStyles from './use-styles';
 
-export default forwardRef(function ColumnGroupHeader(
+/** @type {ColumnGroupHeaderType} */
+const ColumnGroupHeader = forwardRef(function ColumnGroupHeader(
   { columnGroup, height, width },
   ref
 ) {
@@ -31,3 +32,5 @@ export default forwardRef(function ColumnGroupHeader(
     </div>
   );
 });
+
+export default ColumnGroupHeader;

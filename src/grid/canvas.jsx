@@ -15,6 +15,7 @@ import Row from "./row";
 
 const byKey = ([key1], [key2]) => key1 - key2;
 
+/** @type {CanvasType} */
 const Canvas = forwardRef(function Canvas(
   {
     columnGroup,

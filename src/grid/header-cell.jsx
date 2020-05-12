@@ -1,7 +1,8 @@
 import React from "react";
 import useStyles from './use-styles';
 
-export default ({ column }) => {
+/** @type {HeaderCellComponent} */
+const HeaderCell = function HeaderCell({ column }){
   const { name, width } = column;
   const classes = useStyles();
   return (
@@ -13,3 +14,5 @@ export default ({ column }) => {
     </div>
   );
 };
+
+export default HeaderCell;

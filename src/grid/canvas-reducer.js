@@ -2,11 +2,13 @@ import { PADDING_CELL } from "./row";
 
 const VIRTUALIZATION_THRESHOLD = 0.66;
 
+/** @type {CanvasReducerInitializer} */
 export const initCanvasReducer = columnGroup => {
   const renderColumns = getRenderColumns(columnGroup);
   return [renderColumns, initialKeys(renderColumns), columnGroup];
 };
 
+/** @type {CanvasReducer} */
 export default ([_, keys, columnGroup], scrollLeft) => {
   const nextColumns = getRenderColumns(columnGroup, scrollLeft);
   return [nextColumns, nextKeys(nextColumns, keys), columnGroup];
