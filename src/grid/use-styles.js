@@ -1,11 +1,6 @@
 import {createUseStyles} from 'react-jss';
 
 export default createUseStyles({
-  '@global': {
-    body: {
-      backgroundColor: 'gainsboro'
-    }
-  },
 
   Grid: {
     '--grid-heading-border-color': '#bbb',

@@ -1,6 +1,8 @@
-import React from "react";
+import React, {useRef, useState} from "react";
 import { Grid } from "./grid";
 import { LocalDataSource } from "@heswell/data-source";
+
+import useStyles from './use-app-styles.js';
 
 const data = [];
 
@@ -29,14 +31,44 @@ console.log(`creating data took ${end - start} ms`);
 const dataSource = new LocalDataSource({ data });
 
 export default function App() {
-  console.log(`[App]`);
+
+  const pendingHeight = useRef(600);
+  const pendingWidth = useRef(800);
+
+  const [state, setState] = useState({
+    height: 600,
+    width: 800
+  });
+
+  const setDirty = (e, name) => {
+    const value = parseInt(e.target.value || '0');
+    if (name === 'width'){
+      pendingWidth.current = value;
+    } else if (name === 'height'){
+      pendingHeight.current = value;
+    }
+  }
+
+  const applyChanges = () => {
+    console.log(`apply height ${pendingHeight.current} width ${pendingWidth.current}`)
+    setState({height: pendingHeight.current, width: pendingHeight.current});
+  }
+
+  const classes = useStyles();
   return (
+    <>
     <Grid
-      height={600}
-      width={800}
+      height={state.height}
+      width={state.width}
       headerHeight={32}
       columns={columns}
       dataSource={dataSource}
     />
+    <div className={classes.editPanel}>
+      <label>Width</label><input type="text" defaultValue={state.width} onChange={e => setDirty(e, 'width')}/>
+      <label>Height</label><input type="text" defaultValue={state.height} onChange={e => setDirty(e, 'height')}/>
+      <button onClick={applyChanges}>Apply</button> 
+    </div>
+    </>
   );
 }
