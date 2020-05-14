@@ -12,8 +12,13 @@ export const initModel = options => {
 };
 
 /** @type {GridModelReducer} */
-export default (state, _action) => {
-  return state;
+export default (state, action) => {
+  switch(action.type){
+    case 'resize':
+      return handleResize(state, action);
+    default:
+      return state;
+  }
 };
 
 function initialize(initialState, options) {
@@ -30,8 +35,36 @@ function initialize(initialState, options) {
     horizontalScrollbarHeight,
     meta: metaData(columns),
     rowHeight,
-    viewportRowCount: Math.ceil((height - headerHeight) / rowHeight) + 1
+    viewportRowCount: Math.ceil((height - headerHeight) / rowHeight) + 1,
+    width
   };
+}
+
+function handleResize(state, {height, width}){
+  const {headerHeight, rowHeight} = state;
+  const heightDiff = height - state.height;
+  const widthDiff = width - state.width;
+
+  const columnGroups = widthDiff !== 0
+    ? state.columnGroups.map(columnGroup => {
+      if (columnGroup.locked){
+        return columnGroup;
+      } else {
+        return {
+          ...columnGroup,
+          width: columnGroup.width + widthDiff
+        }
+      }
+    })
+    : state.columnGroups;
+
+  return {
+    ...state,
+    columnGroups,
+    height,
+    width,
+    viewportRowCount: Math.ceil((height - headerHeight) / rowHeight) + 1
+  }
 }
 
 function buildColumnGroups(columns, gridWidth) {

@@ -2,6 +2,7 @@ import React, {
   forwardRef,
   useCallback,
   useContext,
+  useEffect,
   useImperativeHandle,
   useReducer,
   useRef
@@ -9,6 +10,7 @@ import React, {
 import cx from "classnames";
 import GridContext from "./grid-context";
 import useScroll from "./use-scroll";
+import useUpdate from "./use-update";
 import useStyles from "./use-styles";
 import canvasReducer, { initCanvasReducer } from "./canvas-reducer";
 import Row from "./row";
@@ -41,6 +43,10 @@ const Canvas = forwardRef(function Canvas(
     initCanvasReducer
   );
 
+  useUpdate(() => {
+    dispatchCanvasAction({type: 'refresh', columnGroup});
+  },[columnGroup.width]);
+
   useImperativeHandle(ref, () => ({
     beginVerticalScroll: () => {
       canvasEl.current.style.height = `${contentHeight + horizontalScrollbarHeight}px`;
@@ -50,7 +56,6 @@ const Canvas = forwardRef(function Canvas(
       canvasEl.current.style.height = `${height}px`;
       contentEl.current.style.transform = `translate3d(0px, -${scrollTop}px, 0px)`;
     },
-    // Should only be invoked on scrollable Canvas
     beginHorizontalScroll: () => {
       canvasEl.current.style.height = `${height + headerHeight}px`;
     },
@@ -64,7 +69,7 @@ const Canvas = forwardRef(function Canvas(
   const scrollCallback = useCallback(
     (scrollEvent, scrollLeft) => {
       if (scrollEvent === "scroll") {
-        dispatchCanvasAction(scrollLeft);
+        dispatchCanvasAction({type:'scroll-left', scrollLeft});
       } else if (scrollEvent === "scroll-start") {
         dispatchGridAction({ type: "scroll-start-horizontal", scrollLeft });
       } else {

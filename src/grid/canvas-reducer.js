@@ -4,14 +4,23 @@ const VIRTUALIZATION_THRESHOLD = 0.66;
 
 /** @type {CanvasReducerInitializer} */
 export const initCanvasReducer = columnGroup => {
+  console.log(`CanvasReducer initial render  width=${columnGroup.width}`)
   const renderColumns = getRenderColumns(columnGroup);
-  return [renderColumns, initialKeys(renderColumns), columnGroup];
+  return [renderColumns, initialKeys(renderColumns), columnGroup, 0];
 };
 
 /** @type {CanvasReducer} */
-export default ([_, keys, columnGroup], scrollLeft) => {
-  const nextColumns = getRenderColumns(columnGroup, scrollLeft);
-  return [nextColumns, nextKeys(nextColumns, keys), columnGroup];
+export default ([_, keys, columnGroup, scrollLeft], action) => {
+  switch (action.type){
+    case 'scroll-left': {
+      const nextColumns = getRenderColumns(columnGroup, action.scrollLeft);
+      return [nextColumns, nextKeys(nextColumns, keys), columnGroup, action.scrollLeft];
+    }
+    case 'refresh': {
+      const nextColumns = getRenderColumns(action.columnGroup, scrollLeft);
+      return [nextColumns, nextKeys(nextColumns, keys), action.columnGroup, scrollLeft];
+    }
+  }
 };
 
 function initialKeys(columns) {

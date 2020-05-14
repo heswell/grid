@@ -3,7 +3,7 @@ import HeaderCell from "./header-cell";
 import useStyles from './use-styles';
 
 /** @type {ColumnGroupHeaderType} */
-const ColumnGroupHeader = forwardRef(function ColumnGroupHeader(
+const ColumnGroupHeader = React.memo(forwardRef(function ColumnGroupHeader(
   { columnGroup, height, width },
   ref
 ) {
@@ -31,6 +31,6 @@ const ColumnGroupHeader = forwardRef(function ColumnGroupHeader(
       </div>
     </div>
   );
-});
+}));
 
 export default ColumnGroupHeader;

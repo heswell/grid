@@ -1,4 +1,4 @@
-import React, { useCallback, useReducer, useRef } from "react";
+import React, { useCallback, useEffect, memo, useReducer, useRef } from "react";
 import ColumnGroupHeader from "./column-group-header";
 import GridContext from "./grid-context";
 import modelReducer, { initModel } from "./grid-model-reducer";
@@ -11,6 +11,7 @@ const Grid = (props) => {
   const gridEl = useRef(null);
   const viewport = useRef(null);
   const scrollableHeader = useRef(null);
+  const initialRender = useRef(true);
 
   const handleHorizontalScrollStart = _scrollLeft => {
     viewport.current.beginHorizontalScroll();
@@ -23,7 +24,7 @@ const Grid = (props) => {
     scrollableHeader.current.endHorizontalScroll(scrollLeft);
   };
 
-  const [gridModel /*, dispatchGridModel*/] = useReducer(
+  const [gridModel, dispatchGridModel] = useReducer(
     modelReducer,
     props,
     initModel
@@ -40,7 +41,15 @@ const Grid = (props) => {
     null
   );
 
-  const { dataSource, headerHeight, height, width } = props;
+  useEffect(() => {
+    if (initialRender.current){
+      initialRender.current = false;
+    } else {
+      dispatchGridModel({ type: 'resize', height: props.height, width: props.width});
+    }
+  },[props.height, props.width]);
+
+  const { headerHeight, height, width } = gridModel;
 
   const getColumnHeaders = scrollingHeaders => {
     return gridModel.columnGroups.map((columnGroup, idx) => (
@@ -64,7 +73,7 @@ const Grid = (props) => {
         </div>
         <Viewport
           columnHeaders={getColumnHeaders(true)}
-          dataSource={dataSource}
+          dataSource={props.dataSource}
           gridModel={gridModel}
           ref={viewport}
         />

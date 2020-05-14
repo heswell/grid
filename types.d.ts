@@ -39,6 +39,7 @@ type GridModel = {
   meta: ColumnMeta;
   rowHeight: number;
   viewportRowCount: number;
+  width: number;
 };
 
 type GridAction = 
@@ -54,7 +55,9 @@ type GridActionHandlerMap = {[key in GridAction['type']]?: GridActionHandler<key
 type GridActionReducerFactory = (handlerMap: GridActionHandlerMap) => (state: {}, action: GridAction) => {};
 
 
-type GridModelAction = any;
+type GridModelAction =
+  | { type: 'resize', height: number, width: number};
+
 type GridModelReducerInitializer = (props: GridProps) => gridModelReducer;
 type GridModelReducer = (state: GridModel, action: GridModelAction) => GridModel;
 
@@ -86,9 +89,11 @@ interface ViewportProps {
 
 type ViewportType = React.FC<ViewportProps>;
 
-type CanvasAction = number;
+type CanvasAction =
+  | {type: 'scroll-left', scrollLeft: number}
+  | {type: 'refresh', columnGroup: ColumnGroup};
 
-type CanvasReducerState = [Column[], Map<number,number>, ColumnGroup];
+type CanvasReducerState = [Column[], Map<number,number>, ColumnGroup, number];
 type CanvasReducer = (state: CanvasReducerState, action: CanvasAction) => CanvasReducerState;
 type CanvasReducerInitializer = (ColumnGroup) => CanvasReducerState;
 

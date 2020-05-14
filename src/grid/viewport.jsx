@@ -7,6 +7,7 @@ import React, {
   useRef
 } from "react";
 import useScroll from "./use-scroll";
+import useUpdate from "./use-update";
 import useStyles from './use-styles';
 import dataReducer, { initialData } from "./grid-data-reducer";
 
@@ -51,6 +52,10 @@ const Viewport = forwardRef(function Viewport(
     },
     [dataSource]
   );
+
+  useUpdate(() => {
+    setRange(firstVisibleRow.current, firstVisibleRow.current + gridModel.viewportRowCount);
+  },[gridModel.viewportRowCount]);
 
   const scrollCallback = useCallback(
     (scrollEvent, scrollTop) => {
@@ -103,17 +108,15 @@ const Viewport = forwardRef(function Viewport(
     );
 
     // shouldn't be necessary if range was included in subscribe
-
-
     dataSource.setRange(0, gridModel.viewportRowCount);
 
     return () => dataSource.unsubscribe();
+    
   }, [
     dataSource,
-    // We don't want to tear down the entire data model when these change
-    gridModel.columns,
-    gridModel.rowHeight,
-    gridModel.viewportRowCount
+    // gridModel.columns,
+    // gridModel.rowHeight,
+    // gridModel.viewportRowCount
   ]);
   // TODO need a destroy method on dataSource to be called when appropriate
 

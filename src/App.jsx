@@ -51,7 +51,7 @@ export default function App() {
 
   const applyChanges = () => {
     console.log(`apply height ${pendingHeight.current} width ${pendingWidth.current}`)
-    setState({height: pendingHeight.current, width: pendingHeight.current});
+    setState({height: pendingHeight.current, width: pendingWidth.current});
   }
 
   const classes = useStyles();

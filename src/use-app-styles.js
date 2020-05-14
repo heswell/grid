@@ -3,7 +3,11 @@ import {createUseStyles} from 'react-jss';
 export default createUseStyles({
   '@global': {
     body: {
-      backgroundColor: 'gainsboro'
+      backgroundColor: 'gainsboro',
+      width: '100vw',
+      height: '100vh',
+      margin: 0,
+      padding: 0
     }
   },
 
