@@ -2,14 +2,17 @@ declare module '@heswell/data-source';
 
 interface Column {
   key?: number;
+  heading?: string[];
+  label?:string;
+  locked?: boolean;
   name: string;
   width: number;
-  locked?: boolean;
 }
 
 type ColumnGroup = {
   columns: Column[];
   contentWidth: number;
+  headings?: string[];
   locked: boolean;
   width: number;
 };
@@ -34,10 +37,12 @@ type GridModel = {
   columnGroups: ColumnGroup[];
   columns: Column[];
   headerHeight: number;
+  headingDepth: number;
   height: number;
   horizontalScrollbarHeight: number;
   meta: ColumnMeta;
   rowHeight: number;
+  viewportHeight: number;
   viewportRowCount: number;
   width: number;
 };
@@ -65,6 +70,7 @@ type Row = any;
 
 interface ColumnGroupHeaderProps {
   columnGroup: ColumnGroup;
+  depth: number;
   height: number;
   ref?: React.RefObject<any>;
   width: number;
@@ -72,6 +78,7 @@ interface ColumnGroupHeaderProps {
 type ColumnGroupHeaderType = React.FC<ColumnGroupHeaderProps>;
 
 interface HeaderCellProps {
+  className?: string;
   column: Column;
 }
 type HeaderCellComponent = React.FC<HeaderCellProps>;
@@ -102,13 +109,13 @@ interface CanvasProps {
   columnHeader: React.ReactNode;
   contentHeight: number;
   firstVisibleRow: number;
-  headerHeight: number;
   height: number;
   horizontalScrollbarHeight: number;
   meta: ColumnMeta;
   ref?: React.RefObject<any>;
   rowHeight: number;
   rows: Row[]
+  totalHeaderHeight: number;
 }
 
 type CanvasType = React.FC<CanvasProps>;

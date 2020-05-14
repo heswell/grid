@@ -24,7 +24,7 @@ const Canvas = forwardRef(function Canvas(
     columnHeader,
     contentHeight,
     firstVisibleRow,
-    headerHeight,
+    totalHeaderHeight,
     height,
     horizontalScrollbarHeight,
     meta,
@@ -57,7 +57,7 @@ const Canvas = forwardRef(function Canvas(
       contentEl.current.style.transform = `translate3d(0px, -${scrollTop}px, 0px)`;
     },
     beginHorizontalScroll: () => {
-      canvasEl.current.style.height = `${height + headerHeight}px`;
+      canvasEl.current.style.height = `${height + totalHeaderHeight}px`;
     },
     endHorizontalScroll: () => {
       canvasEl.current.style.height = `${height}px`;
@@ -101,7 +101,7 @@ const Canvas = forwardRef(function Canvas(
       style={{ height, width }}
       onScroll={handleHorizontalScroll}
     >
-      <div className={classes.canvasContentWrapper} style={{ top: headerHeight,  width: contentWidth }}>
+      <div className={classes.canvasContentWrapper} style={{ top: totalHeaderHeight,  width: contentWidth }}>
         <div
           className={classes.canvasContent}
           ref={contentEl}

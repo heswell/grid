@@ -37,10 +37,9 @@ export default createUseStyles({
     verticalAlign: 'top',
     overflow: 'hidden',
     backgroundColor: 'white'
-   },
+  },
 
-   headerCells: {
-    height: '100%',
+  headerCells: {
     display: 'flex'
    },
 
@@ -113,8 +112,13 @@ export default createUseStyles({
     fontWeight: 'bold',
     height: '100%',
     position: 'relative',
-    verticalAlign: 'top'
-    },
+    verticalAlign: 'top',
+    '&$noBottomBorder': {
+      borderBottom: 'solid 1px transparent'
+    }
+  },
+
+  noBottomBorder: {},
 
   innerHeaderCell: {
     flex: '1 1 auto',

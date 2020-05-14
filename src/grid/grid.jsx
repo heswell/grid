@@ -49,13 +49,14 @@ const Grid = (props) => {
     }
   },[props.height, props.width]);
 
-  const { headerHeight, height, width } = gridModel;
+  const { height, width } = gridModel;
 
   const getColumnHeaders = scrollingHeaders => {
     return gridModel.columnGroups.map((columnGroup, idx) => (
       <ColumnGroupHeader
         columnGroup={columnGroup}
-        height={headerHeight}
+        depth={gridModel.headingDepth}
+        height={gridModel.headerHeight}
         key={idx}
         ref={scrollingHeaders || columnGroup.locked ? null : scrollableHeader}
         width={scrollingHeaders ? columnGroup.contentWidth : columnGroup.width}
@@ -68,7 +69,7 @@ const Grid = (props) => {
   return (
     <GridContext.Provider value={{ dispatchGridAction }}>
       <div className={classes.Grid} ref={gridEl} style={{ width, height }}>
-        <div className={classes.headerContainer} style={{ height: headerHeight }}>
+        <div className={classes.headerContainer} style={{ height: gridModel.headerHeight * gridModel.headingDepth }}>
           {getColumnHeaders()}
         </div>
         <Viewport

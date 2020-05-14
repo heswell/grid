@@ -31,7 +31,7 @@ const Viewport = forwardRef(function Viewport(
     beginHorizontalScroll: () => {
       const scrollTop = viewportEl.current.scrollTop;
       scrollingEl.current.style.height = `${contentHeight.current +
-        gridModel.headerHeight + horizontalScrollbarHeight.current}px`;
+        (gridModel.headerHeight * gridModel.headingDepth) + horizontalScrollbarHeight.current}px`;
       fixedCanvas.current.beginHorizontalScroll( scrollTop );
       scrollableCanvas.current.beginHorizontalScroll( scrollTop );
     },
@@ -126,7 +126,7 @@ const Viewport = forwardRef(function Viewport(
     <div
       className={classes.Viewport}
       ref={viewportEl}
-      style={{ top: gridModel.headerHeight }}
+      style={{ top: gridModel.headerHeight * gridModel.headingDepth }}
       onScroll={handleVerticalScroll}
     >
       <div
@@ -140,14 +140,14 @@ const Viewport = forwardRef(function Viewport(
             columnHeader={columnHeaders[idx]}
             contentHeight={contentHeight.current}
             firstVisibleRow={firstVisibleRow.current}
-            headerHeight={gridModel.headerHeight}
-            height={gridModel.height - gridModel.headerHeight}
+            height={gridModel.viewportHeight}
             horizontalScrollbarHeight={horizontalScrollbarHeight.current}
             key={idx}
             meta={gridModel.meta}
             ref={columnGroup.locked ? fixedCanvas : scrollableCanvas}
             rowHeight={gridModel.rowHeight}
             rows={data.rows}
+            totalHeaderHeight={gridModel.headerHeight * gridModel.headingDepth}
           />
         ))}
       </div>
