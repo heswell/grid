@@ -5,6 +5,9 @@ export default createUseStyles({
   Grid: {
     '--grid-heading-border-color': '#bbb',
     '--grid-cell-border-color': '#d4d4d4',
+    '--header-cell-highlight-bg': 'rgb(66, 139, 202)',
+    '--grid-cell-highlight-bg': 'rgba(66, 139, 202, .5)',
+
     backgroundColor: 'white',
     position: 'absolute',
     fontFamily: 'Roboto',
@@ -115,6 +118,9 @@ export default createUseStyles({
     verticalAlign: 'top',
     '&$noBottomBorder': {
       borderBottom: 'solid 1px transparent'
+    },
+    '&.resizing': {
+      backgroundColor: 'var(--header-cell-highlight-bg)'
     }
   },
 
@@ -166,7 +172,10 @@ export default createUseStyles({
       textOverflow: 'ellipsis',
       verticalAlign: 'top',
       whiteSpace: 'nowrap',
-      zIndex: 0
+      zIndex: 0,
+      '&.resizing': {
+        backgroundColor: 'var(--grid-cell-highlight-bg)'
+      }
   }
 
 });

@@ -1,10 +1,10 @@
-import {useEffect, useRef} from 'react';
+import {useLayoutEffect, useRef} from 'react';
 
 export default function useUpdate(callback, dependencies){
 
   const initialRender = useRef(true);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (initialRender.current){
       initialRender.current = false;
     } else {

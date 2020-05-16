@@ -67,7 +67,7 @@ const Grid = (props) => {
   const classes = useStyles();
 
   return (
-    <GridContext.Provider value={{ dispatchGridAction }}>
+    <GridContext.Provider value={{ dispatchGridAction, dispatchGridModelAction: dispatchGridModel }}>
       <div className={classes.Grid} ref={gridEl} style={{ width, height }}>
         <div className={classes.headerContainer} style={{ height: gridModel.headerHeight * gridModel.headingDepth }}>
           {getColumnHeaders()}

@@ -2,7 +2,6 @@ import React, {
   forwardRef,
   useCallback,
   useContext,
-  useEffect,
   useImperativeHandle,
   useReducer,
   useRef
@@ -45,7 +44,7 @@ const Canvas = forwardRef(function Canvas(
 
   useUpdate(() => {
     dispatchCanvasAction({type: 'refresh', columnGroup});
-  },[columnGroup.width]);
+  },[columnGroup.width, columnGroup.columns]);
 
   useImperativeHandle(ref, () => ({
     beginVerticalScroll: () => {

@@ -6,6 +6,8 @@ interface Column {
   label?:string;
   locked?: boolean;
   name: string;
+  resizeable?: boolean;
+  resizing?: boolean;
   width: number;
 }
 
@@ -33,6 +35,12 @@ interface GridProps {
 
 type GridComponent = React.FC<GridProps>;
 
+type GridContext = React.Context<{
+  dispatchGridAction: (action: GridAction) => void;
+  dispatchGridModelAction: (action: GridModelAction) => void;
+  // showContextMenu: any;
+}>;
+
 type GridModel = {
   columnGroups: ColumnGroup[];
   columns: Column[];
@@ -59,12 +67,26 @@ type GridActionHandler<T extends GridAction['type']> =
 type GridActionHandlerMap = {[key in GridAction['type']]?: GridActionHandler<key>};  
 type GridActionReducerFactory = (handlerMap: GridActionHandlerMap) => (state: {}, action: GridAction) => {};
 
+// Grid Model Reducer and Actions
+type GridModelResizeAction = { type: 'resize', height: number, width: number};
+type GridModelResizeColAction = { type: 'resize-col', phase: ResizePhase, column: Column, width?: number};
+type GridModelResizeHeadingAction = { type: 'resize-heading', phase: ResizePhase, column: Column, width?: number};
 
 type GridModelAction =
-  | { type: 'resize', height: number, width: number};
+  | GridModelResizeAction
+  | GridModelResizeColAction
+  | GridModelResizeHeadingAction;
 
-type GridModelReducerInitializer = (props: GridProps) => gridModelReducer;
-type GridModelReducer = (state: GridModel, action: GridModelAction) => GridModel;
+type GridModelReducerFn<A=GridModelAction> = (state: GridModel, action: A) => GridModel;  
+type GridModelReducerInitializer = (props: GridProps) => GridModel;
+type GridModelReducer<T extends GridModelAction['type']> = 
+  T extends 'resize' ? GridModelReducerFn<GridModelResizeAction> :
+  T extends 'resize-col' ? GridModelReducerFn<GridModelResizeColAction> :
+  T extends 'resize-heading' ? GridModelReducerFn<GridModelResizeHeadingAction> :
+  GridModelReducerFn<GridModelAction>;
+type GridModelReducerTable = {[key in GridModelAction['type']]: GridModelReducer<key>};  
+
+
 
 type Row = any;
 
@@ -77,9 +99,11 @@ interface ColumnGroupHeaderProps {
 }
 type ColumnGroupHeaderType = React.FC<ColumnGroupHeaderProps>;
 
+type ResizePhase = 'begin' | 'resize' | 'end';
 interface HeaderCellProps {
   className?: string;
   column: Column;
+  onResize: (resizePhase: ResizePhase, column: Column, width?: number) => void;
 }
 type HeaderCellComponent = React.FC<HeaderCellProps>;
 
@@ -138,3 +162,12 @@ interface CellProps {
 }
 
 type CellType = React.FC<CellProps>;
+
+interface DraggableProps {
+  className?: string;
+  onDrag: (e: React.MouseEvent, deltaX: number, deltaY: number) => void;
+  onDragStart?: (e: React.MouseEvent) => any; //  what do we allow here ? Who uses it ?
+  onDragEnd?: (e: React.MouseEvent, arg: any) => void;
+}
+
+type DraggableComponent = React.ComponentType<DraggableProps>;
