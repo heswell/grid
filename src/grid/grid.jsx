@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, memo, useReducer, useRef } from "react";
+import React, { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import ColumnGroupHeader from "./column-group-header";
 import GridContext from "./grid-context";
 import modelReducer, { initModel } from "./grid-model-reducer";
@@ -12,6 +12,7 @@ const Grid = (props) => {
   const viewport = useRef(null);
   const scrollableHeader = useRef(null);
   const initialRender = useRef(true);
+  const [draggedColumn, setDraggedColumn] = useState(null);
 
   const handleHorizontalScrollStart = _scrollLeft => {
     viewport.current.beginHorizontalScroll();
@@ -23,6 +24,27 @@ const Grid = (props) => {
     gridEl.current.classList.remove("scrolling-x");
     scrollableHeader.current.endHorizontalScroll(scrollLeft);
   };
+
+  /** @type {onDragHandler} */
+  const handleColumnDrag = useCallback(
+      (phase, column, position) => {
+    // if (!column.isHeading) {
+    //     const pos = scrollLeft.current;
+        const pos = 0; // deal with horizontal scrolling later
+        if (phase === 'drag') {
+              // dispatch({ type: Action.MOVE, distance, scrollLeft: pos });
+          } else if (phase === 'drag-start') {
+            console.log(`set the draggedColumn`)
+            const {left} = gridEl.current.getBoundingClientRect();
+            setDraggedColumn({...column, position: position - left});
+              // dispatch({ type: Action.MOVE_BEGIN, column, scrollLeft: pos });
+          } else if (phase === 'drag-end') {
+            setDraggedColumn(null);
+              // dispatch({ type: Action.MOVE_END, column });
+          }
+    // }
+      },[]
+  );
 
   const [gridModel, dispatchGridModel] = useReducer(
     modelReducer,
@@ -51,15 +73,16 @@ const Grid = (props) => {
 
   const { height, width } = gridModel;
 
-  const getColumnHeaders = scrollingHeaders => {
+  const getColumnHeaders = scrollingHeader => {
     return gridModel.columnGroups.map((columnGroup, idx) => (
       <ColumnGroupHeader
         columnGroup={columnGroup}
         depth={gridModel.headingDepth}
         height={gridModel.headerHeight}
         key={idx}
-        ref={scrollingHeaders || columnGroup.locked ? null : scrollableHeader}
-        width={scrollingHeaders ? columnGroup.contentWidth : columnGroup.width}
+        onColumnDrag={handleColumnDrag}
+        ref={scrollingHeader || columnGroup.locked ? null : scrollableHeader}
+        width={scrollingHeader ? columnGroup.contentWidth : columnGroup.width}
       />
     ));
   };
@@ -76,6 +99,8 @@ const Grid = (props) => {
           columnHeaders={getColumnHeaders(true)}
           dataSource={props.dataSource}
           gridModel={gridModel}
+          draggedColumn={draggedColumn}
+          onColumnDrag={handleColumnDrag}
           ref={viewport}
         />
       </div>

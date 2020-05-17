@@ -12,10 +12,11 @@ import useStyles from './use-styles';
 import dataReducer, { initialData } from "./grid-data-reducer";
 
 import Canvas from "./canvas";
+import ColumnBearer from './column-bearer';
 
 /** @type {ViewportType} */
 const Viewport = forwardRef(function Viewport(
-  { columnHeaders, dataSource, gridModel },
+  { columnHeaders, dataSource, draggedColumn, gridModel, onColumnDrag },
   ref
 ) {
   const viewportEl = useRef(null);
@@ -123,35 +124,40 @@ const Viewport = forwardRef(function Viewport(
   const classes = useStyles();
 
   return (
-    <div
-      className={classes.Viewport}
-      ref={viewportEl}
-      style={{ top: gridModel.headerHeight * gridModel.headingDepth }}
-      onScroll={handleVerticalScroll}
-    >
+    <>
       <div
-        className={classes.scrollingCanvasContainer}
-        ref={scrollingEl}
-        style={{ height: contentHeight.current + horizontalScrollbarHeight.current }}
+        className={classes.Viewport}
+        ref={viewportEl}
+        style={{ top: gridModel.headerHeight * gridModel.headingDepth }}
+        onScroll={handleVerticalScroll}
       >
-        {gridModel.columnGroups.map((columnGroup, idx) => (
-          <Canvas
-            columnGroup={columnGroup}
-            columnHeader={columnHeaders[idx]}
-            contentHeight={contentHeight.current}
-            firstVisibleRow={firstVisibleRow.current}
-            height={gridModel.viewportHeight}
-            horizontalScrollbarHeight={horizontalScrollbarHeight.current}
-            key={idx}
-            meta={gridModel.meta}
-            ref={columnGroup.locked ? fixedCanvas : scrollableCanvas}
-            rowHeight={gridModel.rowHeight}
-            rows={data.rows}
-            totalHeaderHeight={gridModel.headerHeight * gridModel.headingDepth}
-          />
-        ))}
+        <div
+          className={classes.scrollingCanvasContainer}
+          ref={scrollingEl}
+          style={{ height: contentHeight.current + horizontalScrollbarHeight.current }}
+        >
+          {gridModel.columnGroups.map((columnGroup, idx) => (
+            <Canvas
+              columnGroup={columnGroup}
+              columnHeader={columnHeaders[idx]}
+              contentHeight={contentHeight.current}
+              firstVisibleRow={firstVisibleRow.current}
+              height={gridModel.viewportHeight}
+              horizontalScrollbarHeight={horizontalScrollbarHeight.current}
+              key={idx}
+              meta={gridModel.meta}
+              ref={columnGroup.locked ? fixedCanvas : scrollableCanvas}
+              rowHeight={gridModel.rowHeight}
+              rows={data.rows}
+              totalHeaderHeight={gridModel.headerHeight * gridModel.headingDepth}
+            />
+          ))}
+        </div>
       </div>
-    </div>
+      {draggedColumn &&
+          <ColumnBearer column={draggedColumn} gridModel={gridModel} onDrag={onColumnDrag} rows={data.rows} />}
+    </>
+  
   );
 });
 

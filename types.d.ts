@@ -11,13 +11,18 @@ interface Column {
   width: number;
 }
 
-type ColumnGroup = {
+interface ColumnGroup {
   columns: Column[];
   contentWidth: number;
   headings?: string[];
   locked: boolean;
   width: number;
 };
+
+interface DraggedColumn extends Column {
+  position: number;
+}
+
 
 type ColumnMeta = {
   [key: string]: number;
@@ -90,20 +95,26 @@ type GridModelReducerTable = {[key in GridModelAction['type']]: GridModelReducer
 
 type Row = any;
 
+type onDragHandler = (phase: DragPhase, column: Column, delta?: number) => void;
+
 interface ColumnGroupHeaderProps {
   columnGroup: ColumnGroup;
   depth: number;
   height: number;
+  onColumnDrag?: onDragHandler;
   ref?: React.RefObject<any>;
   width: number;
 }
 type ColumnGroupHeaderType = React.FC<ColumnGroupHeaderProps>;
 
+
+type DragPhase = 'drag-start' | 'drag' | 'drag-end'
 type ResizePhase = 'begin' | 'resize' | 'end';
 interface HeaderCellProps {
   className?: string;
   column: Column;
-  onResize: (resizePhase: ResizePhase, column: Column, width?: number) => void;
+  onDrag?: onDragHandler;
+  onResize?: (resizePhase: ResizePhase, column: Column, width?: number) => void;
 }
 type HeaderCellComponent = React.FC<HeaderCellProps>;
 
@@ -114,7 +125,9 @@ type DataReducerFactory = (model: GridModel) => (state: GridData, action: DataAc
 interface ViewportProps {
   columnHeaders: any;
   dataSource: DataSource;
+  draggedColumn?: DraggedColumn;
   gridModel: GridModel;
+  onColumnDrag?: onDragHandler;
   ref?: React.RefObject<any>;
 }
 
@@ -163,6 +176,14 @@ interface CellProps {
 
 type CellType = React.FC<CellProps>;
 
+interface ColumnBearerProps {
+  column: DraggedColumn;
+  gridModel: GridModel;
+  onDrag?: onDragHandler;
+  rows: any[];
+}
+type ColumnBearerComponent = React.FC<ColumnBearerProps>;
+
 interface DraggableProps {
   className?: string;
   onDrag: (e: React.MouseEvent, deltaX: number, deltaY: number) => void;
@@ -171,3 +192,6 @@ interface DraggableProps {
 }
 
 type DraggableComponent = React.ComponentType<DraggableProps>;
+
+type DragCallback = (phase: DragPhase, delta?: number) => void;
+type DragHook = (callback: DragCallback) => React.MouseEventHandler<HTMLDivElement>;

@@ -10,6 +10,8 @@ export default createUseStyles({
 
     backgroundColor: 'white',
     position: 'absolute',
+    left: 100,
+    top: 100,
     fontFamily: 'Roboto',
     fontSize: '0.825em',
     '&.scrolling-x': {
@@ -176,6 +178,17 @@ export default createUseStyles({
       '&.resizing': {
         backgroundColor: 'var(--grid-cell-highlight-bg)'
       }
+  },
+
+  ColumnBearer: {
+    position: 'absolute',
+    zIndex: 150,
+    boxShadow: '0 6px 12px rgba(0,0,0,0.275)',
+    backgroundColor: 'white',
+    overflow: 'hidden',
+    '& $HeaderCell': {
+      backgroundColor: 'var(--header-cell-highlight-bg)'
+    }  
   }
 
 });

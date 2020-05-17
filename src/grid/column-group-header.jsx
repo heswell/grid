@@ -6,7 +6,7 @@ import useStyles from './use-styles';
 
 /** @type {ColumnGroupHeaderType} */
 const ColumnGroupHeader = React.memo(forwardRef(function ColumnGroupHeader(
-  { columnGroup, depth, height, width },
+  { columnGroup, depth, height, onColumnDrag, width },
   ref
 ) {
   const scrollingHeaderWrapper = useRef(null);
@@ -33,7 +33,6 @@ const ColumnGroupHeader = React.memo(forwardRef(function ColumnGroupHeader(
       <HeaderCell
           key={idx}
           className={cx({[classes.noBottomBorder]: item.label === ''})}
-          // className={cx('colgroup-header', { bottomless: item.label === '' })}
           column={item}
           onResize={handleHeadingResize}
           // onMove={onColumnMove}
@@ -57,7 +56,11 @@ const ColumnGroupHeader = React.memo(forwardRef(function ColumnGroupHeader(
       <div className={classes.headerCells}
         style={{ height, width: contentWidth }}>
         {columns.map(column => (
-          <HeaderCell column={column} key={column.key} onResize={handleColumnResize}/>
+          <HeaderCell
+            column={column}
+            key={column.key}
+            onDrag={onColumnDrag}
+            onResize={handleColumnResize}/>
         ))}
       </div>
       </div>
