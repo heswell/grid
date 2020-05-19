@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, {
   forwardRef,
   useCallback,
@@ -22,25 +23,37 @@ const Viewport = forwardRef(function Viewport(
   const viewportEl = useRef(null);
   const scrollingEl = useRef(null);
   const fixedCanvas = useRef(null);
+  /** @type {CanvasRef} */
   const scrollableCanvas = useRef(null);
   const contentHeight = useRef(0);
   const horizontalScrollbarHeight = useRef(gridModel.horizontalScrollbarHeight);
   const verticalScrollbarWidth = useRef(0);
   const firstVisibleRow = useRef(0);
 
+  const showColumnBearer = useRef(draggedColumn !== null);
+  showColumnBearer.current = draggedColumn !== null;  
+
+
   useImperativeHandle(ref, () => ({
     beginHorizontalScroll: () => {
-      const scrollTop = viewportEl.current.scrollTop;
-      scrollingEl.current.style.height = `${contentHeight.current +
-        (gridModel.headerHeight * gridModel.headingDepth) + horizontalScrollbarHeight.current}px`;
-      fixedCanvas.current.beginHorizontalScroll( scrollTop );
-      scrollableCanvas.current.beginHorizontalScroll( scrollTop );
+      console.log(`%cViewport beginHorizontalScroll ${showColumnBearer.current}`, 'color: blue; fontWeight: bold;')
+      if (!showColumnBearer.current){
+        const scrollTop = viewportEl.current.scrollTop;
+        scrollingEl.current.style.height = `${contentHeight.current +
+          (gridModel.headerHeight * gridModel.headingDepth) + horizontalScrollbarHeight.current}px`;
+        fixedCanvas.current.beginHorizontalScroll( scrollTop );
+        scrollableCanvas.current.beginHorizontalScroll( scrollTop );
+      }
     },
     endHorizontalScroll: () => {
-      const scrollTop = viewportEl.current.scrollTop;
-      fixedCanvas.current.endHorizontalScroll(scrollTop);
-      scrollableCanvas.current.endHorizontalScroll(scrollTop);
-      scrollingEl.current.style.height = `${contentHeight.current + horizontalScrollbarHeight.current}px`;
+      console.log(`%cViewport endHorizontalScroll ${showColumnBearer.current}`, 'color: blue; fontWeight: bold;')
+      if (!showColumnBearer.current){
+        const scrollTop = viewportEl.current.scrollTop;
+        fixedCanvas.current.endHorizontalScroll(scrollTop);
+        scrollableCanvas.current.endHorizontalScroll(scrollTop);
+        scrollingEl.current.style.height = `${contentHeight.current + horizontalScrollbarHeight.current}px`;
+        return scrollableCanvas.current.scrollLeft;
+      }
     }
   }));
 
@@ -54,6 +67,9 @@ const Viewport = forwardRef(function Viewport(
     [dataSource]
   );
 
+  const handleColumnBearerScroll = (scrollDistance) =>
+      scrollableCanvas.current.scrollBy(scrollDistance);
+      
   useUpdate(() => {
     setRange(firstVisibleRow.current, firstVisibleRow.current + gridModel.viewportRowCount);
   },[gridModel.viewportRowCount]);
@@ -155,7 +171,12 @@ const Viewport = forwardRef(function Viewport(
         </div>
       </div>
       {draggedColumn &&
-          <ColumnBearer column={draggedColumn} gridModel={gridModel} onDrag={onColumnDrag} rows={data.rows} />}
+          <ColumnBearer
+            column={draggedColumn}
+            gridModel={gridModel}
+            onDrag={onColumnDrag}
+            onScroll={handleColumnBearerScroll}
+            rows={data.rows} />}
     </>
   
   );

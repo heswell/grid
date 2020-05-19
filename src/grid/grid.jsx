@@ -13,16 +13,23 @@ const Grid = (props) => {
   const scrollableHeader = useRef(null);
   const initialRender = useRef(true);
   const [draggedColumn, setDraggedColumn] = useState(null);
+  const draggingColumn = useRef(false);
 
   const handleHorizontalScrollStart = _scrollLeft => {
-    viewport.current.beginHorizontalScroll();
-    gridEl.current.classList.add("scrolling-x");
+    console.log(`%cGrid handleHorizontalScrollStart draggingColumn ? ${draggingColumn.current}`, 'color: green; fontWeight: bold;')
+    if (!draggingColumn.current){
+      viewport.current.beginHorizontalScroll();
+      gridEl.current.classList.add("scrolling-x");
+    }
   };
 
-  const handleHorizontalScrollEnd = scrollLeft => {
-    viewport.current.endHorizontalScroll();
-    gridEl.current.classList.remove("scrolling-x");
-    scrollableHeader.current.endHorizontalScroll(scrollLeft);
+  const handleHorizontalScrollEnd = () => {
+    console.log(`%cGrid handleHorizontalScrollEnd  draggingColumn ? ${draggingColumn.current} `, 'color: green; fontWeight: bold;')
+    if (!draggingColumn.current){
+      const scrollLeft = viewport.current.endHorizontalScroll();
+      gridEl.current.classList.remove("scrolling-x");
+      scrollableHeader.current.endHorizontalScroll(scrollLeft);
+    }
   };
 
   /** @type {onDragHandler} */
@@ -36,10 +43,15 @@ const Grid = (props) => {
           } else if (phase === 'drag-start') {
             console.log(`set the draggedColumn`)
             const {left} = gridEl.current.getBoundingClientRect();
+            handleHorizontalScrollStart();
             setDraggedColumn({...column, position: position - left});
+            draggingColumn.current = true;
               // dispatch({ type: Action.MOVE_BEGIN, column, scrollLeft: pos });
           } else if (phase === 'drag-end') {
             setDraggedColumn(null);
+            draggingColumn.current = false;
+            // TODO we need the final scrollLeft here
+            handleHorizontalScrollEnd();
               // dispatch({ type: Action.MOVE_END, column });
           }
     // }

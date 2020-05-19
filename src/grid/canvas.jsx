@@ -47,6 +47,12 @@ const Canvas = forwardRef(function Canvas(
   },[columnGroup.width, columnGroup.columns]);
 
   useImperativeHandle(ref, () => ({
+    beginHorizontalScroll: () => {
+      canvasEl.current.style.height = `${height + totalHeaderHeight}px`;
+    },
+    endHorizontalScroll: () => {
+      canvasEl.current.style.height = `${height}px`;
+    },
     beginVerticalScroll: () => {
       canvasEl.current.style.height = `${contentHeight + horizontalScrollbarHeight}px`;
       contentEl.current.style.transform = "translate3d(0px, 0px, 0px)";
@@ -55,13 +61,41 @@ const Canvas = forwardRef(function Canvas(
       canvasEl.current.style.height = `${height}px`;
       contentEl.current.style.transform = `translate3d(0px, -${scrollTop}px, 0px)`;
     },
-    beginHorizontalScroll: () => {
-      canvasEl.current.style.height = `${height + totalHeaderHeight}px`;
-    },
-    endHorizontalScroll: () => {
-      canvasEl.current.style.height = `${height}px`;
+
+    scrollBy: scrollDistance => scrollBy(scrollDistance),
+
+    get scrollLeft(){
+      return canvasEl.current.scrollLeft;
     }
+
   }));
+
+  const scrollBy = useCallback(scrollDistance => {
+
+    let scrollLeft = canvasEl.current.scrollLeft;
+    let newScrollLeft = 0;
+
+    if (scrollDistance < 0) {
+      if (scrollLeft === 0){
+        return 0;
+      } else {
+        newScrollLeft = Math.max(0, scrollLeft + scrollDistance);
+      }
+    } else {
+      // need to read this once, at start
+      const maxScroll = canvasEl.current.scrollWidth - canvasEl.current.clientWidth;
+      if (scrollLeft === maxScroll){
+        return 0;
+      } else {
+        newScrollLeft = Math.min(maxScroll, scrollLeft + scrollDistance);
+      }
+    }
+
+    canvasEl.current.scrollLeft = newScrollLeft;
+    // return the distance actually scrolled
+    return newScrollLeft - scrollLeft;
+
+  },[canvasEl])
 
   const { contentWidth, width } = columnGroup;
 

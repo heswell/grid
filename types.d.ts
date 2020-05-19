@@ -141,6 +141,19 @@ type CanvasReducerState = [Column[], Map<number,number>, ColumnGroup, number];
 type CanvasReducer = (state: CanvasReducerState, action: CanvasAction) => CanvasReducerState;
 type CanvasReducerInitializer = (ColumnGroup) => CanvasReducerState;
 
+type CanvasRef = React.RefObject<{
+  beginHorizontalScroll: (scrollTop: number) => void;
+  endHorizontalScroll: (scrollTop: number) => void;
+  beginVerticalScroll: () => void;
+  /**
+   * Returns to default display mode.
+   * Sets the height of Canvas element and applies a transform to content.
+   */
+  endVerticalScroll: (scrollTop: number) => void;
+  scrollBy: (scrollLeft: number) => void;
+  scrollLeft: number;
+}>;
+
 interface CanvasProps {
   columnGroup: any;
   columnHeader: React.ReactNode;
@@ -149,7 +162,7 @@ interface CanvasProps {
   height: number;
   horizontalScrollbarHeight: number;
   meta: ColumnMeta;
-  ref?: React.RefObject<any>;
+  ref?: CanvasRef;
   rowHeight: number;
   rows: Row[]
   totalHeaderHeight: number;
