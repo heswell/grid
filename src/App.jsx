@@ -1,45 +1,23 @@
-import React, {useRef, useState} from "react";
+import React, {useEffect, useMemo, useRef, useState} from "react";
 import { Grid } from "./grid";
-import { LocalDataSource } from "@heswell/data-source";
+import {ThemeProvider} from 'react-jss';
+import themes from './themes';
+import {buildData} from './data/use-test-data';
 
 import useStyles from './use-app-styles.js';
 
-const data = [];
-
-/** @type {Column[]} */
-const columns = [
-  { name: "id", width: 100, locked: true },
-  { name: "ccy", width: 100, locked: true }
-];
-
-const start = performance.now();
-let locked = false;
-for (let i = 2, heading= 'Group 1'; i < 27; i++) {
-  if ((i-2)%3 === 0){
-    heading = `Group ${((i-2)/3) + 1}`
-  }
-  columns.push({ name: `${i - 1}M`, width: 100, locked, heading: [`${i - 1}M`, heading] });
-  locked = false;
-}
-
-for (let i = 0; i < 100; i++) {
-  const row = { id: i, ccy: "USDGBP" };
-  for (let j = 2; j < 27; j++) {
-    row[`${j - 1}M`] = `${i},${j - 1}`;
-  }
-  data.push(row);
-}
-
-const end = performance.now();
-console.log(`creating data took ${end - start} ms`);
-
-const dataSource = new LocalDataSource({ data });
-
 export default function App() {
+
+  useEffect(() => {
+    console.log(`App mounted`)
+  },[])
 
   const pendingHeight = useRef(600);
   const pendingWidth = useRef(800);
 
+  const [columns, dataSource] = useMemo(() => buildData(),[]);
+
+  const [theme, setTheme] = useState('light');
   const [state, setState] = useState({
     height: 600,
     width: 800
@@ -54,6 +32,8 @@ export default function App() {
     }
   }
 
+  const handleSelectTheme = evt => setTheme(evt.target.value);
+
   const applyChanges = () => {
     console.log(`apply height ${pendingHeight.current} width ${pendingWidth.current}`)
     setState({height: pendingHeight.current, width: pendingWidth.current});
@@ -61,19 +41,23 @@ export default function App() {
 
   const classes = useStyles();
   return (
-    <>
-    <Grid
-      height={state.height}
-      width={state.width}
-      headerHeight={32}
-      columns={columns}
-      dataSource={dataSource}
-    />
-    <div className={classes.editPanel}>
-      <label>Width</label><input type="text" defaultValue={state.width} onChange={e => setDirty(e, 'width')}/>
-      <label>Height</label><input type="text" defaultValue={state.height} onChange={e => setDirty(e, 'height')}/>
-      <button onClick={applyChanges}>Apply</button> 
-    </div>
-    </>
+    <ThemeProvider theme={themes[theme]}>
+      <Grid
+        height={state.height}
+        width={state.width}
+        headerHeight={32}
+        columns={columns}
+        dataSource={dataSource}
+      />
+      <div className={classes.editPanel}>
+        <label>Width</label><input type="text" defaultValue={state.width} onChange={e => setDirty(e, 'width')}/>
+        <label>Height</label><input type="text" defaultValue={state.height} onChange={e => setDirty(e, 'height')}/>
+        <button onClick={applyChanges}>Apply</button> 
+        <select defaultValue="light" onChange={handleSelectTheme}>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+      </div>
+    </ThemeProvider>
   );
 }

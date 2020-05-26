@@ -1,21 +1,20 @@
-import {createUseStyles} from 'react-jss';
+import { createUseStyles } from 'react-jss';
 
-export default createUseStyles({
-
+export default createUseStyles(theme => ({
   Grid: {
-    '--grid-heading-border-color': '#bbb',
-    '--grid-cell-background': 'white',
-    '--grid-header-cell-background': 'white',
-    '--grid-cell-border-color': '#d4d4d4',
-    '--header-cell-highlight-bg': 'rgb(66, 139, 202)',
-    '--grid-cell-highlight-bg': 'rgba(66, 139, 202, .5)',
+    '--grid-background': theme['--grid-background'] || 'white',
+    '--grid-text-color': theme['--grid-text-color'] || 'black',
+    '--grid-font-size': theme['--grid-font-size'] || '0.75em',
+    '--grid-heading-border-color': theme['--grid-heading-border-color'],
+    '--grid-cell-border-color': theme['--grid-cell-border-color'] || '#d4d4d4',
+    '--header-cell-highlight-bg': theme['--header-cell-highlight-bg'],
+    '--grid-cell-highlight-bg': theme['--grid-cell-highlight-bg'],
+    '--grid-header-background': theme['--grid-header-background'] || theme['--grid-background'] || 'white',
 
-    backgroundColor: 'white',
+    backgroundColor: 'var(--grid-background)',
     position: 'absolute',
-    left: 125,
-    top: 50,
     fontFamily: 'Roboto',
-    fontSize: '0.825em',
+    fontSize: 'var(--grid-font-size)',
     '&.scrolling-x': {
       '& $headerContainer': {
         display: 'none'
@@ -30,7 +29,7 @@ export default createUseStyles({
       '& $canvasContentWrapper': {
         position: 'relative'
       }
-    } 
+    }
   },
 
   headerContainer: {
@@ -43,27 +42,28 @@ export default createUseStyles({
   ColumnGroupHeader: {
     verticalAlign: 'top',
     overflow: 'hidden',
+    backgroundColor: 'var(--grid-header-background)'
   },
 
-  // headerCells: {
-  //   display: 'flex'
-  //  },
+  headerCells: {
+    display: 'flex'
+  },
 
-   Viewport : {
+  Viewport: {
     position: 'absolute',
     left: 0,
     bottom: 0,
     right: 0,
     overflowX: 'hidden',
     overflowY: 'auto',
-   },
+  },
 
-   scrollingCanvasContainer: {
+  scrollingCanvasContainer: {
     whiteSpace: 'nowrap',
     transform: 'translate3d(0, 0, 0)'
-   },
+  },
 
-   Canvas: {
+  Canvas: {
     display: 'inline-block',
     position: 'sticky',
     top: 0,
@@ -105,7 +105,7 @@ export default createUseStyles({
     top: 0,
     whiteSpace: 'nowrap',
     width: '100%'
-  
+
   },
 
   virtualPadding: {
@@ -119,6 +119,7 @@ export default createUseStyles({
     borderBottom: 'solid 1px var(--grid-heading-border-color)',
     borderRight: '1px solid var(--grid-heading-border-color)',
     boxSizing: 'border-box',
+    color: 'var(--grid-text-color)',
     display: 'inline-flex',
     fontWeight: 'bold',
     height: '100%',
@@ -162,29 +163,30 @@ export default createUseStyles({
   },
 
   GridCell: {
-      '--border-color': '#d4d4d4',
-      '--border-color-selected': 'rgb(46, 100, 139)',
-      alignItems: 'center',
-      backgroundColor: 'var(--grid-cell-background)',
-      boxSizing: 'border-box',
-      borderColor: 'var(--border-color)',
-      borderStyle: 'solid',
-      borderWidth: '0 1px 1px 0',
-      cursor: 'default',
-      display: 'inline-flex',
-      fontSize: 12,
-      fontWeight: 'normal',
-      height: '100%',
-      padding: '0 12px',
-      position: 'relative',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      verticalAlign: 'top',
-      whiteSpace: 'nowrap',
-      zIndex: 0,
-      '&.resizing': {
-        backgroundColor: 'var(--grid-cell-highlight-bg)'
-      }
+    alignItems: 'center',
+    backgroundColor: 'var(--grid-cell-background)',
+    boxSizing: 'border-box',
+    borderColor: 'var(--grid-cell-border-color)',
+    borderStyle: 'solid',
+    borderWidth: '0 1px 1px 0',
+    color: 'var(--grid-text-color)',
+    cursor: 'default',
+    display: 'inline-flex',
+    fontWeight: 'bold',
+    height: '100%',
+    overflow: 'hidden',
+    padding: '0 12px',
+    position: 'relative',
+    textOverflow: 'ellipsis',
+    verticalAlign: 'top',
+    whiteSpace: 'nowrap',
+    zIndex: 0,
+    '&$noBottomBorder': {
+      borderBottom: 'solid 1px transparent'
+    },
+    '&.resizing': {
+      backgroundColor: 'var(--header-cell-highlight-bg)'
+    }
   },
 
   Vanishing: {
@@ -208,7 +210,7 @@ export default createUseStyles({
     zIndex: 150,
     '& $HeaderCell': {
       backgroundColor: 'var(--header-cell-highlight-bg)'
-    }  
+    }
   },
 
   InsertIndicator: {
@@ -216,8 +218,7 @@ export default createUseStyles({
     height: '100%',
     position: 'absolute',
     top: 0,
-    transition: 'left ease-in-out .2s', 
+    transition: 'left ease-in-out .2s',
     width: 4,
   }
-
-});
+}));
