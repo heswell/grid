@@ -1,4 +1,5 @@
 import { metaData } from "@heswell/utils";
+import {addColumn, getColumnGroup, moveColumn, removeColumn} from './grid-model-utils';
 
 const DEFAULT_COLUMN_WIDTH = 100;
 
@@ -22,9 +23,11 @@ export default (state, action) => {
 
 /** @type {GridModelReducerTable} */
 const reducerActionHandlers = {
+  'move-col': handleMoveColumn,
   'resize': handleResize,
-  'resize-col': handleResizeCol,
-  'resize-heading': handleResizeHeading
+  'resize-col': handleResizeColumn,
+  'resize-heading': handleResizeHeading,
+  'add-col': handleAddColumn
 }
 
 function initialize(initialState, options) {
@@ -48,6 +51,33 @@ function initialize(initialState, options) {
     width
   };
 }
+
+/** @type {GridModelReducer<'move-col'>} */
+function handleMoveColumn(state, {column, targetColumn}){
+  const {columnGroups} = state;
+  if (columnGroups.length === 1){
+
+  } else {
+    const sourceColumnGroup = getColumnGroup(state, column);
+    const targetColumnGroup = getColumnGroup(state,targetColumn);
+
+    if (sourceColumnGroup === targetColumnGroup){
+      return {
+        ...state,
+        columnGroups: columnGroups.map(columnGroup => {
+          if (columnGroup === sourceColumnGroup){
+            return moveColumn(columnGroup, column, targetColumn)
+          } else {
+            return columnGroup;
+          }
+        })
+      }
+    }
+  }
+
+  return state;
+}
+
 
 /** @type {GridModelReducer<'resize-heading'>} */
 function handleResizeHeading(state, {phase, column, width}){
@@ -80,15 +110,48 @@ function resizeHeading(state, column, width, headingResizeState){
   for (let i=0;i<diffs.length;i++){
       if (typeof diffs[i] === 'number' && diffs[i] !== 0){
           const targetCol = state.columnGroups[groupIdx].columns[groupColIdx[i]];
-          newState = handleResizeCol({...newState, headingResizeState}, {type: 'resize-col', phase: 'resize', column: targetCol, width: targetCol.width + diffs[i]});
+          newState = handleResizeColumn({...newState, headingResizeState}, {type: 'resize-col', phase: 'resize', column: targetCol, width: targetCol.width + diffs[i]});
       }
   }
   return newState;
 
 }
 
-  /** @type {GridModelReducer<'resize-col'>} */
-function handleResizeCol(state, {phase, column, width}){
+
+/** @type {GridModelReducer<'add-col'>} */
+function handleAddColumn(state, {columnGroup: targetColumnGroup, column}){
+  // TODO allow the columnGroup to be optional and default it
+  const {columnGroups} =state;
+  const targetIdx = columnGroups.indexOf(targetColumnGroup);
+  const sourceColumnGroup = getColumnGroup(state, column);
+  const sourceIdx = columnGroups.indexOf(sourceColumnGroup);
+
+  if (sourceColumnGroup === targetColumnGroup){
+    return state;
+  }
+
+  const idx = targetIdx > sourceIdx
+    ? 0
+    : targetColumnGroup.columns.length;
+
+  const sourceWithColumnRemoved = removeColumn(sourceColumnGroup, column, true);
+  const targetWithColumnAdded = addColumn(targetColumnGroup, column, idx, true);
+
+  const newColumnGroups = columnGroups.slice();
+  newColumnGroups[sourceIdx] = sourceWithColumnRemoved;
+  newColumnGroups[targetIdx] = targetWithColumnAdded;
+
+  console.log(newColumnGroups)
+
+  return {
+    ...state,
+    columnGroups: newColumnGroups
+  }
+
+}
+
+/** @type {GridModelReducer<'resize-col'>} */
+function handleResizeColumn(state, {phase, column, width}){
   if (phase === 'resize'){
     
     // if (column.width <= state.minColumnWidth && width <= column.width) {

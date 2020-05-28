@@ -1,9 +1,9 @@
-// @ts-nocheck
 import React, {
   forwardRef,
   useCallback,
   useImperativeHandle,
   useEffect,
+  useLayoutEffect,
   useReducer,
   useRef
 } from "react";
@@ -11,6 +11,7 @@ import useScroll from "./use-scroll";
 import useUpdate from "./use-update";
 import useStyles from './use-styles';
 import dataReducer, { initialData } from "./grid-data-reducer";
+import {getColumnGroup} from './grid-model-utils.js';
 
 import Canvas from "./canvas";
 import ColumnBearer from './column-bearer';
@@ -36,7 +37,6 @@ const Viewport = forwardRef(function Viewport(
 
   useImperativeHandle(ref, () => ({
     beginHorizontalScroll: () => {
-      console.log(`%cViewport beginHorizontalScroll ${showColumnBearer.current}`, 'color: blue; fontWeight: bold;')
       if (!showColumnBearer.current){
         const scrollTop = viewportEl.current.scrollTop;
         scrollingEl.current.style.height = `${contentHeight.current +
@@ -46,7 +46,6 @@ const Viewport = forwardRef(function Viewport(
       }
     },
     endHorizontalScroll: () => {
-      console.log(`%cViewport endHorizontalScroll ${showColumnBearer.current}`, 'color: blue; fontWeight: bold;')
       if (!showColumnBearer.current){
         const scrollTop = viewportEl.current.scrollTop;
         fixedCanvas.current.endHorizontalScroll(scrollTop);
@@ -69,7 +68,28 @@ const Viewport = forwardRef(function Viewport(
 
   const handleColumnBearerScroll = (scrollDistance) =>
       scrollableCanvas.current.scrollBy(scrollDistance);
-      
+
+        // TODO useCallback
+  const handleColumnDrag = (dragPhase, draggedColumn, targetColumn) => {
+    const columnGroup = getColumnGroup(gridModel, draggedColumn);
+    if (dragPhase === 'drag'){ // only called when we cross onto next targetColumn
+      // we need the canvas refs in an array
+      if (columnGroup.locked){
+        fixedCanvas.current.makeSpaceForColumn(draggedColumn, targetColumn)
+      } else {
+        scrollableCanvas.current.makeSpaceForColumn(draggedColumn, targetColumn)
+      }
+    } else if (dragPhase === 'drag-end'){
+      if (columnGroup.locked){
+        fixedCanvas.current.endDrag(draggedColumn, targetColumn)
+      } else {
+        scrollableCanvas.current.endDrag(draggedColumn, targetColumn)
+      }
+  
+      onColumnDrag(dragPhase, draggedColumn, targetColumn);
+    }
+  }
+
   useUpdate(() => {
     setRange(firstVisibleRow.current, firstVisibleRow.current + gridModel.viewportRowCount);
   },[gridModel.viewportRowCount]);
@@ -93,6 +113,18 @@ const Viewport = forwardRef(function Viewport(
     },
     [gridModel.rowHeight, gridModel.viewportRowCount, setRange]
   );
+
+    useLayoutEffect(() => {
+      if (draggedColumn){
+        // TODO need the indedx here then we can lookup ref bby index
+        const columnGroup = getColumnGroup(gridModel, draggedColumn);
+        if (columnGroup.locked){
+          fixedCanvas.current.hideDraggedColumn(draggedColumn)        
+        } else {
+          scrollableCanvas.current.hideDraggedColumn(draggedColumn)        
+        }
+      }
+    },[draggedColumn])
 
   const handleVerticalScroll = useScroll("scrollTop", scrollCallback);
 
@@ -174,9 +206,11 @@ const Viewport = forwardRef(function Viewport(
           <ColumnBearer
             column={draggedColumn}
             gridModel={gridModel}
-            onDrag={onColumnDrag}
+            initialScrollPosition={scrollableCanvas.current.scrollLeft}
+            onDrag={handleColumnDrag}
             onScroll={handleColumnBearerScroll}
-            rows={data.rows} />}
+            rows={data.rows}
+          />}
     </>
   
   );

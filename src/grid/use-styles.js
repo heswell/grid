@@ -4,6 +4,8 @@ export default createUseStyles({
 
   Grid: {
     '--grid-heading-border-color': '#bbb',
+    '--grid-cell-background': 'white',
+    '--grid-header-cell-background': 'white',
     '--grid-cell-border-color': '#d4d4d4',
     '--header-cell-highlight-bg': 'rgb(66, 139, 202)',
     '--grid-cell-highlight-bg': 'rgba(66, 139, 202, .5)',
@@ -39,14 +41,14 @@ export default createUseStyles({
   },
 
   ColumnGroupHeader: {
+    background: '#ccc', 
     verticalAlign: 'top',
     overflow: 'hidden',
-    backgroundColor: 'white'
   },
 
-  headerCells: {
-    display: 'flex'
-   },
+  // headerCells: {
+  //   display: 'flex'
+  //  },
 
    Viewport : {
     position: 'absolute',
@@ -63,6 +65,7 @@ export default createUseStyles({
    },
 
    Canvas: {
+    background: '#ccc', 
     display: 'inline-block',
     position: 'sticky',
     top: 0,
@@ -77,6 +80,9 @@ export default createUseStyles({
   fixed: {
     '& $canvasContentWrapper': {
       overflow: 'hidden'
+    },
+    '& $GridCell': {
+      backgroundColor: '#efeded'
     }
   },
 
@@ -110,6 +116,7 @@ export default createUseStyles({
 
   HeaderCell: {
     alignItems: 'stretch',
+    background: 'var(--grid-header-cell-background)',
     borderBottom: 'solid 1px var(--grid-heading-border-color)',
     borderRight: '1px solid var(--grid-heading-border-color)',
     boxSizing: 'border-box',
@@ -159,6 +166,7 @@ export default createUseStyles({
       '--border-color': '#d4d4d4',
       '--border-color-selected': 'rgb(46, 100, 139)',
       alignItems: 'center',
+      backgroundColor: 'var(--grid-cell-background)',
       boxSizing: 'border-box',
       borderColor: 'var(--border-color)',
       borderStyle: 'solid',

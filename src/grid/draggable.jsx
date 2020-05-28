@@ -63,18 +63,20 @@ const Draggable = (allProps) => {
         position.current.y = y;
 
         onDrag(e, deltaX, deltaY);
-    },[])
+    },[onDrag])
+
+    let cleanUp;
 
     const onMouseUp = useCallback(e => {
         cleanUp();
         onDragEnd(e, dragState.current); // seems we pass back whatever was passed in drag start ???
         dragState.current = null;
-    },[]);
+    },[cleanUp, onDragEnd]);
 
-    const cleanUp = () => {
+    cleanUp = useCallback(() => {
         window.removeEventListener('mouseup', onMouseUp);
         window.removeEventListener('mousemove', onMouseMove);
-    }
+    },[onMouseMove, onMouseUp]);
 
     if (child && React.isValidElement(child)){
         return React.cloneElement(child, {...props, onMouseDown: handleMouseDown});

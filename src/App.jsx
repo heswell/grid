@@ -13,11 +13,13 @@ const columns = [
 ];
 
 const start = performance.now();
+let locked = true;
 for (let i = 2, heading= 'Group 1'; i < 25; i++) {
   if ((i-2)%3 === 0){
     heading = `Group ${((i-2)/3) + 1}`
   }
-  columns.push({ name: `${i - 1}M`, width: 100, heading: [`${i - 1}M`, heading] });
+  columns.push({ name: `${i - 1}M`, width: 100, locked, heading: [`${i - 1}M`, heading] });
+  locked = false;
 }
 
 for (let i = 0; i < 100; i++) {

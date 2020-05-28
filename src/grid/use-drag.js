@@ -13,24 +13,21 @@ export function useDragStart(callback){
 
 /** @type {DragHook} */
 export default function useDrag(callback, dragPhase=DRAG_ALL){
-
+  let cleanUp;
   // If user is not tracking 'drag-start', it's assumed that we're already dragging
   const dragging = useRef(false);
-  const wasDragging = useRef(false);
   const position = useRef({x:-1,y:-1})
 
   const onMouseUp = useCallback(() => {
-    cleanUp();
     if (dragging.current) {
-
-        wasDragging.current = true;
         // shouldn't we set dragging to false ?
         callback('drag-end');
-    } else {
-        
+        cleanUp();
+      } else {
+       
         // drag aborted
     }
-  },[])
+  },[callback, cleanUp])
 
   const onMouseMove = useCallback(e => {
     if (e.stopPropagation) {
@@ -66,13 +63,13 @@ export default function useDrag(callback, dragPhase=DRAG_ALL){
       position.current.x = x;
       position.current.y = y;
     }
-  },[])
+  },[callback, cleanUp, dragPhase])
 
   const handleMouseDown = useCallback(e => {
       position.current = {x: e.clientX, y: e.clientY};
       window.addEventListener('mouseup', onMouseUp);
       window.addEventListener('mousemove', onMouseMove);
-    },[]);
+    },[onMouseMove, onMouseUp]);
 
   if (!(dragPhase & DRAG_START)) {
     if  (dragPhase & DRAG){
@@ -85,11 +82,12 @@ export default function useDrag(callback, dragPhase=DRAG_ALL){
   }
 
   // TODO extend cleanup to rest references, but careful of order of operations in handlers
-  const cleanUp = () => {
+  cleanUp = useCallback(() => {
     window.removeEventListener('mouseup', onMouseUp);
     window.removeEventListener('mousemove', onMouseMove);
-  }
+    dragging.current = false;
+  },[onMouseMove, onMouseUp])
 
-  return handleMouseDown;
+  return [handleMouseDown, cleanUp];
 
-}
+};

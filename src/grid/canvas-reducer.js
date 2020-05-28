@@ -20,6 +20,7 @@ export default ([_, keys, columnGroup, scrollLeft], action) => {
       const nextColumns = getRenderColumns(action.columnGroup, scrollLeft);
       return [nextColumns, nextKeys(nextColumns, keys), action.columnGroup, scrollLeft];
     }
+    default:
   }
 };
 

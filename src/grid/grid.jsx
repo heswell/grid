@@ -16,7 +16,6 @@ const Grid = (props) => {
   const draggingColumn = useRef(false);
 
   const handleHorizontalScrollStart = _scrollLeft => {
-    console.log(`%cGrid handleHorizontalScrollStart draggingColumn ? ${draggingColumn.current}`, 'color: green; fontWeight: bold;')
     if (!draggingColumn.current){
       viewport.current.beginHorizontalScroll();
       gridEl.current.classList.add("scrolling-x");
@@ -24,7 +23,6 @@ const Grid = (props) => {
   };
 
   const handleHorizontalScrollEnd = () => {
-    console.log(`%cGrid handleHorizontalScrollEnd  draggingColumn ? ${draggingColumn.current} `, 'color: green; fontWeight: bold;')
     if (!draggingColumn.current){
       const scrollLeft = viewport.current.endHorizontalScroll();
       gridEl.current.classList.remove("scrolling-x");
@@ -32,27 +30,24 @@ const Grid = (props) => {
     }
   };
 
-  /** @type {onDragHandler} */
+  /** @type {onColumnDragHandler} */
   const handleColumnDrag = useCallback(
-      (phase, column, position) => {
+      (phase, draggedColumn, targetColumn) => {
     // if (!column.isHeading) {
-    //     const pos = scrollLeft.current;
-        const pos = 0; // deal with horizontal scrolling later
-        if (phase === 'drag') {
-              // dispatch({ type: Action.MOVE, distance, scrollLeft: pos });
-          } else if (phase === 'drag-start') {
-            console.log(`set the draggedColumn`)
+        if (phase === 'drag-start') {
             const {left} = gridEl.current.getBoundingClientRect();
             handleHorizontalScrollStart();
-            setDraggedColumn({...column, position: position - left});
+            setDraggedColumn(
+              left === 0
+                ? draggedColumn
+                : {...draggedColumn, position: draggedColumn.position - left});
             draggingColumn.current = true;
-              // dispatch({ type: Action.MOVE_BEGIN, column, scrollLeft: pos });
           } else if (phase === 'drag-end') {
             setDraggedColumn(null);
             draggingColumn.current = false;
             // TODO we need the final scrollLeft here
             handleHorizontalScrollEnd();
-              // dispatch({ type: Action.MOVE_END, column });
+            dispatchGridModel({ type: 'move-col', column: draggedColumn, targetColumn });
           }
     // }
       },[]

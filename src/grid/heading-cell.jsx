@@ -1,11 +1,10 @@
 import React, {useCallback, useRef} from "react";
 import cx from 'classnames';
 import useStyles from './use-styles';
-import {useDragStart} from './use-drag';
 import Draggable from './draggable';
 
 /** @type {HeaderCellComponent} */
-const HeaderCell = function HeaderCell({ className, column, onDrag, onResize }){
+const HeadingCell = function HeaderCell({ className, column, onDrag, onResize }){
 
   const el = useRef(null);
   const col = useRef(column);
@@ -14,14 +13,6 @@ const HeaderCell = function HeaderCell({ className, column, onDrag, onResize }){
   // we could mitigate this by only passing column key and passing delta,
   // so we don't rely on current width in column
   col.current = column;
-
-  const [handleMouseDown] = useDragStart(useCallback(
-    dragPhase => {
-      const {left} = el.current.getBoundingClientRect();
-      onDrag && onDrag(dragPhase, {...col.current, position: left})
-    },
-    [onDrag, col])
-  );
 
   const handleResizeStart = () => onResize('begin', column);
 
@@ -48,9 +39,7 @@ const HeaderCell = function HeaderCell({ className, column, onDrag, onResize }){
   return (
     <div
       className={cx(classes.HeaderCell, className, {resizing})}
-      onMouseDown={handleMouseDown}
       ref={el}
-      role="columnheader"
       style={{ width }}>
       <div className={classes.innerHeaderCell}>
         <div className={classes.cellWrapper}>{label}</div>
@@ -65,4 +54,4 @@ const HeaderCell = function HeaderCell({ className, column, onDrag, onResize }){
   );
 };
 
-export default HeaderCell;
+export default HeadingCell;
