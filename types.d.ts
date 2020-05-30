@@ -28,6 +28,7 @@ interface ColumnGroup {
 
 interface DraggedColumn extends Column {
   position: number;
+  dragPosition: number;
 }
 
 
@@ -227,5 +228,5 @@ interface DraggableProps {
 
 type DraggableComponent = React.ComponentType<DraggableProps>;
 
-type DragCallback = (phase: DragPhase, delta?: number) => void;
-type DragHook = (callback: DragCallback) => [React.MouseEventHandler<HTMLDivElement>, () => void];
+type DragCallback = (phase: DragPhase, delta?: number, dragPosition?: number) => void;
+type DragHook = (callback: DragCallback, dragPhase?: number, initialDragPosition?: number) => [React.MouseEventHandler<HTMLDivElement>, () => void];

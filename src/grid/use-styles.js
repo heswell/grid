@@ -12,8 +12,8 @@ export default createUseStyles({
 
     backgroundColor: 'white',
     position: 'absolute',
-    left: 100,
-    top: 100,
+    left: 50,
+    top: 50,
     fontFamily: 'Roboto',
     fontSize: '0.825em',
     '&.scrolling-x': {

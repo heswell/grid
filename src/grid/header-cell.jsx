@@ -16,9 +16,9 @@ const HeaderCell = function HeaderCell({ className, column, onDrag, onResize }){
   col.current = column;
 
   const [handleMouseDown] = useDragStart(useCallback(
-    dragPhase => {
+    (dragPhase, delta, dragPosition) => {
       const {left} = el.current.getBoundingClientRect();
-      onDrag && onDrag(dragPhase, {...col.current, position: left})
+      onDrag && onDrag(dragPhase, {...col.current, position: left + delta, dragPosition})
     },
     [onDrag, col])
   );

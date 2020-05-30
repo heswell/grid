@@ -112,7 +112,12 @@ function handleAddColumn(state, {targetColumn, targetColumnGroup, column}){
       return columnGroup.columns.filter(col => col.key !== column.key);
     } else if (idx === sourceIdx){
       if (sourceIdx === targetIdx){
-        return ColumnGroup.moveColumnTo(columnGroup, sourceColumn, targetColumnIdx+1);
+        const sourceColumnIdx = sourceColumnGroup.columns.findIndex(col => col.key === sourceColumn.key);
+        if (targetColumnIdx > sourceColumnIdx){
+          return ColumnGroup.moveColumnTo(columnGroup, sourceColumn, targetColumnIdx+1);
+        } else {
+          return ColumnGroup.moveColumnTo(columnGroup, sourceColumn, targetColumnIdx);
+        }
       } else {
         return ColumnGroup.insertColumnAt(columnGroup, sourceColumn, targetColumnIdx);
       }
@@ -214,7 +219,7 @@ function buildColumnGroups(columns, gridWidth) {
   const headingDepth = getMaxHeadingDepth(columns);
 
   for (let i = 0; i < columns.length; i++) {
-    const { name, heading=[name], locked = false, width } = columns[i];
+    const { key=i, name, heading=[name], locked = false, width } = columns[i];
     if (columnGroup === null || columnGroup.locked !== locked) {
       const headings = headingDepth > 1 ? [] : undefined;
 
@@ -234,7 +239,7 @@ function buildColumnGroups(columns, gridWidth) {
       heading,
       locked,
       name,
-      key: i,
+      key,
       width
     });
 

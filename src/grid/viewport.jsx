@@ -41,15 +41,16 @@ const Viewport = forwardRef(function Viewport(
         const scrollTop = viewportEl.current.scrollTop;
         scrollingEl.current.style.height = `${contentHeight.current +
           (gridModel.headerHeight * gridModel.headingDepth) + horizontalScrollbarHeight.current}px`;
-        fixedCanvas.current.beginHorizontalScroll( scrollTop );
+        fixedCanvas.current && fixedCanvas.current.beginHorizontalScroll( scrollTop );
         scrollableCanvas.current.beginHorizontalScroll( scrollTop );
       }
     },
     endHorizontalScroll: () => {
       if (!showColumnBearer.current){
         const scrollTop = viewportEl.current.scrollTop;
-        fixedCanvas.current.endHorizontalScroll(scrollTop);
-        scrollableCanvas.current.endHorizontalScroll(scrollTop);
+        // TODO store canvas refs in array
+        fixedCanvas.current && fixedCanvas.current.endHorizontalScroll(scrollTop);
+        scrollableCanvas.current && scrollableCanvas.current.endHorizontalScroll(scrollTop);
         scrollingEl.current.style.height = `${contentHeight.current + horizontalScrollbarHeight.current}px`;
         return scrollableCanvas.current.scrollLeft;
       }
@@ -69,8 +70,8 @@ const Viewport = forwardRef(function Viewport(
   const handleColumnBearerScroll = (scrollDistance) =>
       scrollableCanvas.current.scrollBy(scrollDistance);
 
-        // TODO useCallback
-  const handleColumnDrag = (dragPhase, draggedColumn, targetColumn) => {
+  const handleColumnDrag = useCallback((dragPhase, draggedColumn, targetColumn) => {
+
     const columnGroup = getColumnGroup(gridModel, draggedColumn);
     if (dragPhase === 'drag'){ // only called when we cross onto next targetColumn
       // we need the canvas refs in an array
@@ -88,7 +89,7 @@ const Viewport = forwardRef(function Viewport(
   
       onColumnDrag(dragPhase, draggedColumn, targetColumn);
     }
-  }
+  },[gridModel, onColumnDrag]);
 
   useUpdate(() => {
     setRange(firstVisibleRow.current, firstVisibleRow.current + gridModel.viewportRowCount);
@@ -103,11 +104,11 @@ const Viewport = forwardRef(function Viewport(
           setRange(firstRow, firstRow + gridModel.viewportRowCount);
         }
       } else if (scrollEvent === "scroll-start") {
-        fixedCanvas.current.beginVerticalScroll();
+        fixedCanvas.current && fixedCanvas.current.beginVerticalScroll();
         scrollableCanvas.current.beginVerticalScroll();
       } else {
         const scrollTop = viewportEl.current.scrollTop;
-        fixedCanvas.current.endVerticalScroll(scrollTop);
+        fixedCanvas.current && fixedCanvas.current.endVerticalScroll(scrollTop);
         scrollableCanvas.current.endVerticalScroll(scrollTop);
       }
     },

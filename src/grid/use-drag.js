@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 
 const DRAG_THRESHOLD = 3;
 
@@ -12,15 +12,17 @@ export function useDragStart(callback){
 }
 
 /** @type {DragHook} */
-export default function useDrag(callback, dragPhase=DRAG_ALL){
+export default function useDrag(callback, dragPhase=DRAG_ALL, initialDragPosition=-1){
+
   let cleanUp;
   // If user is not tracking 'drag-start', it's assumed that we're already dragging
   const dragging = useRef(false);
-  const position = useRef({x:-1,y:-1})
+  const position = useRef({x:initialDragPosition,y:-1})
+  const onMouseMove = useRef(null)
+  const onMouseUp = useRef(null)
 
-  const onMouseUp = useCallback(() => {
+  onMouseUp.current = useCallback(() => {
     if (dragging.current) {
-        // shouldn't we set dragging to false ?
         callback('drag-end');
         cleanUp();
       } else {
@@ -29,7 +31,7 @@ export default function useDrag(callback, dragPhase=DRAG_ALL){
     }
   },[callback, cleanUp])
 
-  const onMouseMove = useCallback(e => {
+  onMouseMove.current = useCallback(e => {
     if (e.stopPropagation) {
         e.stopPropagation();
     }
@@ -45,13 +47,14 @@ export default function useDrag(callback, dragPhase=DRAG_ALL){
     if (dragging.current) {
         position.current.x = x;
         position.current.y = y;
-        callback('drag', deltaX);
+        callback('drag', deltaX, position.current.x);
     } else if (dragPhase & DRAG_START){
         if (Math.abs(deltaX) > DRAG_THRESHOLD) {
             dragging.current = true;
             position.current.x = x;
             position.current.y = y;
-            callback('drag-start', deltaX);
+
+            callback('drag-start', deltaX, position.current.x);
             if (dragPhase === DRAG_START){
               cleanUp();
             }
@@ -65,26 +68,40 @@ export default function useDrag(callback, dragPhase=DRAG_ALL){
     }
   },[callback, cleanUp, dragPhase])
 
+  // Important that these never change for the lifetime of the hook, as they are
+  // used to register and register window listeners.
+  const mouseMoveHandler = useCallback(e => onMouseMove.current(e),[])
+  const mouseUpHandler = useCallback(e => onMouseUp.current(e),[])
+
   const handleMouseDown = useCallback(e => {
       position.current = {x: e.clientX, y: e.clientY};
-      window.addEventListener('mouseup', onMouseUp);
-      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', mouseUpHandler);
+      window.addEventListener('mousemove', mouseMoveHandler);
     },[onMouseMove, onMouseUp]);
 
-  if (!(dragPhase & DRAG_START)) {
-    if  (dragPhase & DRAG){
-      // How do we initialize the start ?
-      window.addEventListener('mousemove', onMouseMove);
+  useEffect(() => {
+    
+    if (!(dragPhase & DRAG_START)) {
+      if  (dragPhase & DRAG && !dragging.current){
+        window.addEventListener('mousemove', mouseMoveHandler);
+
+        if  (dragPhase & DRAG_END){
+          window.addEventListener('mouseup', mouseUpHandler);
+        }
+        dragging.current = true;
+      }
+      if (dragPhase & DRAG_END  && !dragging.current){
+        window.addEventListener('mouseup', mouseUpHandler);
+        dragging.current = true;
+      }
     }
-    if  (dragPhase & DRAG_END){
-      window.addEventListener('mouseup', onMouseUp);
-    }
-  }
+  
+  }, [callback]);
 
   // TODO extend cleanup to rest references, but careful of order of operations in handlers
   cleanUp = useCallback(() => {
-    window.removeEventListener('mouseup', onMouseUp);
-    window.removeEventListener('mousemove', onMouseMove);
+    window.removeEventListener('mouseup', mouseUpHandler);
+    window.removeEventListener('mousemove', mouseMoveHandler);
     dragging.current = false;
   },[onMouseMove, onMouseUp])
 

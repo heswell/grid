@@ -11,7 +11,6 @@ const LEFT = 'left';
 const RIGHT = 'right';
 
 function getTargetColumnGroup({columnGroups}, dragPosition, draggedColumn){
-
     // If dragged column overlaps another columnGroup, it is considered movimng into that columnGroup
     const dragPosStart = dragPosition;
     const dragPosEnd = dragPosition + draggedColumn.width;
@@ -55,12 +54,13 @@ function getColumn({columns, contentWidth, width}, startPosition, dragPosition, 
     return null;
 }
 
-/** @type {(gm: GridModel, column: DraggedColumn, dp: number, sp: number) => [ColumnGroup, Column] } */
+/** @type {(gm: GridModel, column: DraggedColumn, dp: number, sp: number) => [ColumnGroup, Column, boolean] } */
 function getTargetColumn(gridModel, draggedColumn, dragPosition, scrollPosition){
-    const [columnGroup, startPosition] = getTargetColumnGroup(gridModel, dragPosition, draggedColumn);
-    return columnGroup === null
-        ? [null, null]
-        : [columnGroup, getColumn(columnGroup, startPosition, dragPosition, scrollPosition)];
+    const sourceColumnGroup = getColumnGroup(gridModel, draggedColumn);
+    const [targetColumnGroup, startPosition] = getTargetColumnGroup(gridModel, dragPosition, draggedColumn);
+    return targetColumnGroup === null
+        ? [null, null, false]
+        : [targetColumnGroup, getColumn(targetColumnGroup, startPosition, dragPosition, scrollPosition), sourceColumnGroup !== targetColumnGroup];
 }
 
 function getScrollBounds(gridModel, column){
@@ -112,12 +112,12 @@ const ColumnBearer = ({column, gridModel, onDrag, onScroll, rows, initialScrollP
     const el = useRef(null);
     const scrollTimeout = useRef(null);
     const scrollPosition = useRef(initialScrollPosition);
-    const prevTarget = useRef([null, null]);
+    const prevColumn = useRef(null);
     const { dispatchGridModelAction } = useContext(GridContext);
 
     const style = {
         top,
-        left: column.position, 
+        left: position.current, 
         height: gridModel.height - top,
         width: column.width
     }
@@ -136,7 +136,7 @@ const ColumnBearer = ({column, gridModel, onDrag, onScroll, rows, initialScrollP
     }
 
     const [, cancelDrag] = useDrag(useCallback(
-        (dragPhase, delta) => {
+        (dragPhase, delta, dragPosition) => {
           if (dragPhase === 'drag'){
             const newPosition = Math.max(scrollBounds.left, Math.min(position.current + delta, scrollBounds.right + 5));
 
@@ -144,19 +144,19 @@ const ColumnBearer = ({column, gridModel, onDrag, onScroll, rows, initialScrollP
                 position.current = newPosition;
                 el.current.style.left = position.current + 'px';
             }
-            const [targetColumnGroup, targetColumn] = getTargetColumn(gridModel, column, position.current, scrollPosition.current);
-            const [prevColumnGroup,prevColumn] = prevTarget.current;
-            if (!(targetColumnGroup === prevColumnGroup && targetColumn === prevColumn)){
-                if (targetColumnGroup !== prevColumnGroup && targetColumn === null){
+
+            const [targetColumnGroup, targetColumn, changeOfColumnGroup] = getTargetColumn(gridModel, column, position.current, scrollPosition.current);
+            if (changeOfColumnGroup || targetColumn !== prevColumn.current){
+                if (changeOfColumnGroup){
                     // we have to tell the viewport as well, so it can remove visual effects
                     onDrag('drag', column, null);
                     dispatchGridModelAction({type: 'add-col', targetColumnGroup, column});
-                    // TODO figure out right way to cancel
-                    cancelDrag();
+                    // No need to cancel, the ColumnBearer will re-render, but the hook state is preserved
+                    //cancelDrag();
                 } else {
                     onDrag('drag', column, targetColumn);
                 }
-                prevTarget.current = [targetColumnGroup, targetColumn];
+                prevColumn.current = targetColumn;
             }
 
             // We should probably just fire onDrag and let Viewport worry about this
@@ -166,9 +166,7 @@ const ColumnBearer = ({column, gridModel, onDrag, onScroll, rows, initialScrollP
             } else if (!direction && scrollTimeout.current){
                 cancelScroll();
             }   
-
           } else {
-
             if (scrollTimeout.current){
                 cancelScroll();
             }
@@ -177,7 +175,8 @@ const ColumnBearer = ({column, gridModel, onDrag, onScroll, rows, initialScrollP
           }
         },
         [column, dispatchGridModelAction, gridModel, onDrag, scroll, scrollBounds, withinScrollZone]),
-        DRAG + DRAG_END
+        DRAG + DRAG_END,
+        column.dragPosition
     );
     
     const columnGroup = getColumnGroup(gridModel, column);
