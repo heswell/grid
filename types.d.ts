@@ -11,10 +11,17 @@ interface Column {
   width: number;
 }
 
+interface Heading {
+  key: string;
+  isHeading: true;
+  label: string;
+  width: number;
+}
+
 interface ColumnGroup {
   columns: Column[];
   contentWidth: number;
-  headings?: string[];
+  headings?: Heading[];
   locked: boolean;
   width: number;
 };
@@ -76,14 +83,12 @@ type GridActionReducerFactory = (handlerMap: GridActionHandlerMap) => (state: {}
 type GridModelResizeAction = { type: 'resize', height: number, width: number};
 type GridModelResizeColAction = { type: 'resize-col', phase: ResizePhase, column: Column, width?: number};
 type GridModelResizeHeadingAction = { type: 'resize-heading', phase: ResizePhase, column: Column, width?: number};
-type GridModelMoveColumnAction = { type: 'move-col', column: Column, targetColumn: Column};
-type GridModelAddColumnAction = { type: 'add-col', columnGroup: ColumnGroup, column: Column};
+type GridModelAddColumnAction = { type: 'add-col', targetColumnGroup?: ColumnGroup, targetColumn?: Column, column: Column};
 
 type GridModelAction =
   | GridModelResizeAction
   | GridModelResizeColAction
   | GridModelResizeHeadingAction
-  | GridModelMoveColumnAction
   | GridModelAddColumnAction;
 
 type GridModelReducerFn<A=GridModelAction> = (state: GridModel, action: A) => GridModel;  
@@ -92,7 +97,6 @@ type GridModelReducer<T extends GridModelAction['type']> =
   T extends 'resize' ? GridModelReducerFn<GridModelResizeAction> :
   T extends 'resize-col' ? GridModelReducerFn<GridModelResizeColAction> :
   T extends 'resize-heading' ? GridModelReducerFn<GridModelResizeHeadingAction> :
-  T extends 'move-col' ? GridModelReducerFn<GridModelMoveColumnAction> :
   T extends 'add-col' ? GridModelReducerFn<GridModelAddColumnAction> :
   GridModelReducerFn<GridModelAction>;
 type GridModelReducerTable = {[key in GridModelAction['type']]: GridModelReducer<key>};  

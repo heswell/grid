@@ -47,7 +47,7 @@ const Grid = (props) => {
             draggingColumn.current = false;
             // TODO we need the final scrollLeft here
             handleHorizontalScrollEnd();
-            dispatchGridModel({ type: 'move-col', column: draggedColumn, targetColumn });
+            dispatchGridModel({ type: 'add-col', column: draggedColumn, targetColumn });
           }
     // }
       },[]

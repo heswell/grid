@@ -220,9 +220,9 @@ function getHeaderCells(canvasEl, columnGroup){
 function clearDragDisplay(rows, origin, previous, lastIdx){
   for (let i=0;i<rows.length; i++){
     const cells = Array.isArray(rows[i]) ? rows[i] : rows[i].childNodes;
-      if (previous === lastIdx){
+      if (previous === lastIdx && cells.length > 1){
         closeSpaceRight(cells[previous - 1], true)
-      } else if (previous < origin){
+      } else if (previous < origin || cells.length === 1){
         closeSpaceLeft(cells[previous], true)
       } else {
         closeSpaceLeft(cells[previous+1], true)
@@ -252,7 +252,6 @@ function finalDragDisplay(rows, origin, target, previous, lastIdx){
 }
 
 function setDragDisplay(rows, origin, target, previous, size, lastIdx){
-  console.log(`setDragDisplay origin ${origin}, target ${target} previous ${previous}, last ${lastIdx}`)
 
   for (let i=0;i<rows.length; i++){
     const cells = Array.isArray(rows[i]) ? rows[i] : rows[i].childNodes;
@@ -285,7 +284,7 @@ function setDragDisplay(rows, origin, target, previous, size, lastIdx){
       if (target < origin){
         openSpaceLeft(cells[target], size);
       } else if (target === lastIdx){
-        if (target > origin){
+        if (target > origin || cells.length === 1){
           openSpaceRight(cells[target], size, target === origin);
         } else {
           openSpaceRight(cells[target - 1], size, target === origin);
@@ -329,7 +328,6 @@ const openSpaceLeft = (el, size, suppressTransition) => {
 }
 
 const openSpaceRight = (el, size, suppressTransition) => {
-  console.log(`oprn space right ${el.innerText}`)
   el.style.marginRight = (size-1) + 'px';
   el.style.width = (parseInt(el.style.width) + 1) + 'px';
   el.style.borderRight = 'solid 1px #ccc';

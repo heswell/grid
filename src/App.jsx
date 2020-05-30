@@ -13,7 +13,7 @@ const columns = [
 ];
 
 const start = performance.now();
-let locked = true;
+let locked = false;
 for (let i = 2, heading= 'Group 1'; i < 25; i++) {
   if ((i-2)%3 === 0){
     heading = `Group ${((i-2)/3) + 1}`

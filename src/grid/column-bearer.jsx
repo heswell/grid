@@ -23,7 +23,7 @@ function getTargetColumnGroup({columnGroups}, dragPosition, draggedColumn){
             // do nothing
         } else if (!homeColumnGroup && dragPosStart < start && (dragPosEnd - start > 9)){
             return [columnGroup, start];           
-        } else if (dragPosition > start && dragPosition <= end){
+        } else if (dragPosition >= start && dragPosition < end){
             return [columnGroup, start];           
         }
         start += columnGroup.width;
@@ -144,22 +144,19 @@ const ColumnBearer = ({column, gridModel, onDrag, onScroll, rows, initialScrollP
                 position.current = newPosition;
                 el.current.style.left = position.current + 'px';
             }
-
-            const [columnGroup, targetColumn] = getTargetColumn(gridModel, column, position.current, scrollPosition.current);
-            console.log(`target columnGroup.locked ? ${columnGroup.locked}, targetColumn ${targetColumn ? targetColumn.name: 'nill'} `)
+            const [targetColumnGroup, targetColumn] = getTargetColumn(gridModel, column, position.current, scrollPosition.current);
             const [prevColumnGroup,prevColumn] = prevTarget.current;
-            if (!(columnGroup === prevColumnGroup && targetColumn === prevColumn)){
-                if (columnGroup !== prevColumnGroup && targetColumn === null){
-                    console.log(`>>>>>>>>> new colgroup`)
+            if (!(targetColumnGroup === prevColumnGroup && targetColumn === prevColumn)){
+                if (targetColumnGroup !== prevColumnGroup && targetColumn === null){
                     // we have to tell the viewport as well, so it can remove visual effects
                     onDrag('drag', column, null);
-                    dispatchGridModelAction({type: 'add-col', columnGroup, column});
+                    dispatchGridModelAction({type: 'add-col', targetColumnGroup, column});
                     // TODO figure out right way to cancel
                     cancelDrag();
                 } else {
                     onDrag('drag', column, targetColumn);
                 }
-                prevTarget.current = [columnGroup, targetColumn];
+                prevTarget.current = [targetColumnGroup, targetColumn];
             }
 
             // We should probably just fire onDrag and let Viewport worry about this

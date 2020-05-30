@@ -19,42 +19,30 @@ export function moveColumn(columnGroup, column, targetColumn){
   return { ...columnGroup, columns };
 }
 
-
-/** @type {(columnGroup: ColumnGroup, column: Column, reduceWidth?: boolean) => ColumnGroup} */
-export function removeColumn(columnGroup, column, resize=false){
-  const {columns, contentWidth, width} = columnGroup;
-  const remainingColumns = columns.filter(({key}) => key !== column.key);
-  if (remainingColumns.length === columns.length){
-    throw Error('removeColumn: column not found in columnGroup');
-  } 
-  const remainingContentWidth = contentWidth - column.width;
-  const newWidth = resize
-    ? width - column.width
-    : Math.min(width, remainingContentWidth)
-
-  return {
-    ...columnGroup,
-    columns: remainingColumns,
-    contentWidth: remainingContentWidth,
-    width: newWidth
+export const Column = {
+  /** @type {(column: Column, columnGroup: ColumnGroup) => Column} */
+  clone: (column, {locked}) => {
+    return {...column, locked};
   }
 }
 
-/** @type {(columnGroup: ColumnGroup, column: Column, idx: number, resize: boolean) => ColumnGroup} */
-export function addColumn(columnGroup, column, idx, resize){
-  const {columns, contentWidth, width} = columnGroup;
-  if (columns.findIndex(({key}) => key === column.key) !== -1){
-    throw Error(`addColumn: columnGroup columns already has column with key '${column.key}'`);
+export const ColumnGroup = {
+  insertColumnAt: (columnGroup, column, idx) => {
+    const columns = columnGroup.columns.slice();
+    columns.splice(idx, 0, Column.clone(column, columnGroup));
+    return columns;
+  },
+  moveColumnTo: (columnGroup, column, idx) => {
+    const sourceIdx = columnGroup.columns.findIndex(col => col.key === column.key);
+    const columns = columnGroup.columns.slice();
+    if (sourceIdx < idx){
+      columns.splice(idx, 0, column);
+      columns.splice(sourceIdx,1);
+    } else {
+      columns.splice(sourceIdx, 1);
+      columns.splice(idx, 0, column);
+    }
+    return columns;
+
   }
-
-  const newColumns = columns.slice();
-  newColumns.splice(idx, 0, column);
-
-  return {
-    ...columnGroup,
-    columns: newColumns,
-    contentWidth: contentWidth + column.width,
-    width: resize ? width + column.width : width
-  }  
-
 }
