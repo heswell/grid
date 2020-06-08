@@ -1,4 +1,5 @@
 import React, {
+  createRef,
   forwardRef,
   useCallback,
   useImperativeHandle,
@@ -11,7 +12,7 @@ import useScroll from "./use-scroll";
 import useUpdate from "./use-update";
 import useStyles from './use-styles';
 import dataReducer, { initialData } from "./grid-data-reducer";
-import {getColumnGroup} from './grid-model-utils.js';
+import {getColumnGroupIdx} from './grid-model-utils.js';
 
 import Canvas from "./canvas";
 import ColumnBearer from './column-bearer';
@@ -23,9 +24,10 @@ const Viewport = forwardRef(function Viewport(
 ) {
   const viewportEl = useRef(null);
   const scrollingEl = useRef(null);
-  const fixedCanvas = useRef(null);
-  /** @type {CanvasRef} */
-  const scrollableCanvas = useRef(null);
+  /** @type {React.MutableRefObject<CanvasRef[]>} */
+  const canvasRefs = useRef([]);
+  // const fixedCanvas = useRef(null);
+  // const scrollableCanvas = useRef(null);
   const contentHeight = useRef(0);
   const horizontalScrollbarHeight = useRef(gridModel.horizontalScrollbarHeight);
   const verticalScrollbarWidth = useRef(0);
@@ -34,6 +36,12 @@ const Viewport = forwardRef(function Viewport(
   const showColumnBearer = useRef(draggedColumn !== null);
   showColumnBearer.current = draggedColumn !== null;  
 
+  const canvasCount = gridModel.columnGroups.length;
+  if (canvasRefs.current.length !== canvasCount) {
+    // add or remove refs
+    canvasRefs.current = Array(canvasCount).fill(null).map((_, i) => canvasRefs.current[i] || createRef());
+  }
+  const scrollableCanvasIdx = gridModel.columnGroups.findIndex(group => !group.locked);
 
   useImperativeHandle(ref, () => ({
     beginHorizontalScroll: () => {
@@ -41,18 +49,15 @@ const Viewport = forwardRef(function Viewport(
         const scrollTop = viewportEl.current.scrollTop;
         scrollingEl.current.style.height = `${contentHeight.current +
           (gridModel.headerHeight * gridModel.headingDepth) + horizontalScrollbarHeight.current}px`;
-        fixedCanvas.current && fixedCanvas.current.beginHorizontalScroll( scrollTop );
-        scrollableCanvas.current.beginHorizontalScroll( scrollTop );
+        canvasRefs.current.forEach(({current}) => current.beginHorizontalScroll( scrollTop ));  
       }
     },
     endHorizontalScroll: () => {
       if (!showColumnBearer.current){
         const scrollTop = viewportEl.current.scrollTop;
-        // TODO store canvas refs in array
-        fixedCanvas.current && fixedCanvas.current.endHorizontalScroll(scrollTop);
-        scrollableCanvas.current && scrollableCanvas.current.endHorizontalScroll(scrollTop);
+        canvasRefs.current.forEach(({current}) => current.endHorizontalScroll( scrollTop ));
         scrollingEl.current.style.height = `${contentHeight.current + horizontalScrollbarHeight.current}px`;
-        return scrollableCanvas.current.scrollLeft;
+        return canvasRefs.current[scrollableCanvasIdx].current.scrollLeft;
       }
     }
   }));
@@ -67,26 +72,16 @@ const Viewport = forwardRef(function Viewport(
     [dataSource]
   );
 
-  const handleColumnBearerScroll = (scrollDistance) =>
-      scrollableCanvas.current.scrollBy(scrollDistance);
+  const handleColumnBearerScroll = scrollDistance =>
+    canvasRefs.current[scrollableCanvasIdx].current.scrollBy(scrollDistance);
 
   const handleColumnDrag = useCallback((dragPhase, draggedColumn, targetColumn) => {
-
-    const columnGroup = getColumnGroup(gridModel, draggedColumn);
+    const columnGroupIdx = getColumnGroupIdx(gridModel, draggedColumn);
+    const {current: canvas} = canvasRefs.current[columnGroupIdx];
     if (dragPhase === 'drag'){ // only called when we cross onto next targetColumn
-      // we need the canvas refs in an array
-      if (columnGroup.locked){
-        fixedCanvas.current.makeSpaceForColumn(draggedColumn, targetColumn)
-      } else {
-        scrollableCanvas.current.makeSpaceForColumn(draggedColumn, targetColumn)
-      }
+      canvas.makeSpaceForColumn(draggedColumn, targetColumn);
     } else if (dragPhase === 'drag-end'){
-      if (columnGroup.locked){
-        fixedCanvas.current.endDrag(draggedColumn, targetColumn)
-      } else {
-        scrollableCanvas.current.endDrag(draggedColumn, targetColumn)
-      }
-  
+      canvas.endDrag(draggedColumn, targetColumn);
       onColumnDrag(dragPhase, draggedColumn, targetColumn);
     }
   },[gridModel, onColumnDrag]);
@@ -104,12 +99,10 @@ const Viewport = forwardRef(function Viewport(
           setRange(firstRow, firstRow + gridModel.viewportRowCount);
         }
       } else if (scrollEvent === "scroll-start") {
-        fixedCanvas.current && fixedCanvas.current.beginVerticalScroll();
-        scrollableCanvas.current.beginVerticalScroll();
+        canvasRefs.current.forEach(({current}) => current.beginVerticalScroll( ));
       } else {
         const scrollTop = viewportEl.current.scrollTop;
-        fixedCanvas.current && fixedCanvas.current.endVerticalScroll(scrollTop);
-        scrollableCanvas.current.endVerticalScroll(scrollTop);
+        canvasRefs.current.forEach(({current}) => current.endVerticalScroll(scrollTop));
       }
     },
     [gridModel.rowHeight, gridModel.viewportRowCount, setRange]
@@ -118,12 +111,8 @@ const Viewport = forwardRef(function Viewport(
     useLayoutEffect(() => {
       if (draggedColumn){
         // TODO need the indedx here then we can lookup ref bby index
-        const columnGroup = getColumnGroup(gridModel, draggedColumn);
-        if (columnGroup.locked){
-          fixedCanvas.current.hideDraggedColumn(draggedColumn)        
-        } else {
-          scrollableCanvas.current.hideDraggedColumn(draggedColumn)        
-        }
+        const columnGroupIdx = getColumnGroupIdx(gridModel, draggedColumn);
+        canvasRefs.current[columnGroupIdx].current.hideDraggedColumn(draggedColumn);
       }
     },[draggedColumn])
 
@@ -195,7 +184,7 @@ const Viewport = forwardRef(function Viewport(
               horizontalScrollbarHeight={horizontalScrollbarHeight.current}
               key={idx}
               meta={gridModel.meta}
-              ref={columnGroup.locked ? fixedCanvas : scrollableCanvas}
+              ref={canvasRefs.current[idx]}
               rowHeight={gridModel.rowHeight}
               rows={data.rows}
               totalHeaderHeight={gridModel.headerHeight * gridModel.headingDepth}
@@ -207,7 +196,7 @@ const Viewport = forwardRef(function Viewport(
           <ColumnBearer
             column={draggedColumn}
             gridModel={gridModel}
-            initialScrollPosition={scrollableCanvas.current.scrollLeft}
+            initialScrollPosition={canvasRefs.current[scrollableCanvasIdx].current.scrollLeft}
             onDrag={handleColumnDrag}
             onScroll={handleColumnBearerScroll}
             rows={data.rows}

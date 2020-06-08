@@ -10,6 +10,16 @@ export function getColumnGroup({columnGroups}, column){
   return null;
 }
 
+/** @type {(gm: GridModel, c: Column) => number} */
+export function getColumnGroupIdx({columnGroups}, column){
+  for (let i=0; i<columnGroups.length; i++){
+    if (columnGroups[i].columns.some(({key}) => key === column.key)){
+      return i;
+    }
+  }
+  return -1;
+}
+
 /** @type {(columnGroup: ColumnGroup, column: Column, targetColumn: Column) => ColumnGroup} */
 export function moveColumn(columnGroup, column, targetColumn){
   const col = columnGroup.columns.find(c => c.key === column.key);
