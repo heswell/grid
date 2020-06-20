@@ -12,7 +12,7 @@ export default createUseStyles({
 
     backgroundColor: 'white',
     position: 'absolute',
-    left: 50,
+    left: 125,
     top: 50,
     fontFamily: 'Roboto',
     fontSize: '0.825em',

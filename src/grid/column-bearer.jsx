@@ -12,16 +12,27 @@ const RIGHT = 'right';
 
 
 /** @type {(dragData: ColumnDragData, dp: number, sp: number) => [number, number, number] } */
-function getTargetColumn({columnPositions}, dragPosition, scrollPosition){
+function getTargetColumn({column: {width}, columnPositions}, dragPosition, scrollPosition){
     console.log(`getTargetColumn scrollPosition ${scrollPosition} dragPosition: ${dragPosition}`)
-    const absDragPosition = dragPosition + scrollPosition;
+    const columnStart = dragPosition + scrollPosition;
+    const columnEnd = columnStart + width;
+    const [[offsetLeft]] = columnPositions;
     // This must be more sensitive detecting moves over another columnGroup
     for (let i=0,idx=0; i<columnPositions.length; i++){
         const positions = columnPositions[i];
         for (let j=0; j< positions.length; j++, idx++){
-            if (absDragPosition <= positions[j]){
-                const [[offsetLeft]] = columnPositions;
-                return [idx, positions[j] - offsetLeft - scrollPosition, i];
+            const position = positions[j] - offsetLeft;
+            if (columnStart <= position && columnEnd > position){
+                let groupIdx = i;
+                if (i > 0 && j === 0){
+                    // break between 2 groups
+                    const centerPoint = columnStart + width / 2;
+                    if (centerPoint < position){
+                        groupIdx -= 1;
+                    }
+
+                }
+                return [idx, position - scrollPosition, groupIdx];
             }
         }
     }
