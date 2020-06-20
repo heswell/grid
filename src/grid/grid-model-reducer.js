@@ -102,8 +102,7 @@ function handleAddColumn(state, {insertIdx: absInsertIdx, targetColumnGroup, col
   const sourceColumnGroup = getColumnGroup(state, column);
   const sourceIdx = state.columnGroups.indexOf(sourceColumnGroup);
   const sourceColumn = state.columnGroups[sourceIdx].columns.find(col => col.key === column.key);
-
-    const columns = state.columnGroups.flatMap((columnGroup, idx) => {
+  const columns = state.columnGroups.flatMap((columnGroup, idx) => {
     if (idx === sourceIdx && sourceIdx !== targetIdx){
       return columnGroup.columns.filter(col => col.key !== column.key);
     } else if (idx === sourceIdx){

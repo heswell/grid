@@ -13,7 +13,7 @@ const RIGHT = 'right';
 
 /** @type {(dragData: ColumnDragData, dp: number, sp: number) => [number, number, number] } */
 function getTargetColumn({columnPositions}, dragPosition, scrollPosition){
-    console.log(columnPositions)
+    // This must be more sensitive detecting moves over another columnGroup
     for (let i=0,idx=0; i<columnPositions.length; i++){
         const positions = columnPositions[i];
         for (let j=0; j< positions.length; j++, idx++){
@@ -71,6 +71,7 @@ const ColumnBearer = forwardRef(({columnDragData, gridModel, onDrag, onScroll, r
     const top = headerHeight * (headingDepth - 1);
     const classes = useStyles();
     const columnPosition = useRef(columnDragData.initialColumnPosition);
+    const columnGroupIdx = useRef(columnDragData.columnGroupIdx);
     const [scrollBounds, withinScrollZone] = useScrollBounds(gridModel, columnDragData.column);    
     const el = useRef(null);
     const scrollTimeout = useRef(null);
@@ -118,16 +119,18 @@ const ColumnBearer = forwardRef(({columnDragData, gridModel, onDrag, onScroll, r
                 el.current.style.left = columnPosition.current + 'px';
             }
 
-            const [insertIdx, insertPos, columnGroupIdx] = getTargetColumn(columnDragData, columnPosition.current, scrollPosition.current);
-            if (columnGroupIdx !== columnDragData.columnGroupIdx){
-                const targetColumnGroup = gridModel.columnGroups[columnGroupIdx]
-                // we have to tell the viewport as well, so it can remove visual effects
-                onDrag('drag', column, null);
-                // TODO we won't need the targetColumnGroup because insertIdx spans all columnGroups
-                dispatchGridModelAction({type: 'add-col', targetColumnGroup, column, insertIdx});
-                // No need to cancel, the ColumnBearer will re-render, but the hook state is preserved
-                //cancelDrag();
-            } else if (insertPos !== prevPosition.current) {
+            const [insertIdx, insertPos, groupIdx] = getTargetColumn(columnDragData, columnPosition.current, scrollPosition.current);
+            if (groupIdx !== columnGroupIdx.current){
+                // We want to apply appropriate class to columnbearer
+                const columnGroup = gridModel.columnGroups[groupIdx];
+                if (columnGroup.locked){
+                    el.current.classList.add(classes.fixed);
+                } else {
+                    el.current.classList.remove(classes.fixed);
+                }
+                columnGroupIdx.current = groupIdx;
+            }
+            if (insertPos !== prevPosition.current) {
                 console.log(`insertPosition ${insertPos} insertIdx ${insertIdx} ${JSON.stringify(columnDragData.columnPositions)}`)
                 onDrag('drag', column, insertIdx, insertPos);
             }

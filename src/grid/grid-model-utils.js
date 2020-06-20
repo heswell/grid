@@ -7,10 +7,11 @@ export function getColumnGroup({columnGroups}, target){
     const lastGroup = columnGroups.length - 1;
     for (let i=0,idx=0;i<=lastGroup;i++){
       const columnGroup = columnGroups[i];
-      for (let j=0;j<columnGroup.columns.length;j++, idx++){
+      const columnCount = columnGroup.columns.length;
+      for (let j=0;j<columnCount;j++, idx++){
         if (target === idx){
           return columnGroup;
-        } else if (i === lastGroup && target === j + 1){
+        } else if (i === lastGroup && target === idx+1 && j === columnCount - 1){
           return columnGroup;
         }
       }
