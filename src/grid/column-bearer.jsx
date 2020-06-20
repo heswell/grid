@@ -13,6 +13,7 @@ const RIGHT = 'right';
 
 /** @type {(dragData: ColumnDragData, dp: number, sp: number) => [number, number, number] } */
 function getTargetColumn({columnPositions}, dragPosition, scrollPosition){
+    console.log(columnPositions)
     for (let i=0,idx=0; i<columnPositions.length; i++){
         const positions = columnPositions[i];
         for (let j=0; j< positions.length; j++, idx++){

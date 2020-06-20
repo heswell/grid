@@ -12,7 +12,7 @@ import useScroll from "./use-scroll";
 import useUpdate from "./use-update";
 import useStyles from './use-styles';
 import dataReducer, { initialData } from "./grid-data-reducer";
-import {getColumnGroupIdx} from './grid-model-utils.js';
+import {getColumnGroupColumnIdx} from './grid-model-utils.js';
 
 import Canvas from "./canvas";
 import ColumnBearer from './column-bearer';
@@ -90,7 +90,8 @@ const Viewport = forwardRef(function Viewport(
         insertIndicator.current.style.left = (insertPos) + 'px';
         columnBearer.current.setFinalPosition(insertPos);
       }
-      await canvas.endDrag(draggedColumn, insertIdx, insertPos);
+      const groupInsertIdx = getColumnGroupColumnIdx(gridModel, insertIdx);
+      await canvas.endDrag(columnDragData, groupInsertIdx);
       onColumnDrag(dragPhase, draggedColumn, insertIdx);
     }
   },[gridModel, onColumnDrag, columnDragData]);
@@ -120,7 +121,7 @@ const Viewport = forwardRef(function Viewport(
     useLayoutEffect(() => {
       if (columnDragData){
         const {column, columnGroupIdx} = columnDragData;
-        const columnOffset = canvasRefs.current[columnGroupIdx].current.hideDraggedColumn(column);
+        const columnOffset = canvasRefs.current[columnGroupIdx].current.startDrag(column);
         const {left} = viewportEl.current.getBoundingClientRect();
         insertIndicator.current.style.left = (columnOffset-left) + 'px';
       }

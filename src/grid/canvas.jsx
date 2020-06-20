@@ -62,22 +62,20 @@ const Canvas = forwardRef(function Canvas(
       contentEl.current.style.transform = "translate3d(0px, 0px, 0px)";
     },
 
-    endDrag: (draggedColumn, insertIdx, insertPos) => {
+    endDrag: (columnDragData, insertIdx) => {
+      const {column: draggedColumn, columnGroupIdx} = columnDragData;
       const idx = columns.findIndex(col => col.key === draggedColumn.key);
-
-      console.log(`endDrag insertPos ${insertPos} insertIdx: ${insertIdx}`)
       const rows = contentEl.current.childNodes;
       const headerCells = getHeaderCells(canvasEl, columnGroup);
-      // const lastIdx = columns.length - 1; 
+
       const effect = { 
         replaceClass: {idx, className: classes.DraggedColumn, newClassName: classes.Vanishing}, 
         openSpaceLeft: {idx: insertIdx}
       };
       applyOperation(effect, [headerCells], draggedColumn.width);
       applyOperation(effect, rows, draggedColumn.width);
-      // finalDragDisplay([headerCells], idx, hilightedIndex.current, hilightedIndex.current, lastIdx );
-      // finalDragDisplay(rows, idx, hilightedIndex.current, hilightedIndex.current, lastIdx );
       hilightedIndex.current = -1;
+
       return new Promise(resolve => 
         rows[idx].addEventListener('transitionend', () => {
           const effect = {
@@ -96,7 +94,7 @@ const Canvas = forwardRef(function Canvas(
       contentEl.current.style.transform = `translate3d(0px, -${scrollTop}px, 0px)`;
     },
 
-    hideDraggedColumn: column => {
+    startDrag: column => {
 
       const idx = columns.findIndex(col => col.key === column.key);
       const rows = contentEl.current.childNodes;
@@ -109,38 +107,6 @@ const Canvas = forwardRef(function Canvas(
 
       const {left} = headerCells[idx].getBoundingClientRect();
       return left;
-    },
-
-    reverseDragEffect: (draggedColumn, operation) => {
-      const headerCells = getHeaderCells(canvasEl, columnGroup);
-      const rows = contentEl.current.childNodes;
-      applyOperation(operation, [headerCells], draggedColumn.width);
-      applyOperation(operation, rows, draggedColumn.width);
-    },
-
-    makeSpaceForColumn: (column, targetColumn) => {
-      console.log(`makeSpaceForColumn`)
-      const idx = columns.findIndex(col => col.key === targetColumn.key);
-      if (hilightedIndex.current === idx){
-        return null;
-      }
-
-      const idxDraggedColumn = columns.findIndex(col => col.key === column.key);
-      const headerCells = getHeaderCells(canvasEl, columnGroup);
-      const rows = contentEl.current.childNodes;
-      const lastIdx = columns.length - 1;  
-      const [effect, reverseEffect] = setDragDisplay(idxDraggedColumn, idx, hilightedIndex.current, column.width, lastIdx );
-
-      // console.log(` ops: ${JSON.stringify(effect)}
-      // reverse Ops: ${JSON.stringify(reverseEffect)}
-      // `)
-
-      applyOperation(effect, [headerCells], column.width);
-      applyOperation(effect, rows, column.width);
-
-      hilightedIndex.current = idx;
-
-      return reverseEffect;
     },
 
     scrollBy: scrollDistance => scrollBy(scrollDistance),
@@ -308,62 +274,6 @@ function finalDragDisplay(rows, origin, target, previous, lastIdx){
         closeSpaceLeft(cells[previous+1], true)
       }
     }
-}
-
-function setDragDisplay(origin, target, previous, size, lastIdx){
-
-  const operation = {};
-  const reverseOperation = {};
-    if (target === -1){
-      // the draggedColumn has left this Canvas (columnGroup)
-      // Note, we only want to show it again if moving between fixed/scrollable canvas
-      // i.e where re-render will occur
-      /*
-      cells[origin].style.display = '';
-      if (previous < origin){
-        closeSpaceLeft(cells[previous], true)
-        reverseOperation.openSpaceLeft = previous;
-      } else {
-        closeSpaceLeft(cells[previous+1], true)
-        reverseOperation.openSpaceLeft = previous + 1;
-      }
-      */
-    } else {
-
-      // dragging column within same canvas
-      if (previous === lastIdx){
-        console.log(`1)`)
-        //closeSpaceRight(cells[previous - 1])
-      } else if (target > origin && target === lastIdx){
-        console.log(`2)`)
-        //closeSpaceLeft(cells[previous+1])
-      } else if ((previous === origin || target >= origin) && target !== lastIdx){
-        console.log(`3)`)
-        //closeSpaceLeft(cells[previous + 1])
-      } else {
-        console.log(`4)`)
-        //closeSpaceLeft(cells[previous])
-      }
-
-      if (target < origin){
-        operation.openSpaceLeft = reverseOperation.closeSpaceLeft = {idx:target};
-      } else if (target === lastIdx){
-        if (target > origin /*|| cells.length === 1*/){
-          operation.openSpaceRight = reverseOperation.closeSpaceRight = {idx:target}; 
-        } else {
-          operation.openSpaceRight = reverseOperation.closeSpaceRight = {idx:target - 1}; 
-        }
-      } else {
-        if (previous === -1){
-          alert('never')
-          operation.openSpaceLeft = {idx: -(target + 1)};
-          // keep the gap open from which draggedColumn was dragged
-        } else {
-          reverseOperation.closeSpaceLeft = operation.openSpaceLeft = {idx:target};
-        }
-      }
-  }
-  return [operation, reverseOperation];
 }
 
 const closeSpaceLeft = (el, suppressTransition) => {

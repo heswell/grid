@@ -151,10 +151,10 @@ type Operation = any;
 
 type CanvasRef = React.RefObject<{
   beginHorizontalScroll: (scrollTop: number) => void;
-  endDrag: (column: Column, insertIdx: number, insertPos: number) => void;
+  endDrag: (columnDragData: ColumnDragData, insertIdx: number) => void;
   endHorizontalScroll: (scrollTop: number) => void;
   beginVerticalScroll: () => void;
-  hideDraggedColumn: (column: Column) => number;
+  startDrag: (column: Column) => number;
   /**
    * Returns to default display mode.
    * Sets the height of Canvas element and applies a transform to content.
@@ -164,8 +164,6 @@ type CanvasRef = React.RefObject<{
    * Scrolls canvas by amount requested or less if scrollLimit reached.
    * Returns distance actually scrolled.
    */
-  reverseDragEffect: (operation: Operation, column: Column) => void;
-  makeSpaceForColumn: (column: Column, targetColumn: Column) => Operation;
   scrollBy: (scrollLeft: number) => number;
   scrollLeft: number;
 }>;

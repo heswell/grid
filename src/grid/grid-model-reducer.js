@@ -1,5 +1,5 @@
 import { metaData } from "@heswell/utils";
-import {getColumnGroup, ColumnGroup} from './grid-model-utils';
+import {getColumnGroup, getColumnGroupColumnIdx, ColumnGroup} from './grid-model-utils';
 
 const DEFAULT_COLUMN_WIDTH = 100;
 
@@ -17,6 +17,7 @@ export const initModel = options => {
 
 /** @type {(s: GridModel, a: GridModelAction) => GridModel} */
 export default (state, action) => {
+  console.log(`model reducer ${action.type}`)
   // @ts-ignore
   return reducerActionHandlers[action.type](state, action);
 };
@@ -91,10 +92,12 @@ function resizeHeading(state, column, width, headingResizeState){
 }
 
 /** @type {GridModelReducer<'add-col'>} */
-function handleAddColumn(state, {insertIdx, targetColumnGroup, column}){
-  if (insertIdx !== -1){
-    targetColumnGroup = getColumnGroup(state, insertIdx);
+function handleAddColumn(state, {insertIdx: absInsertIdx, targetColumnGroup, column}){
+  if (absInsertIdx !== -1){
+    targetColumnGroup = getColumnGroup(state, absInsertIdx);
   }
+  const insertIdx = getColumnGroupColumnIdx(state, absInsertIdx);
+
   const targetIdx = state.columnGroups.indexOf(targetColumnGroup);
   const sourceColumnGroup = getColumnGroup(state, column);
   const sourceIdx = state.columnGroups.indexOf(sourceColumnGroup);

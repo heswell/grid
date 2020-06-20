@@ -68,17 +68,34 @@ export const ColumnGroup = {
       columns.splice(idx, 0, column);
     }
     return columns;
-
   }
 }
 
-export const measureColumns = (gridModel, left) => 
-  gridModel.columnGroups.map(columnGroup => 
-    columnGroup.columns.reduce((sizes, column, i) => {
-      if (i === 0){
-        sizes.push(left);
+export const measureColumns = (gridModel, left) => {
+  let position = left;
+  const lastGroup = gridModel.columnGroups.length- 1;
+  return gridModel.columnGroups.map((columnGroup,groupIdx) => 
+    columnGroup.columns.reduce((sizes, column, i, columns) => {
+      sizes.push(position);
+      position += column.width;
+      if (groupIdx === lastGroup && i === columns.length - 1){
+        sizes.push(position);
       }
-      sizes.push(sizes[sizes.length-1] + column.width);
       return sizes;
     },[]));
+  }
 
+export const getColumnGroupColumnIdx = ({columnGroups}, idx) => {
+  let relativeIdx = idx;
+  const lastGroup = columnGroups.length - 1;
+  for (let i=0; i<=lastGroup; i++){
+    const {columns} = columnGroups[i];
+    if (relativeIdx < columns.length){
+      break;
+    } else if (i === lastGroup && relativeIdx === columns.length){
+      break;
+    }
+    relativeIdx -= columns.length;
+  }
+  return relativeIdx;
+}
