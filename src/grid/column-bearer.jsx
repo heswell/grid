@@ -13,13 +13,15 @@ const RIGHT = 'right';
 
 /** @type {(dragData: ColumnDragData, dp: number, sp: number) => [number, number, number] } */
 function getTargetColumn({columnPositions}, dragPosition, scrollPosition){
+    console.log(`getTargetColumn scrollPosition ${scrollPosition} dragPosition: ${dragPosition}`)
+    const absDragPosition = dragPosition + scrollPosition;
     // This must be more sensitive detecting moves over another columnGroup
     for (let i=0,idx=0; i<columnPositions.length; i++){
         const positions = columnPositions[i];
         for (let j=0; j< positions.length; j++, idx++){
-            if (dragPosition <= positions[j]){
+            if (absDragPosition <= positions[j]){
                 const [[offsetLeft]] = columnPositions;
-                return [idx, positions[j] - offsetLeft, i];
+                return [idx, positions[j] - offsetLeft - scrollPosition, i];
             }
         }
     }

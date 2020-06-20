@@ -68,25 +68,37 @@ const Canvas = forwardRef(function Canvas(
       const rows = contentEl.current.childNodes;
       const headerCells = getHeaderCells(canvasEl, columnGroup);
 
-      const effect = { 
-        replaceClass: {idx, className: classes.DraggedColumn, newClassName: classes.Vanishing}, 
-        openSpaceLeft: {idx: insertIdx}
-      };
-      applyOperation(effect, [headerCells], draggedColumn.width);
-      applyOperation(effect, rows, draggedColumn.width);
-      hilightedIndex.current = -1;
+      if (idx === -1){
+        // The (original) draggedColumn is no longer in the scroll window
+        // We need to apply effect to headers because headers are not (yet) virtualized
+        const effect = { 
+          removeClass: {idx, className: classes.DraggedColumn}
+        };
+        applyOperation(effect, [headerCells], draggedColumn.width);
+        hilightedIndex.current = -1;
 
-      return new Promise(resolve => 
-        rows[idx].addEventListener('transitionend', () => {
-          const effect = {
-            removeClass: {idx, className: classes.Vanishing},
-            closeSpaceLeft: {idx: -insertIdx}
-          };
-          applyOperation(effect, [headerCells]);
-          applyOperation(effect, rows);
-          resolve();
-        })
-      );
+      } else {
+        const effect = { 
+          replaceClass: {idx, className: classes.DraggedColumn, newClassName: classes.Vanishing}, 
+          openSpaceLeft: {idx: insertIdx}
+        };
+        applyOperation(effect, [headerCells], draggedColumn.width);
+        applyOperation(effect, rows, draggedColumn.width);
+        hilightedIndex.current = -1;
+  
+        return new Promise(resolve => 
+          headerCells[idx].addEventListener('transitionend', () => {
+            const effect = {
+              removeClass: {idx, className: classes.Vanishing},
+              closeSpaceLeft: {idx: -insertIdx}
+            };
+            applyOperation(effect, [headerCells]);
+            applyOperation(effect, rows);
+            resolve();
+          })
+        );
+      }
+
     },
 
     endVerticalScroll: scrollTop => {
