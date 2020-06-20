@@ -4,10 +4,11 @@ import GridContext from "./grid-context";
 import HeaderCell from "./header-cell";
 import HeadingCell from "./heading-cell";
 import useStyles from './use-styles';
+import { getColumnGroupIdx } from "./grid-model-utils";
 
 /** @type {ColumnGroupHeaderType} */
 const ColumnGroupHeader = React.memo(forwardRef(function ColumnGroupHeader(
-  { columnGroup, depth, height, onColumnDrag, width },
+  { columnGroup, columnGroupIdx, depth, height, onColumnDrag, width },
   ref
 ) {
   const scrollingHeaderWrapper = useRef(null);
@@ -28,6 +29,10 @@ const ColumnGroupHeader = React.memo(forwardRef(function ColumnGroupHeader(
   },[dispatchGridModelAction]);
 
   const classes = useStyles();
+
+  const handleDrag = useCallback((phase, column, columnPosition, mousePosition) => 
+    onColumnDrag(phase,columnGroup, columnGroupIdx, column, columnPosition, mousePosition)
+  ,[columnGroup, getColumnGroupIdx])
 
   const renderColHeadings = heading =>
   heading.map((item, idx) =>
@@ -61,7 +66,7 @@ const ColumnGroupHeader = React.memo(forwardRef(function ColumnGroupHeader(
           <HeaderCell
             column={column}
             key={column.key}
-            onDrag={onColumnDrag}
+            onDrag={handleDrag}
             onResize={handleColumnResize}
           />
         ))}

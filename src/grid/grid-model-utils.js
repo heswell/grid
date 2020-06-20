@@ -1,10 +1,25 @@
 import ColumnGroupHeader from "./column-group-header";
 
-/** @type {(gm: GridModel, c: Column) => ColumnGroup} */
-export function getColumnGroup({columnGroups}, column){
-  for (let columnGroup of columnGroups){
-    if (columnGroup.columns.some(({key}) => key === column.key)){
-      return columnGroup;
+/** @type {(gm: GridModel, target: Column | number) => ColumnGroup} */
+export function getColumnGroup({columnGroups}, target){
+  if (typeof target === 'number'){
+    // this can be simplified, dom\t need to iterate columns
+    const lastGroup = columnGroups.length - 1;
+    for (let i=0,idx=0;i<=lastGroup;i++){
+      const columnGroup = columnGroups[i];
+      for (let j=0;j<columnGroup.columns.length;j++, idx++){
+        if (target === idx){
+          return columnGroup;
+        } else if (i === lastGroup && target === j + 1){
+          return columnGroup;
+        }
+      }
+    }
+  } else {
+    for (let columnGroup of columnGroups){
+      if (columnGroup.columns.some(({key}) => key === target.key)){
+        return columnGroup;
+      }
     }
   }
   return null;
@@ -56,3 +71,14 @@ export const ColumnGroup = {
 
   }
 }
+
+export const measureColumns = (gridModel, left) => 
+  gridModel.columnGroups.map(columnGroup => 
+    columnGroup.columns.reduce((sizes, column, i) => {
+      if (i === 0){
+        sizes.push(left);
+      }
+      sizes.push(sizes[sizes.length-1] + column.width);
+      return sizes;
+    },[]));
+

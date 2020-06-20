@@ -36,6 +36,7 @@ const Canvas = forwardRef(function Canvas(
   const contentEl = useRef(null);
   const hilightedIndex = useRef(-1);
   const { dispatchGridAction } = useContext(GridContext);
+  const classes = useStyles();
 
   const [[columns, cellKeys], dispatchCanvasAction] = useReducer(
     canvasReducer,
@@ -61,14 +62,33 @@ const Canvas = forwardRef(function Canvas(
       contentEl.current.style.transform = "translate3d(0px, 0px, 0px)";
     },
 
-    endDrag: (draggedColumn, targetColumn) => {
+    endDrag: (draggedColumn, insertIdx, insertPos) => {
       const idx = columns.findIndex(col => col.key === draggedColumn.key);
+
+      console.log(`endDrag insertPos ${insertPos} insertIdx: ${insertIdx}`)
       const rows = contentEl.current.childNodes;
       const headerCells = getHeaderCells(canvasEl, columnGroup);
-      const lastIdx = columns.length - 1; 
-      finalDragDisplay([headerCells], idx, hilightedIndex.current, hilightedIndex.current, lastIdx );
-      finalDragDisplay(rows, idx, hilightedIndex.current, hilightedIndex.current, lastIdx );
+      // const lastIdx = columns.length - 1; 
+      const effect = { 
+        replaceClass: {idx, className: classes.DraggedColumn, newClassName: classes.Vanishing}, 
+        openSpaceLeft: {idx: insertIdx}
+      };
+      applyOperation(effect, [headerCells], draggedColumn.width);
+      applyOperation(effect, rows, draggedColumn.width);
+      // finalDragDisplay([headerCells], idx, hilightedIndex.current, hilightedIndex.current, lastIdx );
+      // finalDragDisplay(rows, idx, hilightedIndex.current, hilightedIndex.current, lastIdx );
       hilightedIndex.current = -1;
+      return new Promise(resolve => 
+        rows[idx].addEventListener('transitionend', () => {
+          const effect = {
+            removeClass: {idx, className: classes.Vanishing},
+            closeSpaceLeft: {idx: -insertIdx}
+          };
+          applyOperation(effect, [headerCells]);
+          applyOperation(effect, rows);
+          resolve();
+        })
+      );
     },
 
     endVerticalScroll: scrollTop => {
@@ -77,38 +97,50 @@ const Canvas = forwardRef(function Canvas(
     },
 
     hideDraggedColumn: column => {
+
       const idx = columns.findIndex(col => col.key === column.key);
       const rows = contentEl.current.childNodes;
       const headerCells = getHeaderCells(canvasEl, columnGroup);
-      const lastIdx = columns.length - 1;
-      setDragDisplay([headerCells], idx, idx, -1, column.width, lastIdx);
-      setDragDisplay(rows, idx, idx, -1, column.width, lastIdx );
-      
+      const effect = { addClass: {idx} };
+      applyOperation(effect, [headerCells], column.width);
+      applyOperation(effect, rows, column.width);
+
       hilightedIndex.current = idx;
+
+      const {left} = headerCells[idx].getBoundingClientRect();
+      return left;
+    },
+
+    reverseDragEffect: (draggedColumn, operation) => {
+      const headerCells = getHeaderCells(canvasEl, columnGroup);
+      const rows = contentEl.current.childNodes;
+      applyOperation(operation, [headerCells], draggedColumn.width);
+      applyOperation(operation, rows, draggedColumn.width);
     },
 
     makeSpaceForColumn: (column, targetColumn) => {
-      const idxDraggedColumn = columns.findIndex(col => col.key === column.key);
-      if (targetColumn === null){
-        const headerCells = getHeaderCells(canvasEl, columnGroup);
-        const rows = contentEl.current.childNodes;
-        const lastIdx = columns.length - 1;  
-        clearDragDisplay([headerCells], idxDraggedColumn, hilightedIndex.current, lastIdx );
-        clearDragDisplay(rows, idxDraggedColumn, hilightedIndex.current, lastIdx );
-
-        hilightedIndex.current = -1;
-
-      } else {
-        const idx = columns.findIndex(col => col.key === targetColumn.key);
-        if (hilightedIndex.current !== idx){
-          const headerCells = getHeaderCells(canvasEl, columnGroup);
-          const rows = contentEl.current.childNodes;
-          const lastIdx = columns.length - 1;  
-          setDragDisplay([headerCells], idxDraggedColumn, idx, hilightedIndex.current, column.width, lastIdx );
-          setDragDisplay(rows, idxDraggedColumn, idx, hilightedIndex.current, column.width, lastIdx );
-        }
-        hilightedIndex.current = idx;
+      console.log(`makeSpaceForColumn`)
+      const idx = columns.findIndex(col => col.key === targetColumn.key);
+      if (hilightedIndex.current === idx){
+        return null;
       }
+
+      const idxDraggedColumn = columns.findIndex(col => col.key === column.key);
+      const headerCells = getHeaderCells(canvasEl, columnGroup);
+      const rows = contentEl.current.childNodes;
+      const lastIdx = columns.length - 1;  
+      const [effect, reverseEffect] = setDragDisplay(idxDraggedColumn, idx, hilightedIndex.current, column.width, lastIdx );
+
+      // console.log(` ops: ${JSON.stringify(effect)}
+      // reverse Ops: ${JSON.stringify(reverseEffect)}
+      // `)
+
+      applyOperation(effect, [headerCells], column.width);
+      applyOperation(effect, rows, column.width);
+
+      hilightedIndex.current = idx;
+
+      return reverseEffect;
     },
 
     scrollBy: scrollDistance => scrollBy(scrollDistance),
@@ -118,6 +150,47 @@ const Canvas = forwardRef(function Canvas(
     }
   }));
 
+  // TODO memoize
+  function applyOperation(ops, rows, width){
+    Object.entries(ops).forEach(([opName, args]) => {
+      const suppressTransition = args.idx < 0;
+      const idx = Math.abs(args.idx);
+      for (let i=0;i<rows.length; i++){
+        const cells = Array.isArray(rows[i]) ? rows[i] : rows[i].childNodes;
+        if (idx !== -1 && idx < cells.length){
+          switch(opName){
+            case 'openSpaceLeft': 
+              openSpaceLeft(cells[idx], width, suppressTransition);
+              break;
+            case 'closeSpaceLeft': 
+              closeSpaceLeft(cells[idx], suppressTransition);
+              break;
+            case 'openSpaceRight': 
+              openSpaceRight(cells[idx], width);
+              break;
+            case 'closeSpaceRight': 
+              closeSpaceRight(cells[idx], suppressTransition);
+              break;
+            case 'hide':
+              debugger;
+              cells[idx].style.display = 'none';
+              break;
+            case 'addClass':
+              cells[idx].classList.add(classes.DraggedColumn);
+              break;
+            case 'removeClass':
+              cells[idx].classList.remove(args.className);
+              break;
+            case 'replaceClass':
+              cells[idx].classList.replace(args.className, args.newClassName);
+              break;
+          }
+        }
+      }
+    });
+  
+  }
+  
   const scrollBy = useCallback(scrollDistance => {
 
     let scrollLeft = canvasEl.current.scrollLeft;
@@ -169,7 +242,6 @@ const Canvas = forwardRef(function Canvas(
     })
     .sort(byKey);
 
-  const classes = useStyles();
   const rootClassName = cx(classes.Canvas, {
     [classes.fixed]: columnGroup.locked,
     [classes.scrollable]: !columnGroup.locked
@@ -211,23 +283,10 @@ const Canvas = forwardRef(function Canvas(
 export default Canvas;
 
 function getHeaderCells(canvasEl, columnGroup){
-  return columnGroup.locked
+  return columnGroup.locked || columnGroup.width >= columnGroup.contentWidth
     ? Array.from(canvasEl.current.querySelectorAll("[role='columnheader']"))
     : [null].concat(Array.from(canvasEl.current.querySelectorAll("[role='columnheader']")));
 
-}
-
-function clearDragDisplay(rows, origin, previous, lastIdx){
-  for (let i=0;i<rows.length; i++){
-    const cells = Array.isArray(rows[i]) ? rows[i] : rows[i].childNodes;
-      if (previous === lastIdx && cells.length > 1){
-        closeSpaceRight(cells[previous - 1], true)
-      } else if (previous < origin || cells.length === 1){
-        closeSpaceLeft(cells[previous], true)
-      } else {
-        closeSpaceLeft(cells[previous+1], true)
-      }
-  }
 }
 
 function finalDragDisplay(rows, origin, target, previous, lastIdx){
@@ -251,59 +310,70 @@ function finalDragDisplay(rows, origin, target, previous, lastIdx){
     }
 }
 
-function setDragDisplay(rows, origin, target, previous, size, lastIdx){
+function setDragDisplay(origin, target, previous, size, lastIdx){
 
-  for (let i=0;i<rows.length; i++){
-    const cells = Array.isArray(rows[i]) ? rows[i] : rows[i].childNodes;
+  const operation = {};
+  const reverseOperation = {};
     if (target === -1){
       // the draggedColumn has left this Canvas (columnGroup)
       // Note, we only want to show it again if moving between fixed/scrollable canvas
       // i.e where re-render will occur
+      /*
       cells[origin].style.display = '';
       if (previous < origin){
         closeSpaceLeft(cells[previous], true)
+        reverseOperation.openSpaceLeft = previous;
       } else {
         closeSpaceLeft(cells[previous+1], true)
+        reverseOperation.openSpaceLeft = previous + 1;
       }
-
+      */
     } else {
 
       // dragging column within same canvas
-      if (previous === -1){
-        cells[origin].style.display = 'none';
-      } else if (previous === lastIdx /*&& origin === lastIdx*/){
-        closeSpaceRight(cells[previous - 1])
+      if (previous === lastIdx){
+        console.log(`1)`)
+        //closeSpaceRight(cells[previous - 1])
       } else if (target > origin && target === lastIdx){
-        closeSpaceLeft(cells[previous+1])
+        console.log(`2)`)
+        //closeSpaceLeft(cells[previous+1])
       } else if ((previous === origin || target >= origin) && target !== lastIdx){
-        closeSpaceLeft(cells[previous + 1])
+        console.log(`3)`)
+        //closeSpaceLeft(cells[previous + 1])
       } else {
-        closeSpaceLeft(cells[previous])
+        console.log(`4)`)
+        //closeSpaceLeft(cells[previous])
       }
 
       if (target < origin){
-        openSpaceLeft(cells[target], size);
+        operation.openSpaceLeft = reverseOperation.closeSpaceLeft = {idx:target};
       } else if (target === lastIdx){
-        if (target > origin || cells.length === 1){
-          openSpaceRight(cells[target], size, target === origin);
+        if (target > origin /*|| cells.length === 1*/){
+          operation.openSpaceRight = reverseOperation.closeSpaceRight = {idx:target}; 
         } else {
-          openSpaceRight(cells[target - 1], size, target === origin);
+          operation.openSpaceRight = reverseOperation.closeSpaceRight = {idx:target - 1}; 
         }
       } else {
-        openSpaceLeft(cells[target + 1], size, target === origin);
+        if (previous === -1){
+          alert('never')
+          operation.openSpaceLeft = {idx: -(target + 1)};
+          // keep the gap open from which draggedColumn was dragged
+        } else {
+          reverseOperation.closeSpaceLeft = operation.openSpaceLeft = {idx:target};
+        }
       }
-    } 
   }
+  return [operation, reverseOperation];
 }
 
 const closeSpaceLeft = (el, suppressTransition) => {
   el.style.marginLeft = '0px';
-  el.style.width = (parseInt(el.style.width) - 1) + 'px';
-  el.style.borderLeft = 'none';
+  // el.style.width = (parseInt(el.style.width) - 1) + 'px';
+  // el.style.borderLeft = 'none';
   if (suppressTransition === true){
     el.style.transition = 'none';
   } else {
-    el.style.transition = 'margin .15s ease-out';
+    el.style.transition = 'margin .15s ease-in-out';
   }
 }
 
@@ -314,16 +384,16 @@ const closeSpaceRight = (el, suppressTransition) => {
   if (suppressTransition === true){
     el.style.transition = 'none';
   } else {
-    el.style.transition = 'margin .15s ease-out';
+    el.style.transition = 'margin .15s ease-in-out';
   }
 }
 
 const openSpaceLeft = (el, size, suppressTransition) => {
   el.style.marginLeft = (size-1) + 'px';
-  el.style.width = (parseInt(el.style.width) + 1) + 'px';
-  el.style.borderLeft = 'solid 1px #ccc';
+  // el.style.width = (parseInt(el.style.width) + 1) + 'px';
+  // el.style.borderLeft = 'solid 1px #ccc';
   if (suppressTransition !== true){
-    el.style.transition = 'margin .15s ease-out';
+    el.style.transition = 'margin .3s ease';
   }
 }
 
@@ -332,6 +402,6 @@ const openSpaceRight = (el, size, suppressTransition) => {
   el.style.width = (parseInt(el.style.width) + 1) + 'px';
   el.style.borderRight = 'solid 1px #ccc';
   if (suppressTransition !== true){
-    el.style.transition = 'margin .15s ease-out';
+    el.style.transition = 'margin .15s ease-in-out';
   }
 }

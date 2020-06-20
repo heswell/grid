@@ -26,12 +26,6 @@ interface ColumnGroup {
   width: number;
 };
 
-interface DraggedColumn extends Column {
-  position: number;
-  dragPosition: number;
-}
-
-
 type ColumnMeta = {
   [key: string]: number;
 }
@@ -84,7 +78,7 @@ type GridActionReducerFactory = (handlerMap: GridActionHandlerMap) => (state: {}
 type GridModelResizeAction = { type: 'resize', height: number, width: number};
 type GridModelResizeColAction = { type: 'resize-col', phase: ResizePhase, column: Column, width?: number};
 type GridModelResizeHeadingAction = { type: 'resize-heading', phase: ResizePhase, column: Column, width?: number};
-type GridModelAddColumnAction = { type: 'add-col', targetColumnGroup?: ColumnGroup, targetColumn?: Column, column: Column};
+type GridModelAddColumnAction = { type: 'add-col', targetColumnGroup?: ColumnGroup, column: Column, insertIdx: number};
 
 type GridModelAction =
   | GridModelResizeAction
@@ -104,25 +98,28 @@ type GridModelReducerTable = {[key in GridModelAction['type']]: GridModelReducer
 
 type Row = any;
 
-type onColumnDragHandler = (phase: DragPhase, column: DraggedColumn, targetColumn?: Column) => void;
+type onHeaderCellDragHandler = (phase: 'drag-start', column: Column, columnPosition: number, mousePosition: number) => void;
+type onColumnDragHandler = (phase: DragPhase, column: Column, insertIdx?: number, insertPos?: number) => void;
+type onColumnGroupHeaderDragHandler = (phase: 'drag-start', columnGroup: ColumnGroup, columnGroupIdx: number, column: Column, columnPosition: number, mousePosition: number) => void;
 
 interface ColumnGroupHeaderProps {
   columnGroup: ColumnGroup;
+  columnGroupIdx: number;
   depth: number;
   height: number;
-  onColumnDrag?: onColumnDragHandler;
+  onColumnDrag?: onColumnGroupHeaderDragHandler;
   ref?: React.RefObject<any>;
   width: number;
 }
 type ColumnGroupHeaderType = React.FC<ColumnGroupHeaderProps>;
 
 
-type DragPhase = 'drag-start' | 'drag' | 'drag-end'
+type DragPhase = 'drag-start' | 'drag' | 'drag-pause' | 'drag-end'
 type ResizePhase = 'begin' | 'resize' | 'end';
 interface HeaderCellProps {
   className?: string;
   column: Column;
-  onDrag?: onColumnDragHandler;
+  onDrag?: onHeaderCellDragHandler;
   onResize?: (resizePhase: ResizePhase, column: Column, width?: number) => void;
 }
 type HeaderCellComponent = React.FC<HeaderCellProps>;
@@ -134,13 +131,13 @@ type DataReducerFactory = (model: GridModel) => (state: GridData, action: DataAc
 interface ViewportProps {
   columnHeaders: any;
   dataSource: DataSource;
-  draggedColumn?: DraggedColumn;
+  columnDragData?: ColumnDragData;
   gridModel: GridModel;
   onColumnDrag?: onColumnDragHandler;
-  ref?: React.RefObject<any>;
+  ref?: React.Ref<any>;
 }
 
-type ViewportType = React.FC<ViewportProps>;
+type ViewportComponent = React.FC<ViewportProps>;
 
 type CanvasAction =
   | {type: 'scroll-left', scrollLeft: number}
@@ -150,12 +147,14 @@ type CanvasReducerState = [Column[], Map<number,number>, ColumnGroup, number];
 type CanvasReducer = (state: CanvasReducerState, action: CanvasAction) => CanvasReducerState;
 type CanvasReducerInitializer = (ColumnGroup) => CanvasReducerState;
 
+type Operation = any;
+
 type CanvasRef = React.RefObject<{
   beginHorizontalScroll: (scrollTop: number) => void;
-  endDrag: (column: DraggedColumn, targetColumn: Column) => void;
+  endDrag: (column: Column, insertIdx: number, insertPos: number) => void;
   endHorizontalScroll: (scrollTop: number) => void;
   beginVerticalScroll: () => void;
-  hideDraggedColumn: (column: DraggedColumn) => void;
+  hideDraggedColumn: (column: Column) => number;
   /**
    * Returns to default display mode.
    * Sets the height of Canvas element and applies a transform to content.
@@ -165,7 +164,8 @@ type CanvasRef = React.RefObject<{
    * Scrolls canvas by amount requested or less if scrollLimit reached.
    * Returns distance actually scrolled.
    */
-  makeSpaceForColumn: (column: DraggedColumn, targetColumn: Column) => void;
+  reverseDragEffect: (operation: Operation, column: Column) => void;
+  makeSpaceForColumn: (column: Column, targetColumn: Column) => Operation;
   scrollBy: (scrollLeft: number) => number;
   scrollLeft: number;
 }>;
@@ -205,8 +205,21 @@ interface CellProps {
 
 type CellType = React.FC<CellProps>;
 
+type ColumnBearerRef = React.RefObject<{
+  setFinalPosition: () => void;
+}>;
+
+type ColumnDragData = {
+  column: Column;
+  columnGroupIdx: number;
+  columnIdx: number;
+  initialColumnPosition: number;
+  columnPositions: [[number]];
+  mousePosition: number;
+}
+
 interface ColumnBearerProps {
-  column: DraggedColumn;
+  columnDragData: ColumnDragData;
   gridModel: GridModel;
   /**
    * The initial scroll position of scrollable Canvas when Column drag begins.
@@ -215,6 +228,7 @@ interface ColumnBearerProps {
   initialScrollPosition: number;
   onDrag?: onColumnDragHandler;
   onScroll: (scrollDistance: number) => number;
+  ref: ColumBearerRef;
   rows: any[];
 }
 type ColumnBearerComponent = React.FC<ColumnBearerProps>;

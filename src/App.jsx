@@ -14,7 +14,7 @@ const columns = [
 
 const start = performance.now();
 let locked = false;
-for (let i = 2, heading= 'Group 1'; i < 25; i++) {
+for (let i = 2, heading= 'Group 1'; i < 7; i++) {
   if ((i-2)%3 === 0){
     heading = `Group ${((i-2)/3) + 1}`
   }
@@ -24,7 +24,7 @@ for (let i = 2, heading= 'Group 1'; i < 25; i++) {
 
 for (let i = 0; i < 100; i++) {
   const row = { id: i, ccy: "USDGBP" };
-  for (let j = 2; j < 25; j++) {
+  for (let j = 2; j < 7; j++) {
     row[`${j - 1}M`] = `${i},${j - 1}`;
   }
   data.push(row);

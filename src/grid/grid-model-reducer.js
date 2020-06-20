@@ -91,21 +91,14 @@ function resizeHeading(state, column, width, headingResizeState){
 }
 
 /** @type {GridModelReducer<'add-col'>} */
-function handleAddColumn(state, {targetColumn, targetColumnGroup, column}){
-  // TODO make this more of a generic addColumns (we would need an index as well to tell us where to add)
-  if (targetColumn){
-    targetColumnGroup = getColumnGroup(state, targetColumn);
+function handleAddColumn(state, {insertIdx, targetColumnGroup, column}){
+  if (insertIdx !== -1){
+    targetColumnGroup = getColumnGroup(state, insertIdx);
   }
-
   const targetIdx = state.columnGroups.indexOf(targetColumnGroup);
   const sourceColumnGroup = getColumnGroup(state, column);
   const sourceIdx = state.columnGroups.indexOf(sourceColumnGroup);
   const sourceColumn = state.columnGroups[sourceIdx].columns.find(col => col.key === column.key);
-  const targetColumnIdx = targetColumn
-    ? targetColumnGroup.columns.findIndex(col => col.key === targetColumn.key)
-    : targetIdx > sourceIdx
-      ? 0
-      : targetColumnGroup.columns.length;
 
     const columns = state.columnGroups.flatMap((columnGroup, idx) => {
     if (idx === sourceIdx && sourceIdx !== targetIdx){
@@ -113,16 +106,16 @@ function handleAddColumn(state, {targetColumn, targetColumnGroup, column}){
     } else if (idx === sourceIdx){
       if (sourceIdx === targetIdx){
         const sourceColumnIdx = sourceColumnGroup.columns.findIndex(col => col.key === sourceColumn.key);
-        if (targetColumnIdx > sourceColumnIdx){
-          return ColumnGroup.moveColumnTo(columnGroup, sourceColumn, targetColumnIdx+1);
+        if (insertIdx > sourceColumnIdx){
+          return ColumnGroup.moveColumnTo(columnGroup, sourceColumn, insertIdx);
         } else {
-          return ColumnGroup.moveColumnTo(columnGroup, sourceColumn, targetColumnIdx);
+          return ColumnGroup.moveColumnTo(columnGroup, sourceColumn, insertIdx);
         }
       } else {
-        return ColumnGroup.insertColumnAt(columnGroup, sourceColumn, targetColumnIdx);
+        return ColumnGroup.insertColumnAt(columnGroup, sourceColumn, insertIdx);
       }
     } else if (idx === targetIdx){
-      return ColumnGroup.insertColumnAt(columnGroup, sourceColumn, targetColumnIdx);
+      return ColumnGroup.insertColumnAt(columnGroup, sourceColumn, insertIdx);
     } else {
       return columnGroup.columns;
     }

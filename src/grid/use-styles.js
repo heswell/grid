@@ -41,7 +41,6 @@ export default createUseStyles({
   },
 
   ColumnGroupHeader: {
-    background: '#ccc', 
     verticalAlign: 'top',
     overflow: 'hidden',
   },
@@ -65,7 +64,6 @@ export default createUseStyles({
    },
 
    Canvas: {
-    background: '#ccc', 
     display: 'inline-block',
     position: 'sticky',
     top: 0,
@@ -188,15 +186,37 @@ export default createUseStyles({
       }
   },
 
+  Vanishing: {
+    borderStyle: 'none',
+    color: 'transparent',
+    padding: 0,
+    transition: 'width ease .3s',
+    width: '0 !important'
+  },
+
+  DraggedColumn: {
+    backgroundColor: 'ivory',
+    opacity: 0.4
+  },
+
   ColumnBearer: {
-    position: 'absolute',
-    zIndex: 150,
-    boxShadow: '0 6px 12px rgba(0,0,0,0.275)',
     backgroundColor: 'white',
+    boxShadow: '0 6px 12px rgba(0,0,0,0.275)',
+    position: 'absolute',
     overflow: 'hidden',
+    zIndex: 150,
     '& $HeaderCell': {
       backgroundColor: 'var(--header-cell-highlight-bg)'
     }  
+  },
+
+  InsertIndicator: {
+    backgroundColor: 'green',
+    height: '100%',
+    position: 'absolute',
+    top: 0,
+    transition: 'left ease-in-out .2s', 
+    width: 4,
   }
 
 });

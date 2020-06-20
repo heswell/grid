@@ -16,25 +16,26 @@ import {getColumnGroupIdx} from './grid-model-utils.js';
 
 import Canvas from "./canvas";
 import ColumnBearer from './column-bearer';
+import InsertIndicator from './insert-indicator';
 
-/** @type {ViewportType} */
+/** @type {ViewportComponent} */
 const Viewport = forwardRef(function Viewport(
-  { columnHeaders, dataSource, draggedColumn, gridModel, onColumnDrag },
+  { columnHeaders, dataSource, columnDragData, gridModel, onColumnDrag },
   ref
 ) {
   const viewportEl = useRef(null);
   const scrollingEl = useRef(null);
   /** @type {React.MutableRefObject<CanvasRef[]>} */
   const canvasRefs = useRef([]);
-  // const fixedCanvas = useRef(null);
-  // const scrollableCanvas = useRef(null);
+  const columnBearer = useRef(null)
   const contentHeight = useRef(0);
   const horizontalScrollbarHeight = useRef(gridModel.horizontalScrollbarHeight);
   const verticalScrollbarWidth = useRef(0);
   const firstVisibleRow = useRef(0);
+  const insertIndicator = useRef(null);
 
-  const showColumnBearer = useRef(draggedColumn !== null);
-  showColumnBearer.current = draggedColumn !== null;  
+  const showColumnBearer = useRef(columnDragData !== null);
+  showColumnBearer.current = columnDragData !== null;  
 
   const canvasCount = gridModel.columnGroups.length;
   if (canvasRefs.current.length !== canvasCount) {
@@ -75,16 +76,24 @@ const Viewport = forwardRef(function Viewport(
   const handleColumnBearerScroll = scrollDistance =>
     canvasRefs.current[scrollableCanvasIdx].current.scrollBy(scrollDistance);
 
-  const handleColumnDrag = useCallback((dragPhase, draggedColumn, targetColumn) => {
-    const columnGroupIdx = getColumnGroupIdx(gridModel, draggedColumn);
+  const handleColumnDrag = useCallback(async (dragPhase, draggedColumn, insertIdx, insertPos) => {
+    const {columnGroupIdx, columnIdx} = columnDragData;
     const {current: canvas} = canvasRefs.current[columnGroupIdx];
     if (dragPhase === 'drag'){ // only called when we cross onto next targetColumn
-      canvas.makeSpaceForColumn(draggedColumn, targetColumn);
+      insertIndicator.current.style.left = insertPos + 'px';
     } else if (dragPhase === 'drag-end'){
-      canvas.endDrag(draggedColumn, targetColumn);
-      onColumnDrag(dragPhase, draggedColumn, targetColumn);
+      insertIndicator.current.style.transition = 'left ease .3s';
+      if (insertIdx > columnIdx){
+        insertIndicator.current.style.left = (insertPos - draggedColumn.width) + 'px';
+        columnBearer.current.setFinalPosition(insertPos - draggedColumn.width);
+      } else {
+        insertIndicator.current.style.left = (insertPos) + 'px';
+        columnBearer.current.setFinalPosition(insertPos);
+      }
+      await canvas.endDrag(draggedColumn, insertIdx, insertPos);
+      onColumnDrag(dragPhase, draggedColumn, insertIdx);
     }
-  },[gridModel, onColumnDrag]);
+  },[gridModel, onColumnDrag, columnDragData]);
 
   useUpdate(() => {
     setRange(firstVisibleRow.current, firstVisibleRow.current + gridModel.viewportRowCount);
@@ -109,12 +118,13 @@ const Viewport = forwardRef(function Viewport(
   );
 
     useLayoutEffect(() => {
-      if (draggedColumn){
-        // TODO need the indedx here then we can lookup ref bby index
-        const columnGroupIdx = getColumnGroupIdx(gridModel, draggedColumn);
-        canvasRefs.current[columnGroupIdx].current.hideDraggedColumn(draggedColumn);
+      if (columnDragData){
+        const {column, columnGroupIdx} = columnDragData;
+        const columnOffset = canvasRefs.current[columnGroupIdx].current.hideDraggedColumn(column);
+        const {left} = viewportEl.current.getBoundingClientRect();
+        insertIndicator.current.style.left = (columnOffset-left) + 'px';
       }
-    },[draggedColumn])
+    },[columnDragData])
 
   const handleVerticalScroll = useScroll("scrollTop", scrollCallback);
 
@@ -192,15 +202,18 @@ const Viewport = forwardRef(function Viewport(
           ))}
         </div>
       </div>
-      {draggedColumn &&
+      {columnDragData && <>
+          <InsertIndicator ref={insertIndicator}/>
           <ColumnBearer
-            column={draggedColumn}
+            columnDragData={columnDragData}
             gridModel={gridModel}
             initialScrollPosition={canvasRefs.current[scrollableCanvasIdx].current.scrollLeft}
             onDrag={handleColumnDrag}
             onScroll={handleColumnBearerScroll}
+            ref={columnBearer}
             rows={data.rows}
-          />}
+          />
+        </>}
     </>
   
   );

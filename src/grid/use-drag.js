@@ -3,23 +3,26 @@ import { useCallback, useRef, useEffect } from 'react';
 const DRAG_THRESHOLD = 3;
 
 export const DRAG_START = 1;
-export const DRAG_END = 2;
 export const DRAG = 4;
-const DRAG_ALL = 7;
+export const DRAG_PAUSE = 8;
+export const DRAG_END = 2;
+
+const DRAG_DEFAULT = DRAG_START + DRAG + DRAG_END;
 
 export function useDragStart(callback){
   return useDrag(callback, DRAG_START);
 }
 
 /** @type {DragHook} */
-export default function useDrag(callback, dragPhase=DRAG_ALL, initialDragPosition=-1){
+export default function useDrag(callback, dragPhase=DRAG_DEFAULT, initialDragPosition=-1){
 
   let cleanUp;
   // If user is not tracking 'drag-start', it's assumed that we're already dragging
   const dragging = useRef(false);
   const position = useRef({x:initialDragPosition,y:-1})
   const onMouseMove = useRef(null)
-  const onMouseUp = useRef(null)
+  const onMouseUp = useRef(null);
+  const timeoutHandle = useRef(null);
 
   onMouseUp.current = useCallback(() => {
     if (dragging.current) {
@@ -30,6 +33,11 @@ export default function useDrag(callback, dragPhase=DRAG_ALL, initialDragPositio
         // drag aborted
     }
   },[callback, cleanUp])
+
+
+  const pauseListener = () => {
+    callback('drag-pause');
+  }
 
   onMouseMove.current = useCallback(e => {
     if (e.stopPropagation) {
@@ -66,6 +74,17 @@ export default function useDrag(callback, dragPhase=DRAG_ALL, initialDragPositio
       position.current.x = x;
       position.current.y = y;
     }
+
+    if (dragPhase & DRAG_PAUSE){
+      if (timeoutHandle.current){
+        clearTimeout(timeoutHandle.current);
+        timeoutHandle.current = null;
+      }
+
+      timeoutHandle.current = setTimeout(pauseListener, 300);
+      
+    }
+
   },[callback, cleanUp, dragPhase])
 
   // Important that these never change for the lifetime of the hook, as they are
