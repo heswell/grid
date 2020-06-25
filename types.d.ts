@@ -149,24 +149,19 @@ type CanvasReducerInitializer = (ColumnGroup) => CanvasReducerState;
 
 type Operation = any;
 
-type CanvasRef = React.RefObject<{
-  beginHorizontalScroll: (scrollTop: number) => void;
-  endDrag: (columnDragData: ColumnDragData, insertIdx: number) => void;
-  endHorizontalScroll: (scrollTop: number) => void;
+type Handle<T> = T extends React.ForwardRefExoticComponent<React.RefAttributes<infer T2>> ? T2 : never;
+
+type CanvasRef = React.Ref<{
+  beginHorizontalScroll: () => void;
+  endHorizontalScroll: () => void;
   beginVerticalScroll: () => void;
-  startDrag: (column: Column) => number;
-  /**
-   * Returns to default display mode.
-   * Sets the height of Canvas element and applies a transform to content.
-   */
   endVerticalScroll: (scrollTop: number) => void;
-  /**
-   * Scrolls canvas by amount requested or less if scrollLimit reached.
-   * Returns distance actually scrolled.
-   */
+  beginDrag: (column: Column) => number;
+  endDrag: (columnDragData: ColumnDragData, insertIdx: number) => void;
   scrollBy: (scrollLeft: number) => number;
   scrollLeft: number;
 }>;
+
 
 interface CanvasProps {
   columnGroup: any;
@@ -182,7 +177,9 @@ interface CanvasProps {
   totalHeaderHeight: number;
 }
 
-type CanvasType = React.FC<CanvasProps>;
+type CanvasType = React.ForwardRefExoticComponent<CanvasProps>;
+
+type CanvasHandle = Handle<CanvasType>;
 
 interface RowProps {
   columns: Column[];

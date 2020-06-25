@@ -62,51 +62,12 @@ const Canvas = forwardRef(function Canvas(
       contentEl.current.style.transform = "translate3d(0px, 0px, 0px)";
     },
 
-    endDrag: (columnDragData, insertIdx) => {
-      const {column: draggedColumn, columnGroupIdx} = columnDragData;
-      const idx = columns.findIndex(col => col.key === draggedColumn.key);
-      const rows = contentEl.current.childNodes;
-      const headerCells = getHeaderCells(canvasEl, columnGroup);
-
-      if (idx === -1){
-        // The (original) draggedColumn is no longer in the scroll window
-        // We need to apply effect to headers because headers are not (yet) virtualized
-        const effect = { 
-          removeClass: {idx, className: classes.DraggedColumn}
-        };
-        applyOperation(effect, [headerCells], draggedColumn.width);
-        hilightedIndex.current = -1;
-
-      } else {
-        const effect = { 
-          replaceClass: {idx, className: classes.DraggedColumn, newClassName: classes.Vanishing}, 
-          openSpaceLeft: {idx: insertIdx}
-        };
-        applyOperation(effect, [headerCells], draggedColumn.width);
-        applyOperation(effect, rows, draggedColumn.width);
-        hilightedIndex.current = -1;
-  
-        return new Promise(resolve => 
-          headerCells[idx].addEventListener('transitionend', () => {
-            const effect = {
-              removeClass: {idx, className: classes.Vanishing},
-              closeSpaceLeft: {idx: -insertIdx}
-            };
-            applyOperation(effect, [headerCells]);
-            applyOperation(effect, rows);
-            resolve();
-          })
-        );
-      }
-
-    },
-
     endVerticalScroll: scrollTop => {
       canvasEl.current.style.height = `${height}px`;
       contentEl.current.style.transform = `translate3d(0px, -${scrollTop}px, 0px)`;
     },
 
-    startDrag: column => {
+    beginDrag: column => {
 
       const idx = columns.findIndex(col => col.key === column.key);
       const rows = contentEl.current.childNodes;
@@ -119,6 +80,44 @@ const Canvas = forwardRef(function Canvas(
 
       const {left} = headerCells[idx].getBoundingClientRect();
       return left;
+    },
+
+    endDrag: (columnDragData, insertIdx) => {
+      const {column: draggedColumn, columnGroupIdx} = columnDragData;
+      const idx = columns.findIndex(col => col.key === draggedColumn.key);
+      const rows = contentEl.current.childNodes;
+      const headerCells = getHeaderCells(canvasEl, columnGroup);
+      if (idx === -1){
+        // The (original) draggedColumn is no longer in the scroll window
+        // We need to apply effect to headers because headers are not (yet) virtualized
+        const effect = { 
+          removeClass: {idx, className: classes.DraggedColumn}
+        };
+        applyOperation(effect, [headerCells], draggedColumn.width);
+        hilightedIndex.current = -1;
+
+      } else {
+        const effect = { 
+          replaceClass: {idx, className: classes.DraggedColumn, newClassName: classes.Vanishing}, 
+          openSpaceLeft: {idx: insertIdx+1}
+        };
+        applyOperation(effect, [headerCells], draggedColumn.width);
+        applyOperation(effect, rows, draggedColumn.width);
+        hilightedIndex.current = -1;
+        return new Promise(resolve => {
+          headerCells[idx].addEventListener('transitionend', () => {
+            const effect = {
+              removeClass: {idx, className: classes.Vanishing},
+              closeSpaceLeft: {idx: -(insertIdx+1)}
+            };
+            applyOperation(effect, [headerCells]);
+            applyOperation(effect, rows);
+            resolve();
+          })
+        }
+        );
+      }
+
     },
 
     scrollBy: scrollDistance => scrollBy(scrollDistance),
@@ -293,7 +292,7 @@ const closeSpaceLeft = (el, suppressTransition) => {
   // el.style.width = (parseInt(el.style.width) - 1) + 'px';
   // el.style.borderLeft = 'none';
   if (suppressTransition === true){
-    el.style.transition = 'none';
+    el.style.transition = null;
   } else {
     el.style.transition = 'margin .15s ease-in-out';
   }
@@ -304,7 +303,7 @@ const closeSpaceRight = (el, suppressTransition) => {
   el.style.width = (parseInt(el.style.width) - 1) + 'px';
   el.style.borderRight = 'none';
   if (suppressTransition === true){
-    el.style.transition = 'none';
+    el.style.transition = null;
   } else {
     el.style.transition = 'margin .15s ease-in-out';
   }

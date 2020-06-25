@@ -25,8 +25,8 @@ const Viewport = forwardRef(function Viewport(
 ) {
   const viewportEl = useRef(null);
   const scrollingEl = useRef(null);
-  /** @type {React.MutableRefObject<CanvasRef[]>} */
-  const canvasRefs = useRef([]);
+  /** @type {React.MutableRefObject<any>} */
+  const canvasRefs = useRef([null]);
   const columnBearer = useRef(null)
   const contentHeight = useRef(0);
   const horizontalScrollbarHeight = useRef(gridModel.horizontalScrollbarHeight);
@@ -47,16 +47,14 @@ const Viewport = forwardRef(function Viewport(
   useImperativeHandle(ref, () => ({
     beginHorizontalScroll: () => {
       if (!showColumnBearer.current){
-        const scrollTop = viewportEl.current.scrollTop;
         scrollingEl.current.style.height = `${contentHeight.current +
           (gridModel.headerHeight * gridModel.headingDepth) + horizontalScrollbarHeight.current}px`;
-        canvasRefs.current.forEach(({current}) => current.beginHorizontalScroll( scrollTop ));  
+        canvasRefs.current.forEach(({current}) => current.beginHorizontalScroll());  
       }
     },
     endHorizontalScroll: () => {
       if (!showColumnBearer.current){
-        const scrollTop = viewportEl.current.scrollTop;
-        canvasRefs.current.forEach(({current}) => current.endHorizontalScroll( scrollTop ));
+        canvasRefs.current.forEach(({current}) => current.endHorizontalScroll());
         scrollingEl.current.style.height = `${contentHeight.current + horizontalScrollbarHeight.current}px`;
         return canvasRefs.current[scrollableCanvasIdx].current.scrollLeft;
       }
@@ -121,7 +119,7 @@ const Viewport = forwardRef(function Viewport(
     useLayoutEffect(() => {
       if (columnDragData){
         const {column, columnGroupIdx} = columnDragData;
-        const columnOffset = canvasRefs.current[columnGroupIdx].current.startDrag(column);
+        const columnOffset = canvasRefs.current[columnGroupIdx].current.beginDrag(column);
         const {left} = viewportEl.current.getBoundingClientRect();
         insertIndicator.current.style.left = (columnOffset-left) + 'px';
       }

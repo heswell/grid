@@ -13,7 +13,7 @@ const RIGHT = 'right';
 
 /** @type {(dragData: ColumnDragData, dp: number, sp: number) => [number, number, number] } */
 function getTargetColumn({column: {width}, columnPositions}, dragPosition, scrollPosition){
-    console.log(`getTargetColumn scrollPosition ${scrollPosition} dragPosition: ${dragPosition}`)
+    //console.log(`getTargetColumn scrollPosition ${scrollPosition} dragPosition: ${dragPosition}`)
     const columnStart = dragPosition + scrollPosition;
     const columnEnd = columnStart + width;
     const [[offsetLeft]] = columnPositions;
