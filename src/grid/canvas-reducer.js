@@ -1,5 +1,3 @@
-import { PADDING_CELL } from "./row";
-
 const VIRTUALIZATION_THRESHOLD = 0.66;
 
 /** @type {CanvasReducerInitializer} */
@@ -20,6 +18,7 @@ export default ([_, keys, columnGroup, scrollLeft], action) => {
       const nextColumns = getRenderColumns(action.columnGroup, scrollLeft);
       return [nextColumns, nextKeys(nextColumns, keys), action.columnGroup, scrollLeft];
     }
+    default:
   }
 };
 
@@ -93,10 +92,12 @@ function getRenderColumns(columnGroup, scrollLeft = 0) {
       firstIdx = i;
     }
   }
-  return [
-    { key: -1, name: PADDING_CELL, width: offset },
-    ...columns.slice(firstIdx, lastIdx + 1)
-  ];
+
+  const renderColumns = columns.slice(firstIdx, lastIdx + 1).map((column, idx) => ({
+    ...column,
+    marginLeft: idx === 0 ? offset : 0
+  }));
+  return renderColumns;  
 }
 
 const isVirtualizationRequired = ({ contentWidth, locked, width }) => {

@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, memo, useReducer, useRef } from "react";
+import React, { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import ColumnGroupHeader from "./column-group-header";
 import GridContext from "./grid-context";
 import modelReducer, { initModel } from "./grid-model-reducer";
 import actionReducer from "./grid-action-reducer";
 import useStyles from './use-styles';
 import Viewport from "./viewport";
+import {measureColumns} from './grid-model-utils';
 
 /** @type {GridComponent} */
 const Grid = (props) => {
@@ -12,22 +13,58 @@ const Grid = (props) => {
   const viewport = useRef(null);
   const scrollableHeader = useRef(null);
   const initialRender = useRef(true);
+  /** @type {[ColumnDragData, React.Dispatch<ColumnDragData>]} */
+  const [columnDragData, setColumnDragData] = useState(null);
+  const draggingColumn = useRef(false);
 
   const handleHorizontalScrollStart = _scrollLeft => {
-    viewport.current.beginHorizontalScroll();
-    gridEl.current.classList.add("scrolling-x");
+    if (!draggingColumn.current){
+      viewport.current.beginHorizontalScroll();
+      gridEl.current.classList.add("scrolling-x");
+    }
   };
 
-  const handleHorizontalScrollEnd = scrollLeft => {
-    viewport.current.endHorizontalScroll();
-    gridEl.current.classList.remove("scrolling-x");
-    scrollableHeader.current.endHorizontalScroll(scrollLeft);
+  const handleHorizontalScrollEnd = () => {
+    if (!draggingColumn.current){
+      const scrollLeft = viewport.current.endHorizontalScroll();
+      gridEl.current.classList.remove("scrolling-x");
+      scrollableHeader.current.endHorizontalScroll(scrollLeft);
+    }
   };
 
   const [gridModel, dispatchGridModel] = useReducer(
     modelReducer,
     props,
     initModel
+  );
+
+  const handleColumnDrag = useCallback(
+      (phase, ...args) => {
+    // if (!column.isHeading) {
+        if (phase === 'drag-start') {
+            const [columnGroupIdx, column, columnPosition, mousePosition] = args;
+            const {left} = gridEl.current.getBoundingClientRect();
+            const columnGroup = gridModel.columnGroups[columnGroupIdx];
+            handleHorizontalScrollStart();
+            setColumnDragData({
+              column,
+              columnGroupIdx,
+              columnIdx: columnGroup.columns.findIndex(col => col.key === column.key),
+              initialColumnPosition: columnPosition - left,
+              columnPositions: measureColumns(gridModel, left),
+              mousePosition
+            });
+            draggingColumn.current = true;
+          } else if (phase === 'drag-end') {
+            const [column, insertIdx] = args;
+            setColumnDragData(null);
+            draggingColumn.current = false;
+            // TODO we need the final scrollLeft here
+            handleHorizontalScrollEnd();
+            dispatchGridModel({ type: 'add-col', column, insertIdx });
+          }
+    // }
+      },[gridModel]
   );
 
   const [, dispatchGridAction] = useReducer(
@@ -51,31 +88,30 @@ const Grid = (props) => {
 
   const { height, width } = gridModel;
 
-  const getColumnHeaders = scrollingHeaders => {
-    return gridModel.columnGroups.map((columnGroup, idx) => (
-      <ColumnGroupHeader
-        columnGroup={columnGroup}
-        depth={gridModel.headingDepth}
-        height={gridModel.headerHeight}
-        key={idx}
-        ref={scrollingHeaders || columnGroup.locked ? null : scrollableHeader}
-        width={scrollingHeaders ? columnGroup.contentWidth : columnGroup.width}
-      />
-    ));
-  };
-
   const classes = useStyles();
 
   return (
     <GridContext.Provider value={{ dispatchGridAction, dispatchGridModelAction: dispatchGridModel }}>
       <div className={classes.Grid} ref={gridEl} style={{ width, height }}>
         <div className={classes.headerContainer} style={{ height: gridModel.headerHeight * gridModel.headingDepth }}>
-          {getColumnHeaders()}
+          {gridModel.columnGroups.map((columnGroup, idx) => (
+            <ColumnGroupHeader
+              columnGroup={columnGroup}
+              columnGroupIdx={idx}
+              depth={gridModel.headingDepth}
+              height={gridModel.headerHeight}
+              key={idx}
+              onColumnDrag={handleColumnDrag}
+              ref={columnGroup.locked ? null : scrollableHeader}
+              width={columnGroup.width}
+            />
+          ))}
         </div>
         <Viewport
-          columnHeaders={getColumnHeaders(true)}
           dataSource={props.dataSource}
           gridModel={gridModel}
+          columnDragData={columnDragData}
+          onColumnDrag={handleColumnDrag}
           ref={viewport}
         />
       </div>

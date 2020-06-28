@@ -2,11 +2,12 @@ import React, { forwardRef, useCallback, useContext, useImperativeHandle, useRef
 import cx from 'classnames';
 import GridContext from "./grid-context";
 import HeaderCell from "./header-cell";
+import HeadingCell from "./heading-cell";
 import useStyles from './use-styles';
 
 /** @type {ColumnGroupHeaderType} */
 const ColumnGroupHeader = React.memo(forwardRef(function ColumnGroupHeader(
-  { columnGroup, depth, height, width },
+  { columnGroup, columnGroupIdx, columns=columnGroup.columns, depth, height, onColumnDrag, width },
   ref
 ) {
   const scrollingHeaderWrapper = useRef(null);
@@ -20,20 +21,23 @@ const ColumnGroupHeader = React.memo(forwardRef(function ColumnGroupHeader(
 
   const handleColumnResize = useCallback((phase, column, width) => {
     dispatchGridModelAction({ type: 'resize-col', phase, column, width });
-  },[]);
+  },[dispatchGridModelAction]);
 
   const handleHeadingResize = useCallback((phase, column, width) => {
     dispatchGridModelAction({ type: 'resize-heading', phase, column, width });
-  },[]);
+  },[dispatchGridModelAction]);
 
   const classes = useStyles();
 
+  const handleDrag = useCallback((phase, column, columnPosition, mousePosition) => 
+    onColumnDrag(phase, columnGroupIdx, column, columnPosition, mousePosition)
+  ,[columnGroup, columnGroupIdx])
+
   const renderColHeadings = heading =>
   heading.map((item, idx) =>
-      <HeaderCell
+      <HeadingCell
           key={idx}
           className={cx({[classes.noBottomBorder]: item.label === ''})}
-          // className={cx('colgroup-header', { bottomless: item.label === '' })}
           column={item}
           onResize={handleHeadingResize}
           // onMove={onColumnMove}
@@ -41,8 +45,7 @@ const ColumnGroupHeader = React.memo(forwardRef(function ColumnGroupHeader(
       />
   )
 
-  const { columns, contentWidth, headings = [] } = columnGroup;
-
+  const { contentWidth, headings = [] } = columnGroup;
   return (
     <div className={classes.ColumnGroupHeader} style={{ height: height * depth, width }}>
       <div ref={scrollingHeaderWrapper}
@@ -54,10 +57,16 @@ const ColumnGroupHeader = React.memo(forwardRef(function ColumnGroupHeader(
         </div>).reverse()
       }
 
-      <div className={classes.headerCells}
+      <div
+        role="row"
         style={{ height, width: contentWidth }}>
-        {columns.map(column => (
-          <HeaderCell column={column} key={column.key} onResize={handleColumnResize}/>
+        {columns.map((column,idx) => (
+          <HeaderCell
+            column={column}
+            key={column.key}
+            onDrag={handleDrag}
+            onResize={handleColumnResize}
+          />
         ))}
       </div>
       </div>

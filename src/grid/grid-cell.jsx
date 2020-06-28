@@ -24,7 +24,7 @@ function useGridCellClassName(column){
 const GridCell = React.memo(({ column, row }) => {
   const className = useGridCellClassName(column);
   return (
-    <div className={className} style={{ width: column.width }}>
+    <div className={className} style={{ marginLeft: column.marginLeft, width: column.width }}>
       {row[column.key]}
     </div>
   );

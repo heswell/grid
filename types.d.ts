@@ -5,16 +5,25 @@ interface Column {
   heading?: string[];
   label?:string;
   locked?: boolean;
+  // would like to avoid this, it is purely an internal implementation detail
+  marginLeft?: number;
   name: string;
   resizeable?: boolean;
   resizing?: boolean;
   width: number;
 }
 
-type ColumnGroup = {
+interface Heading {
+  key: string;
+  isHeading: true;
+  label: string;
+  width: number;
+}
+
+interface ColumnGroup {
   columns: Column[];
   contentWidth: number;
-  headings?: string[];
+  headings?: Heading[];
   locked: boolean;
   width: number;
 };
@@ -71,11 +80,13 @@ type GridActionReducerFactory = (handlerMap: GridActionHandlerMap) => (state: {}
 type GridModelResizeAction = { type: 'resize', height: number, width: number};
 type GridModelResizeColAction = { type: 'resize-col', phase: ResizePhase, column: Column, width?: number};
 type GridModelResizeHeadingAction = { type: 'resize-heading', phase: ResizePhase, column: Column, width?: number};
+type GridModelAddColumnAction = { type: 'add-col', targetColumnGroup?: ColumnGroup, column: Column, insertIdx: number};
 
 type GridModelAction =
   | GridModelResizeAction
   | GridModelResizeColAction
-  | GridModelResizeHeadingAction;
+  | GridModelResizeHeadingAction
+  | GridModelAddColumnAction;
 
 type GridModelReducerFn<A=GridModelAction> = (state: GridModel, action: A) => GridModel;  
 type GridModelReducerInitializer = (props: GridProps) => GridModel;
@@ -83,27 +94,36 @@ type GridModelReducer<T extends GridModelAction['type']> =
   T extends 'resize' ? GridModelReducerFn<GridModelResizeAction> :
   T extends 'resize-col' ? GridModelReducerFn<GridModelResizeColAction> :
   T extends 'resize-heading' ? GridModelReducerFn<GridModelResizeHeadingAction> :
+  T extends 'add-col' ? GridModelReducerFn<GridModelAddColumnAction> :
   GridModelReducerFn<GridModelAction>;
 type GridModelReducerTable = {[key in GridModelAction['type']]: GridModelReducer<key>};  
 
-
-
 type Row = any;
+
+type onHeaderCellDragHandler = (phase: 'drag-start', column: Column, columnPosition: number, mousePosition: number) => void;
+type onColumnDragHandler = (phase: DragPhase, column: Column, insertIdx?: number, insertPos?: number, columnLeft?: number) => void;
+type onColumnGroupHeaderDragHandler = (phase: 'drag-start', columnGroupIdx: number, column: Column, columnPosition: number, mousePosition: number) => void;
 
 interface ColumnGroupHeaderProps {
   columnGroup: ColumnGroup;
+  columnGroupIdx: number;
+  columns?: Column[];
   depth: number;
   height: number;
+  onColumnDrag?: onColumnGroupHeaderDragHandler;
   ref?: React.RefObject<any>;
   width: number;
 }
 type ColumnGroupHeaderType = React.FC<ColumnGroupHeaderProps>;
 
+
+type DragPhase = 'drag-start' | 'drag' | 'drag-pause' | 'drag-end'
 type ResizePhase = 'begin' | 'resize' | 'end';
 interface HeaderCellProps {
   className?: string;
   column: Column;
-  onResize: (resizePhase: ResizePhase, column: Column, width?: number) => void;
+  onDrag?: onHeaderCellDragHandler;
+  onResize?: (resizePhase: ResizePhase, column: Column, width?: number) => void;
 }
 type HeaderCellComponent = React.FC<HeaderCellProps>;
 
@@ -112,13 +132,14 @@ type DataAction = any;
 type DataReducerFactory = (model: GridModel) => (state: GridData, action: DataAction) => GridData;
 
 interface ViewportProps {
-  columnHeaders: any;
   dataSource: DataSource;
+  columnDragData?: ColumnDragData;
   gridModel: GridModel;
-  ref?: React.RefObject<any>;
+  onColumnDrag?: onColumnDragHandler;
+  ref?: React.Ref<any>;
 }
 
-type ViewportType = React.FC<ViewportProps>;
+type ViewportComponent = React.FC<ViewportProps>;
 
 type CanvasAction =
   | {type: 'scroll-left', scrollLeft: number}
@@ -128,21 +149,40 @@ type CanvasReducerState = [Column[], Map<number,number>, ColumnGroup, number];
 type CanvasReducer = (state: CanvasReducerState, action: CanvasAction) => CanvasReducerState;
 type CanvasReducerInitializer = (ColumnGroup) => CanvasReducerState;
 
+type Operation = any;
+
+type Handle<T> = T extends React.ForwardRefExoticComponent<React.RefAttributes<infer T2>> ? T2 : never;
+
+type CanvasRef = React.Ref<{
+  beginHorizontalScroll: () => void;
+  endHorizontalScroll: () => void;
+  beginVerticalScroll: () => void;
+  endVerticalScroll: (scrollTop: number) => void;
+  beginDrag: (column: Column) => number;
+  endDrag: (columnDragData: ColumnDragData, insertIdx: number) => void;
+  isWithinScrollWindow: (column: Column) => boolean;
+  scrollBy: (scrollLeft: number) => number;
+  scrollLeft: number;
+}>;
+
+
 interface CanvasProps {
-  columnGroup: any;
-  columnHeader: React.ReactNode;
+  columnGroupIdx: number;
   contentHeight: number;
   firstVisibleRow: number;
+  gridModel: GridModel;
   height: number;
   horizontalScrollbarHeight: number;
   meta: ColumnMeta;
-  ref?: React.RefObject<any>;
+  ref?: CanvasRef;
   rowHeight: number;
   rows: Row[]
   totalHeaderHeight: number;
 }
 
-type CanvasType = React.FC<CanvasProps>;
+type CanvasType = React.ForwardRefExoticComponent<CanvasProps>;
+
+type CanvasHandle = Handle<CanvasType>;
 
 interface RowProps {
   columns: Column[];
@@ -163,6 +203,34 @@ interface CellProps {
 
 type CellType = React.FC<CellProps>;
 
+type ColumnBearerRef = React.RefObject<{
+  setFinalPosition: () => void;
+}>;
+
+type ColumnDragData = {
+  column: Column;
+  columnGroupIdx: number;
+  columnIdx: number;
+  initialColumnPosition: number;
+  columnPositions: [[number]];
+  mousePosition: number;
+}
+
+interface ColumnBearerProps {
+  columnDragData: ColumnDragData;
+  gridModel: GridModel;
+  /**
+   * The initial scroll position of scrollable Canvas when Column drag begins.
+   * (scroll position may subsequently be changed by column drag itself)
+   */
+  initialScrollPosition: number;
+  onDrag?: onColumnDragHandler;
+  onScroll: (scrollDistance: number) => number;
+  ref: ColumBearerRef;
+  rows: any[];
+}
+type ColumnBearerComponent = React.FC<ColumnBearerProps>;
+
 interface DraggableProps {
   className?: string;
   onDrag: (e: React.MouseEvent, deltaX: number, deltaY: number) => void;
@@ -171,3 +239,6 @@ interface DraggableProps {
 }
 
 type DraggableComponent = React.ComponentType<DraggableProps>;
+
+type DragCallback = (phase: DragPhase, delta?: number, dragPosition?: number) => void;
+type DragHook = (callback: DragCallback, dragPhase?: number, initialDragPosition?: number) => [React.MouseEventHandler<HTMLDivElement>, () => void];

@@ -11,6 +11,7 @@ export default function useScroll(scrollPos, callback, scrollThreshold = 0) {
 
   return useCallback(
     e => {
+      console.log(`handleHorizontalScroll`)
       // important for the horizontal scroll on Canvas
       e.stopPropagation();
       const scrollPosition = e.target[scrollPos];

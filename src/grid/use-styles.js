@@ -4,12 +4,16 @@ export default createUseStyles({
 
   Grid: {
     '--grid-heading-border-color': '#bbb',
+    '--grid-cell-background': 'white',
+    '--grid-header-cell-background': 'white',
     '--grid-cell-border-color': '#d4d4d4',
     '--header-cell-highlight-bg': 'rgb(66, 139, 202)',
     '--grid-cell-highlight-bg': 'rgba(66, 139, 202, .5)',
 
     backgroundColor: 'white',
     position: 'absolute',
+    left: 125,
+    top: 50,
     fontFamily: 'Roboto',
     fontSize: '0.825em',
     '&.scrolling-x': {
@@ -39,12 +43,11 @@ export default createUseStyles({
   ColumnGroupHeader: {
     verticalAlign: 'top',
     overflow: 'hidden',
-    backgroundColor: 'white'
   },
 
-  headerCells: {
-    display: 'flex'
-   },
+  // headerCells: {
+  //   display: 'flex'
+  //  },
 
    Viewport : {
     position: 'absolute',
@@ -75,11 +78,15 @@ export default createUseStyles({
   fixed: {
     '& $canvasContentWrapper': {
       overflow: 'hidden'
+    },
+    '& $GridCell': {
+      backgroundColor: '#efeded'
     }
   },
 
   scrollable: {
     overflowX: 'auto',
+    overscrollBehaviorX: 'contain',
     overflowY: 'hidden',
     '& $canvasContent': {
       position: 'relative'
@@ -108,6 +115,7 @@ export default createUseStyles({
 
   HeaderCell: {
     alignItems: 'stretch',
+    background: 'var(--grid-header-cell-background)',
     borderBottom: 'solid 1px var(--grid-heading-border-color)',
     borderRight: '1px solid var(--grid-heading-border-color)',
     boxSizing: 'border-box',
@@ -157,6 +165,7 @@ export default createUseStyles({
       '--border-color': '#d4d4d4',
       '--border-color-selected': 'rgb(46, 100, 139)',
       alignItems: 'center',
+      backgroundColor: 'var(--grid-cell-background)',
       boxSizing: 'border-box',
       borderColor: 'var(--border-color)',
       borderStyle: 'solid',
@@ -176,6 +185,39 @@ export default createUseStyles({
       '&.resizing': {
         backgroundColor: 'var(--grid-cell-highlight-bg)'
       }
+  },
+
+  Vanishing: {
+    borderStyle: 'none',
+    color: 'transparent',
+    padding: 0,
+    transition: 'width ease .3s',
+    width: '0 !important'
+  },
+
+  DraggedColumn: {
+    backgroundColor: 'ivory',
+    opacity: 0.4
+  },
+
+  ColumnBearer: {
+    backgroundColor: 'white',
+    boxShadow: '0 6px 12px rgba(0,0,0,0.275)',
+    position: 'absolute',
+    overflow: 'hidden',
+    zIndex: 150,
+    '& $HeaderCell': {
+      backgroundColor: 'var(--header-cell-highlight-bg)'
+    }  
+  },
+
+  InsertIndicator: {
+    backgroundColor: 'green',
+    height: '100%',
+    position: 'absolute',
+    top: 0,
+    transition: 'left ease-in-out .2s', 
+    width: 4,
   }
 
 });

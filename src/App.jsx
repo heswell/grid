@@ -13,16 +13,18 @@ const columns = [
 ];
 
 const start = performance.now();
-for (let i = 2, heading= 'Group 1'; i < 25; i++) {
+let locked = false;
+for (let i = 2, heading= 'Group 1'; i < 27; i++) {
   if ((i-2)%3 === 0){
     heading = `Group ${((i-2)/3) + 1}`
   }
-  columns.push({ name: `${i - 1}M`, width: 100, heading: [`${i - 1}M`, heading] });
+  columns.push({ name: `${i - 1}M`, width: 100, locked, heading: [`${i - 1}M`, heading] });
+  locked = false;
 }
 
 for (let i = 0; i < 100; i++) {
   const row = { id: i, ccy: "USDGBP" };
-  for (let j = 2; j < 25; j++) {
+  for (let j = 2; j < 27; j++) {
     row[`${j - 1}M`] = `${i},${j - 1}`;
   }
   data.push(row);

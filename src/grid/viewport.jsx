@@ -1,8 +1,10 @@
 import React, {
+  createRef,
   forwardRef,
   useCallback,
   useImperativeHandle,
   useEffect,
+  useLayoutEffect,
   useReducer,
   useRef
 } from "react";
@@ -10,36 +12,52 @@ import useScroll from "./use-scroll";
 import useUpdate from "./use-update";
 import useStyles from './use-styles';
 import dataReducer, { initialData } from "./grid-data-reducer";
+import {getColumnGroupColumnIdx} from './grid-model-utils.js';
 
 import Canvas from "./canvas";
+import ColumnBearer from './column-bearer';
+import InsertIndicator from './insert-indicator';
 
-/** @type {ViewportType} */
+/** @type {ViewportComponent} */
 const Viewport = forwardRef(function Viewport(
-  { columnHeaders, dataSource, gridModel },
+  { dataSource, columnDragData, gridModel, onColumnDrag },
   ref
 ) {
   const viewportEl = useRef(null);
   const scrollingEl = useRef(null);
-  const fixedCanvas = useRef(null);
-  const scrollableCanvas = useRef(null);
+  /** @type {React.MutableRefObject<any>} */
+  const canvasRefs = useRef([null]);
+  const columnBearer = useRef(null)
   const contentHeight = useRef(0);
   const horizontalScrollbarHeight = useRef(gridModel.horizontalScrollbarHeight);
   const verticalScrollbarWidth = useRef(0);
   const firstVisibleRow = useRef(0);
+  const insertIndicator = useRef(null);
+
+  const showColumnBearer = useRef(columnDragData !== null);
+  showColumnBearer.current = columnDragData !== null;  
+
+  const canvasCount = gridModel.columnGroups.length;
+  if (canvasRefs.current.length !== canvasCount) {
+    // add or remove refs
+    canvasRefs.current = Array(canvasCount).fill(null).map((_, i) => canvasRefs.current[i] || createRef());
+  }
+  const scrollableCanvasIdx = gridModel.columnGroups.findIndex(group => !group.locked);
 
   useImperativeHandle(ref, () => ({
     beginHorizontalScroll: () => {
-      const scrollTop = viewportEl.current.scrollTop;
-      scrollingEl.current.style.height = `${contentHeight.current +
-        (gridModel.headerHeight * gridModel.headingDepth) + horizontalScrollbarHeight.current}px`;
-      fixedCanvas.current.beginHorizontalScroll( scrollTop );
-      scrollableCanvas.current.beginHorizontalScroll( scrollTop );
+      if (!showColumnBearer.current){
+        scrollingEl.current.style.height = `${contentHeight.current +
+          (gridModel.headerHeight * gridModel.headingDepth) + horizontalScrollbarHeight.current}px`;
+        canvasRefs.current.forEach(({current}) => current.beginHorizontalScroll());  
+      }
     },
     endHorizontalScroll: () => {
-      const scrollTop = viewportEl.current.scrollTop;
-      fixedCanvas.current.endHorizontalScroll(scrollTop);
-      scrollableCanvas.current.endHorizontalScroll(scrollTop);
-      scrollingEl.current.style.height = `${contentHeight.current + horizontalScrollbarHeight.current}px`;
+      if (!showColumnBearer.current){
+        canvasRefs.current.forEach(({current}) => current.endHorizontalScroll());
+        scrollingEl.current.style.height = `${contentHeight.current + horizontalScrollbarHeight.current}px`;
+        return canvasRefs.current[scrollableCanvasIdx].current.scrollLeft;
+      }
     }
   }));
 
@@ -52,6 +70,31 @@ const Viewport = forwardRef(function Viewport(
     },
     [dataSource]
   );
+
+  const handleColumnBearerScroll = scrollDistance =>
+    canvasRefs.current[scrollableCanvasIdx].current.scrollBy(scrollDistance);
+
+  const handleColumnDrag = useCallback(async (dragPhase, draggedColumn, insertIdx, insertPos, columnLeft) => {
+    const {columnGroupIdx, columnIdx} = columnDragData;
+    const {current: canvas} = canvasRefs.current[columnGroupIdx];
+    if (dragPhase === 'drag'){ // only called when we cross onto next targetColumn
+      insertIndicator.current.style.left = insertPos + 'px';
+    } else if (dragPhase === 'drag-end'){
+      insertIndicator.current.style.transition = 'left ease .3s';
+      if (canvas.isWithinScrollWindow(draggedColumn)){
+        if (insertIdx > columnIdx){
+          insertIndicator.current.style.left = (insertPos - draggedColumn.width) + 'px';
+          columnBearer.current.setFinalPosition(insertPos - draggedColumn.width);
+        } else {
+          insertIndicator.current.style.left = (insertPos) + 'px';
+          columnBearer.current.setFinalPosition(insertPos);
+        }
+      }
+      const groupInsertIdx = getColumnGroupColumnIdx(gridModel, insertIdx);
+      await canvas.endDrag(columnDragData, groupInsertIdx, columnLeft);
+      onColumnDrag(dragPhase, draggedColumn, insertIdx);
+    }
+  },[gridModel, onColumnDrag, columnDragData]);
 
   useUpdate(() => {
     setRange(firstVisibleRow.current, firstVisibleRow.current + gridModel.viewportRowCount);
@@ -66,16 +109,23 @@ const Viewport = forwardRef(function Viewport(
           setRange(firstRow, firstRow + gridModel.viewportRowCount);
         }
       } else if (scrollEvent === "scroll-start") {
-        fixedCanvas.current.beginVerticalScroll();
-        scrollableCanvas.current.beginVerticalScroll();
+        canvasRefs.current.forEach(({current}) => current.beginVerticalScroll( ));
       } else {
         const scrollTop = viewportEl.current.scrollTop;
-        fixedCanvas.current.endVerticalScroll(scrollTop);
-        scrollableCanvas.current.endVerticalScroll(scrollTop);
+        canvasRefs.current.forEach(({current}) => current.endVerticalScroll(scrollTop));
       }
     },
     [gridModel.rowHeight, gridModel.viewportRowCount, setRange]
   );
+
+    useLayoutEffect(() => {
+      if (columnDragData){
+        const {column, columnGroupIdx} = columnDragData;
+        const columnOffset = canvasRefs.current[columnGroupIdx].current.beginDrag(column);
+        const {left} = viewportEl.current.getBoundingClientRect();
+        insertIndicator.current.style.left = (columnOffset-left) + 'px';
+      }
+    },[columnDragData])
 
   const handleVerticalScroll = useScroll("scrollTop", scrollCallback);
 
@@ -123,35 +173,50 @@ const Viewport = forwardRef(function Viewport(
   const classes = useStyles();
 
   return (
-    <div
-      className={classes.Viewport}
-      ref={viewportEl}
-      style={{ top: gridModel.headerHeight * gridModel.headingDepth }}
-      onScroll={handleVerticalScroll}
-    >
+    <>
       <div
-        className={classes.scrollingCanvasContainer}
-        ref={scrollingEl}
-        style={{ height: contentHeight.current + horizontalScrollbarHeight.current }}
+        className={classes.Viewport}
+        ref={viewportEl}
+        style={{ top: gridModel.headerHeight * gridModel.headingDepth }}
+        onScroll={handleVerticalScroll}
       >
-        {gridModel.columnGroups.map((columnGroup, idx) => (
-          <Canvas
-            columnGroup={columnGroup}
-            columnHeader={columnHeaders[idx]}
-            contentHeight={contentHeight.current}
-            firstVisibleRow={firstVisibleRow.current}
-            height={gridModel.viewportHeight}
-            horizontalScrollbarHeight={horizontalScrollbarHeight.current}
-            key={idx}
-            meta={gridModel.meta}
-            ref={columnGroup.locked ? fixedCanvas : scrollableCanvas}
-            rowHeight={gridModel.rowHeight}
-            rows={data.rows}
-            totalHeaderHeight={gridModel.headerHeight * gridModel.headingDepth}
-          />
-        ))}
+        <div
+          className={classes.scrollingCanvasContainer}
+          ref={scrollingEl}
+          style={{ height: contentHeight.current + horizontalScrollbarHeight.current }}
+        >
+          {gridModel.columnGroups.map((columnGroup, idx) => (
+            <Canvas
+              columnGroupIdx={idx}
+              contentHeight={contentHeight.current}
+              firstVisibleRow={firstVisibleRow.current}
+              gridModel={gridModel}
+              height={gridModel.viewportHeight}
+              horizontalScrollbarHeight={horizontalScrollbarHeight.current}
+              key={idx}
+              meta={gridModel.meta}
+              ref={canvasRefs.current[idx]}
+              rowHeight={gridModel.rowHeight}
+              rows={data.rows}
+              totalHeaderHeight={gridModel.headerHeight * gridModel.headingDepth}
+            />
+          ))}
+        </div>
       </div>
-    </div>
+      {columnDragData && <>
+          <InsertIndicator ref={insertIndicator}/>
+          <ColumnBearer
+            columnDragData={columnDragData}
+            gridModel={gridModel}
+            initialScrollPosition={canvasRefs.current[scrollableCanvasIdx].current.scrollLeft}
+            onDrag={handleColumnDrag}
+            onScroll={handleColumnBearerScroll}
+            ref={columnBearer}
+            rows={data.rows}
+          />
+        </>}
+    </>
+  
   );
 });
 
