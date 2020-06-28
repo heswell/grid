@@ -5,14 +5,15 @@ import React, {
   useImperativeHandle,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useReducer,
   useRef
 } from "react";
 import useScroll from "./use-scroll";
 import useUpdate from "./use-update";
 import useStyles from './use-styles';
-import dataReducer, { initialData } from "./grid-data-reducer";
-import {getColumnGroupColumnIdx} from './grid-model-utils.js';
+import {getColumnGroupColumnIdx, GridModel} from './grid-model-utils.js';
+import dataReducer, { initData } from "./grid-data-reducer";
 
 import Canvas from "./canvas";
 import ColumnBearer from './column-bearer';
@@ -61,12 +62,14 @@ const Viewport = forwardRef(function Viewport(
     }
   }));
 
-  const [data, dispatchData] = useReducer(dataReducer(gridModel), initialData);
+  const metaDataKeys = useMemo(() => GridModel.metaDataKeys(gridModel),[/* what should go here */]);
+
+  const [data, dispatchData] = useReducer(dataReducer, metaDataKeys, initData);
 
   const setRange = useCallback(
     (lo, hi) => {
-      dispatchData({ type: "range", range: { lo, hi } });
       dataSource.setRange(lo, hi);
+      // dispatchData({ type: "range", range: { lo, hi } });
     },
     [dataSource]
   );
@@ -132,7 +135,7 @@ const Viewport = forwardRef(function Viewport(
   useEffect(() => {
     dataSource.subscribe(
       {
-        columns: gridModel.columns,
+        columns: GridModel.columnNames(gridModel),
         range: { lo: 0, hi: gridModel.viewportRowCount }
       },
       /* postMessageToClient */
@@ -153,6 +156,11 @@ const Viewport = forwardRef(function Viewport(
             offset: msg.offset,
             range: msg.range
           });
+        } else if (msg.updates){
+          dispatchData({
+            type: 'update',
+            updates: msg.updates
+          })
         }
       }
     );
@@ -194,7 +202,7 @@ const Viewport = forwardRef(function Viewport(
               height={gridModel.viewportHeight}
               horizontalScrollbarHeight={horizontalScrollbarHeight.current}
               key={idx}
-              meta={gridModel.meta}
+              metaDataKeys={metaDataKeys}
               ref={canvasRefs.current[idx]}
               rowHeight={gridModel.rowHeight}
               rows={data.rows}

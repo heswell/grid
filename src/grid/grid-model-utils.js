@@ -1,3 +1,4 @@
+import { metaData } from "@heswell/utils";
 
 /** @type {(gm: GridModel, target: Column | number) => ColumnGroup} */
 export function getColumnGroup({columnGroups}, target){
@@ -117,4 +118,10 @@ export const getColumnOffset = (gridModel, columnGroupIdx, columnIdx) => {
     offset += cols[i].width;
   }
   return offset;
+}
+
+export const GridModel = {
+  columns: gridModel => gridModel.columnGroups.flatMap(group => group.columns),
+  columnNames: gridModel => GridModel.columns(gridModel).map(column => column.name),
+  metaDataKeys: gridModel => metaData(GridModel.columns(gridModel))
 }
