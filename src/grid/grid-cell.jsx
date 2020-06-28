@@ -2,6 +2,7 @@ import React from "react";
 import cx from 'classnames';
 
 import useStyles from './use-styles';
+import getInstanceCount from './use-instance-counter';
 
 const columnType = column =>
   !column.type ? null
@@ -10,7 +11,12 @@ const columnType = column =>
 
 // TODO we want to allow css class to be determined by value
 function useGridCellClassName(column){
-  const {GridCell} = useStyles();
+  const classes = useStyles();
+
+  const count = getInstanceCount(classes);
+  console.log(`instance count = ${JSON.stringify(count)}`)
+
+  const {GridCell} = classes;
   return cx(
       GridCell,
       column.className,

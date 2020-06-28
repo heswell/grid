@@ -5,6 +5,7 @@ const NOOP = () => {}
 
 /** @type {DraggableComponent} */
 const Draggable = (allProps) => {
+    let cleanUp;
     const {
         children: child,
         onDrag,
@@ -64,8 +65,6 @@ const Draggable = (allProps) => {
 
         onDrag(e, deltaX, deltaY);
     },[onDrag])
-
-    let cleanUp;
 
     const onMouseUp = useCallback(e => {
         cleanUp();
