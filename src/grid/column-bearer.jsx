@@ -185,7 +185,7 @@ const ColumnBearer = forwardRef(({columnDragData, gridModel, onDrag, onScroll, r
                         key={idx}
                         className={classes.GridRow}
                         style={{height: rowHeight, transform: `translate3d(0px, ${idx * rowHeight}px, 0px)`}}>
-                        <Cell column={column} key={idx} meta={gridModel.meta} row={row} />
+                        <Cell column={column} key={idx} row={row} />
                     </div>
                 )
             }

@@ -1,5 +1,11 @@
 declare module '@heswell/data-source';
 
+interface ColumnDescriptor {
+  locked?: boolean;
+  name: string;
+  width?: number;
+}
+
 interface Column {
   key?: number;
   heading?: string[];
@@ -28,17 +34,19 @@ interface ColumnGroup {
   width: number;
 };
 
-type ColumnMeta = {
+type MetaDataKeys = {
   [key: string]: number;
 }
 
 type DataSource = any;
 
 interface GridProps {
-  columns: Column[];
+  columns: ColumnDescriptor[];
   dataSource: DataSource;
+  defaultColumnWidth?: number;
   headerHeight?: number;
   height: number;
+  rowHeight?: number;
   width: number;
 }
 
@@ -52,12 +60,10 @@ type GridContext = React.Context<{
 
 type GridModel = {
   columnGroups: ColumnGroup[];
-  columns: Column[];
   headerHeight: number;
   headingDepth: number;
   height: number;
   horizontalScrollbarHeight: number;
-  meta: ColumnMeta;
   rowHeight: number;
   viewportHeight: number;
   viewportRowCount: number;
@@ -127,9 +133,27 @@ interface HeaderCellProps {
 }
 type HeaderCellComponent = React.FC<HeaderCellProps>;
 
-type GridData = any;
+type RowsetRange = {
+  hi: number;
+  lo: number;
+}
+
+type RowKeys = {
+  free: number[],
+  used: {[key: number]: number}
+}
+
+type GridData = {
+  metaDataKeys: MetaDataKeys;
+  offset: number;
+  rows: any[];
+  rowCount: number;
+  range: RowsetRange;
+  _keys: RowKeys
+};
+
 type DataAction = any;
-type DataReducerFactory = (model: GridModel) => (state: GridData, action: DataAction) => GridData;
+type DataReducer = (state: GridData, action: DataAction) => GridData;
 
 interface ViewportProps {
   dataSource: DataSource;
@@ -173,7 +197,7 @@ interface CanvasProps {
   gridModel: GridModel;
   height: number;
   horizontalScrollbarHeight: number;
-  meta: ColumnMeta;
+  metaDataKeys: MetaDataKeys;
   ref?: CanvasRef;
   rowHeight: number;
   rows: Row[]
@@ -189,7 +213,6 @@ interface RowProps {
   height: number;
   idx: number;
   keys: any;
-  meta: ColumnMeta;
   row: Row;
 }
 
@@ -197,7 +220,6 @@ type RowType = React.FC<RowProps>;
 
 interface CellProps {
   column: Column;
-  meta: ColumnMeta;
   row: Row;
 }
 

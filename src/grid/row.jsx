@@ -3,7 +3,7 @@ import Cell from "./grid-cell";
 import useStyles from './use-styles';
 
 /** @type {RowType} */
-const Row =  memo(function Row({ columns, height, idx, meta, row }) {
+const Row =  memo(function Row({ columns, height, idx, row }) {
   const classes = useStyles();  
   return (
     <div
@@ -17,7 +17,6 @@ const Row =  memo(function Row({ columns, height, idx, meta, row }) {
           <Cell
             key={column.key}
             column={column}
-            meta={meta}
             row={row}
           />
       )}

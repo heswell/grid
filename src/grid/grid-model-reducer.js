@@ -1,23 +1,58 @@
-import { metaData } from "@heswell/utils";
 import {getColumnGroup, getColumnGroupColumnIdx, ColumnGroup} from './grid-model-utils';
 
 const DEFAULT_COLUMN_WIDTH = 100;
 
-const DEFAULT_STATE = {
-  defaultColumnWidth: DEFAULT_COLUMN_WIDTH
-};
-
 const RESIZING = {resizing: true};
 const NOT_RESIZING = {resizing: false};
 
-/** @type {GridModelReducerInitializer} */
-export const initModel = options => {
-  return initialize(DEFAULT_STATE, options);
+// /** @type {GridModelReducerInitializer} */
+// export const initModel = options => {
+//   return initialize(DEFAULT_STATE, options);
+// };
+
+// /** @type {(s: GridModel, a: GridModelAction) => GridModel} */
+// export default (state, action) => {
+//   console.log(`model reducer ${action.type}`)
+//   // @ts-ignore
+//   return reducerActionHandlers[action.type](state, action);
+// };
+
+// /** @type {GridModelReducerTable} */
+// const reducerActionHandlers = {
+//   'resize': handleResize,
+//   'resize-col': handleResizeColumn,
+//   'resize-heading': handleResizeHeading,
+//   'add-col': handleAddColumn
+// }
+
+// function initialize(initialState, options) {
+//   const { columns, headerHeight = 32, height, rowHeight = 24, width } = options;
+// const start = performance.now();
+//   const {columnGroups, headingDepth} = buildColumnGroups(columns, width);
+//   const end = performance.now();
+//   console.log(`it took ${end-start} ms to build columns`)
+export const initModel = gridProps => {
+  const { columns, defaultColumnWidth=DEFAULT_COLUMN_WIDTH, headerHeight = 32, height, rowHeight = 24, width } = gridProps;
+  const {columnGroups, headingDepth} = buildColumnGroups(columns, width, defaultColumnWidth);
+  const totalHeaderHeight = headerHeight * headingDepth;
+  const horizontalScrollbarHeight = columnGroups.some(({width, contentWidth}) => width < contentWidth)
+    ? 15
+    : 0;
+  return {
+    columnGroups,
+    headerHeight,
+    height,
+    horizontalScrollbarHeight,
+    headingDepth,
+    rowHeight,
+    viewportHeight: height - totalHeaderHeight,
+    viewportRowCount: Math.ceil((height - totalHeaderHeight) / rowHeight) + 1,
+    width
+  };
 };
 
 /** @type {(s: GridModel, a: GridModelAction) => GridModel} */
 export default (state, action) => {
-  console.log(`model reducer ${action.type}`)
   // @ts-ignore
   return reducerActionHandlers[action.type](state, action);
 };
@@ -28,31 +63,6 @@ const reducerActionHandlers = {
   'resize-col': handleResizeColumn,
   'resize-heading': handleResizeHeading,
   'add-col': handleAddColumn
-}
-
-function initialize(initialState, options) {
-  const { columns, headerHeight = 32, height, rowHeight = 24, width } = options;
-const start = performance.now();
-  const {columnGroups, headingDepth} = buildColumnGroups(columns, width);
-  const end = performance.now();
-  console.log(`it took ${end-start} ms to build columns`)
-  const totalHeaderHeight = headerHeight * headingDepth;
-  const horizontalScrollbarHeight = columnGroups.some(({width, contentWidth}) => width < contentWidth)
-    ? 15
-    : 0;
-  return {
-    columnGroups,
-    columns,
-    headerHeight,
-    height,
-    horizontalScrollbarHeight,
-    headingDepth,
-    meta: metaData(columns),
-    rowHeight,
-    viewportHeight: height - totalHeaderHeight,
-    viewportRowCount: Math.ceil((height - totalHeaderHeight) / rowHeight) + 1,
-    width
-  };
 }
 
 /** @type {GridModelReducer<'resize-heading'>} */
@@ -205,7 +215,7 @@ function handleResize(state, {height, width}){
   }
 }
 
-function buildColumnGroups(columns, gridWidth) {
+function buildColumnGroups(columns, gridWidth, defaultColumnWidth) {
   let column = null;
   let columnGroup = null;
   let columnGroups = [];
@@ -214,7 +224,11 @@ function buildColumnGroups(columns, gridWidth) {
   const headingDepth = getMaxHeadingDepth(columns);
 
   for (let i = 0; i < columns.length; i++) {
-    const { key=i, name, heading=[name], locked = false, width } = columns[i];
+// <<<<<<< HEAD
+//     const { key=i, name, heading=[name], locked = false, width } = columns[i];
+// =======
+    const { key=i, name, heading=[name], locked = false, width=defaultColumnWidth } = columns[i];
+// >>>>>>> feat(grid) streaming data
     if (columnGroup === null || columnGroup.locked !== locked) {
       const headings = headingDepth > 1 ? [] : undefined;
 

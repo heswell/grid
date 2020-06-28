@@ -27,7 +27,7 @@ const Canvas = forwardRef(function Canvas(
     gridModel,
     height,
     horizontalScrollbarHeight,
-    meta,
+    metaDataKeys,
     rowHeight,
     rows,
     totalHeaderHeight,
@@ -228,10 +228,12 @@ const Canvas = forwardRef(function Canvas(
 
   const onHorizontalScroll = useScroll("scrollLeft", horizontalScrollHandler, 100);
 
+  // we don't need this, absIdx is already in the row (with offset)
+  // key is already in the row
   const rowPositions = rows
     .map((row, idx) => {
       const absIdx = firstVisibleRow + idx;
-      return [row[meta.RENDER_IDX], absIdx, row];
+      return [row[metaDataKeys.RENDER_IDX], absIdx, row];
     })
     .sort(byKey);
 
@@ -273,7 +275,6 @@ const Canvas = forwardRef(function Canvas(
                 height={rowHeight}
                 idx={absIdx}
                 keys={cellKeys}
-                meta={meta}
                 row={row}
               />
             );

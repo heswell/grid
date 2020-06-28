@@ -1,10 +1,35 @@
 
 import { useRef } from 'react';
 import { LocalDataSource } from "@heswell/data-source";
+import { RemoteDataView as RemoteDataSource } from "@heswell/data-remote";
 
-export function buildData(columnCount=25, rowCount=100){
+export function buildData(source, columnCount=25, rowCount=100){
   console.log(`>>>>> buildData`)
   const data = [];
+
+
+  // const tableName = 'Instruments'
+// const dataConfig = {url: '127.0.0.1:9090', tableName};
+
+// const instrumentColumns = [
+//   { name: 'Symbol', width: 120} ,
+//   { name: 'Name', width: 200} ,
+//   { name: 'Price', 
+//     type: { 
+//       name: 'number', 
+//       renderer: {name: 'background', flashStyle:'arrow-bg'},
+//       formatting: { decimals:2, zeroPad: true }
+//     },
+//     aggregate: 'avg'
+//   },
+//   { name: 'MarketCap', type: 'number', aggregate: 'sum' },
+//   { name: 'IPO'},
+//   { name: 'Sector'},
+//   { name: 'Industry', width: 120}
+// ];
+
+// const columns = instrumentColumns;
+// const dataSource = new RemoteDataSource(dataConfig);
 
   /** @type {Column[]} */
   const columns = [
@@ -30,12 +55,13 @@ export function buildData(columnCount=25, rowCount=100){
 
   const end = performance.now();
   console.log(`creating data took ${end - start} ms`);
+  debugger;
   const dataSource = new LocalDataSource({ data });
   return [columns, dataSource]
 
 }
 
-export default function useTestData(){
-  const {current: [columns, dataSource]} = useRef(buildData(10, 100))
+export default function useTestData(source='local'){
+  const {current: [columns, dataSource]} = useRef(buildData(source, 10, 100))
   return [columns, dataSource]
 }
