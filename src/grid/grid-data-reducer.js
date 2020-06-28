@@ -1,9 +1,12 @@
+
 import { update as updateRows } from "@heswell/utils";
 import * as Action from "./grid-data-actions";
 
 const INITIAL_RANGE = { lo: 0, hi: -1 };
 
-export const initialData = {
+/** @type {(keys: MetaDataKeys) =>  GridData} */
+export const initData = metaDataKeys => ({
+  metaDataKeys,
   rows: [],
   rowCount: 0,
   range: INITIAL_RANGE,
@@ -12,23 +15,21 @@ export const initialData = {
     free: [],
     used: {}
   }
-};
+});
 
 // This assumes model.meta never changes. If it does (columns etc)
 // we will need additional action types to update
-/** @type {DataReducerFactory} */
-export default function(model) {
-  return (state, action) => {
+/** @type {DataReducer} */
+export default (state, action) => {
     if (action.type === "range") {
-      return setRange(state, action, model.meta);
+      return setRange(state, action);
     } else if (action.type === "data") {
-      return setData(state, action, model.meta);
+      return setData(state, action);
     } else if (action.type === "update") {
-      return applyUpdates(state, action, model.meta);
+      return applyUpdates(state, action);
     } else if (action.type === Action.ROWCOUNT) {
       return setSize(state, action);
     }
-  };
 }
 
 function setKeys(keys, { lo, hi }) {
@@ -50,24 +51,26 @@ function setSize(state, { rowCount }) {
 }
 
 //TODO we HAVE to remove out=of-range rows and add empty placeholders
-function setRange(state, { range }, meta) {
+/** @type {DataReducer} */
+function setRange(state, { range }) {
+  console.log(`data-reducer setRange ${range.lo},${range.hi}`)
   // return {
   //   ...state,
   //   range,
   //   _keys: setKeys(state._keys, range)
   // }
 
-  // const { IDX, SELECTED } = meta;
-  const { rows, rowCount, offset } = state;
+  const { metaDataKeys, rows, rowCount, offset } = state;
   const keys = setKeys(state._keys, range);
 
   const [mergedRows, _keys] =
     rows.length === 0
       ? [rows, keys]
-      : mergeAndPurge(range, rows, offset, [], rowCount, meta, keys);
+      : mergeAndPurge(range, rows, offset, [], rowCount, metaDataKeys, keys);
 
   // const selected = rows.filter(row => row[SELECTED]).map(row => row[IDX]);
   return {
+    metaDataKeys,
     rows: mergedRows,
     rowCount,
     offset,
@@ -76,22 +79,25 @@ function setRange(state, { range }, meta) {
   };
 }
 
-function applyUpdates(state, action, meta) {
-  const rows = updateRows(state.rows, action.updates, meta);
+function applyUpdates(state, action) {
+  const rows = updateRows(state.rows, action.updates, state.metaDataKeys);
   return {
     ...state,
     rows
   };
 }
 
-function setData(state, action, meta) {
+/** @type {DataReducer} */
+function setData(state, action) {
   // const { IDX, SELECTED } = meta;
+  // console.log(`data-reducer setData ${action.range.lo} ${action.range.hi}`)
+  const {metaDataKeys} = state;
   const { rows, rowCount, offset } = action;
-  const range =
-    action.range.reset || state.range === INITIAL_RANGE
-      ? action.range
-      : state.range;
-
+  // const range =
+  //   action.range.reset || state.range === INITIAL_RANGE
+  //     ? action.range
+  //     : state.range;
+  const range = action.range;
   // console.log(`setData <<<<<<<  incoming...`)
   // console.table(rows)
 
@@ -104,13 +110,14 @@ function setData(state, action, meta) {
     offset,
     rows,
     rowCount,
-    meta,
+    metaDataKeys,
     state._keys
   );
 
   // console.log(`setData >>>>>>  out...`)
   // console.table(mergedRows)
   return {
+    metaDataKeys,
     rows: mergedRows,
     rowCount,
     offset,
@@ -126,6 +133,7 @@ function emptyRow(idx, { IDX, count }) {
   return row;
 }
 
+/** @type {(...args: any[]) => [any[], RowKeys]} */
 function mergeAndPurge(
   { lo, hi },
   rows,
@@ -150,7 +158,9 @@ function mergeAndPurge(
   const high = Math.min(hi + offset, size + offset);
   const rowCount = hi - lo;
   const results = [];
+  /** @type {{[key: number]: number}} */
   const used = {};
+  /** @type {number[]} */
   const free = freeKeys.slice();
 
   let maxKey = rows.length;
@@ -204,7 +214,7 @@ function mergeAndPurge(
   // 3) assign empty row to any free slots in results
   // TODO make this more efficient
   // TODO how do we determine this -2
-  for (let i = 0, freeIdx = 0; i < rowCount-2; i++) {
+  for (let i = 0, freeIdx = 0; i < rowCount; i++) {
     if (results[i] === undefined) {
       const row = (results[i] = emptyRow(i + low, meta));
       if (free[freeIdx] === undefined){
@@ -223,6 +233,8 @@ function mergeAndPurge(
   //     used : ${Object.keys(used).join(',')}
   //     row keys : ${results.map(r=>r[RENDER_IDX]).join(',')}
   // `)
+
+  // console.table(results)
 
   return [
     results,

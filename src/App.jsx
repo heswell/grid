@@ -1,39 +1,32 @@
 import React, {useRef, useState} from "react";
 import { Grid } from "./grid";
-import { LocalDataSource } from "@heswell/data-source";
+import { RemoteDataView as RemoteDataSource } from "@heswell/data-remote";
 
 import useStyles from './use-app-styles.js';
 
-const data = [];
+const tableName = 'Instruments'
+const dataConfig = {url: '127.0.0.1:9090', tableName};
 
-/** @type {Column[]} */
-const columns = [
-  { name: "id", width: 100, locked: true },
-  { name: "ccy", width: 100, locked: true }
+const instrumentColumns = [
+  { name: 'Symbol', width: 120} ,
+  { name: 'Name', width: 200} ,
+  { name: 'Price', 
+    type: { 
+      name: 'number', 
+      renderer: {name: 'background', flashStyle:'arrow-bg'},
+      formatting: { decimals:2, zeroPad: true }
+    },
+    aggregate: 'avg'
+  },
+  { name: 'MarketCap', type: 'number', aggregate: 'sum' },
+  { name: 'IPO'},
+  { name: 'Sector'},
+  { name: 'Industry', width: 120}
 ];
 
-const start = performance.now();
-let locked = false;
-for (let i = 2, heading= 'Group 1'; i < 27; i++) {
-  if ((i-2)%3 === 0){
-    heading = `Group ${((i-2)/3) + 1}`
-  }
-  columns.push({ name: `${i - 1}M`, width: 100, locked, heading: [`${i - 1}M`, heading] });
-  locked = false;
-}
+const columns = instrumentColumns;
+const dataSource = new RemoteDataSource(dataConfig);
 
-for (let i = 0; i < 100; i++) {
-  const row = { id: i, ccy: "USDGBP" };
-  for (let j = 2; j < 27; j++) {
-    row[`${j - 1}M`] = `${i},${j - 1}`;
-  }
-  data.push(row);
-}
-
-const end = performance.now();
-console.log(`creating data took ${end - start} ms`);
-
-const dataSource = new LocalDataSource({ data });
 
 export default function App() {
 
@@ -59,6 +52,14 @@ export default function App() {
     setState({height: pendingHeight.current, width: pendingWidth.current});
   }
 
+  const scrollBy = value => {
+    console.log(`scrollBy ${value}`)
+    const viewport = document.querySelector('.Viewport-0-2-6');
+    const scrollTop = viewport.scrollTop;
+    viewport.scrollTop = scrollTop + value;
+
+  }
+
   const classes = useStyles();
   return (
     <>
@@ -73,6 +74,14 @@ export default function App() {
       <label>Width</label><input type="text" defaultValue={state.width} onChange={e => setDirty(e, 'width')}/>
       <label>Height</label><input type="text" defaultValue={state.height} onChange={e => setDirty(e, 'height')}/>
       <button onClick={applyChanges}>Apply</button> 
+      <div>
+        <button onClick={() => scrollBy(1)}>Scroll Down 1</button>
+        <button onClick={() => scrollBy(-1)}>Scroll Up 1</button>
+        <button onClick={() => scrollBy(4)}>Scroll Down 4</button>
+        <button onClick={() => scrollBy(-4)}>Scroll Up 4</button>
+        <button onClick={() => scrollBy(24)}>Scroll Down 24</button>
+        <button onClick={() => scrollBy(-24)}>Scroll Up 24</button>
+      </div>
     </div>
     </>
   );
