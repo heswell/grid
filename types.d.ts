@@ -87,12 +87,14 @@ type GridModelResizeAction = { type: 'resize', height: number, width: number};
 type GridModelResizeColAction = { type: 'resize-col', phase: ResizePhase, column: Column, width?: number};
 type GridModelResizeHeadingAction = { type: 'resize-heading', phase: ResizePhase, column: Column, width?: number};
 type GridModelAddColumnAction = { type: 'add-col', targetColumnGroup?: ColumnGroup, column: Column, insertIdx: number};
+type GridModelInitializeAction = { type: 'initialize', props};
 
 type GridModelAction =
   | GridModelResizeAction
   | GridModelResizeColAction
   | GridModelResizeHeadingAction
-  | GridModelAddColumnAction;
+  | GridModelAddColumnAction
+  | GridModelInitializeAction;
 
 type GridModelReducerFn<A=GridModelAction> = (state: GridModel, action: A) => GridModel;  
 type GridModelReducerInitializer = (props: GridProps) => GridModel;
@@ -101,6 +103,7 @@ type GridModelReducer<T extends GridModelAction['type']> =
   T extends 'resize-col' ? GridModelReducerFn<GridModelResizeColAction> :
   T extends 'resize-heading' ? GridModelReducerFn<GridModelResizeHeadingAction> :
   T extends 'add-col' ? GridModelReducerFn<GridModelAddColumnAction> :
+  T extends 'initialize' ? GridModelReducerFn<GridModelInitializeAction> :
   GridModelReducerFn<GridModelAction>;
 type GridModelReducerTable = {[key in GridModelAction['type']]: GridModelReducer<key>};  
 

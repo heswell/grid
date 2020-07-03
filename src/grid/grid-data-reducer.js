@@ -29,6 +29,10 @@ export default (state, action) => {
       return applyUpdates(state, action);
     } else if (action.type === Action.ROWCOUNT) {
       return setSize(state, action);
+    } else if (action.type === 'metadata'){
+      return initData(action.metaDataKeys);
+    } else {
+      throw Error(`GridDataReducer unknown action type ${action.type}`);
     }
 }
 

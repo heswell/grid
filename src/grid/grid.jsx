@@ -7,6 +7,8 @@ import useStyles from './use-styles';
 import Viewport from "./viewport";
 import {measureColumns} from './grid-model-utils';
 
+const getDataSource = props => props.dataSource.setColumns(props.columns);
+
 /** @type {GridComponent} */
 const Grid = (props) => {
   const gridEl = useRef(null);
@@ -16,6 +18,13 @@ const Grid = (props) => {
   /** @type {[ColumnDragData, React.Dispatch<ColumnDragData>]} */
   const [columnDragData, setColumnDragData] = useState(null);
   const draggingColumn = useRef(false);
+
+  const [dataSource, setDataSource] = useState(getDataSource(props));
+
+  useEffect(() => {
+    setDataSource(getDataSource(props));
+  },[props.dataSource])
+
 
   const handleHorizontalScrollStart = _scrollLeft => {
     if (!draggingColumn.current){
@@ -37,6 +46,11 @@ const Grid = (props) => {
     props,
     initModel
   );
+
+  useEffect(() => {
+    console.log(`Grid columns changed reset model`)
+    dispatchGridModel({type: 'initialize', props});
+  },[props.columns])
 
   const handleColumnDrag = useCallback(
       (phase, ...args) => {
@@ -108,7 +122,7 @@ const Grid = (props) => {
           ))}
         </div>
         <Viewport
-          dataSource={props.dataSource}
+          dataSource={dataSource}
           gridModel={gridModel}
           columnDragData={columnDragData}
           onColumnDrag={handleColumnDrag}

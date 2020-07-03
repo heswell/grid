@@ -14,6 +14,7 @@ import useUpdate from "./use-update";
 import useStyles from './use-styles';
 import {getColumnGroupColumnIdx, GridModel} from './grid-model-utils.js';
 import dataReducer, { initData } from "./grid-data-reducer";
+import { metaData } from "@heswell/utils";
 
 import Canvas from "./canvas";
 import ColumnBearer from './column-bearer';
@@ -34,6 +35,13 @@ const Viewport = forwardRef(function Viewport(
   const verticalScrollbarWidth = useRef(0);
   const firstVisibleRow = useRef(0);
   const insertIndicator = useRef(null);
+
+  const gridModelRef = useRef(gridModel);
+  if (gridModelRef.current !== gridModel){
+    // Is there a better way to do this - the dataSource effect needs to get the latest gridModel
+    // but changes to gridModel should not trigger re-subscription
+    gridModelRef.current = gridModel;
+  }
 
   const showColumnBearer = useRef(columnDragData !== null);
   showColumnBearer.current = columnDragData !== null;  
@@ -62,10 +70,12 @@ const Viewport = forwardRef(function Viewport(
     }
   }));
 
-  const metaDataKeys = useMemo(() => GridModel.metaDataKeys(gridModel),[/* what should go here */]);
+  // Note this will cause to refresh too often. This will be redundant once we move
+  // to zero based metadata 
+  const metaDataKeys = useMemo(() => GridModel.metaDataKeys(gridModel),[gridModel]);
 
   const [data, dispatchData] = useReducer(dataReducer, metaDataKeys, initData);
-
+  // I don't think we should need this
   const setRange = useCallback(
     (lo, hi) => {
       dataSource.setRange(lo, hi);
@@ -132,15 +142,20 @@ const Viewport = forwardRef(function Viewport(
 
   const handleVerticalScroll = useScroll("scrollTop", scrollCallback);
 
+  // THis is a problem because child effects fire before parent effects. Hence When datasource and columns
+  // change at the same time , dataSOurce fires this effect first, but old columns are processed
+  // ANdwer - consume columns from datasource
   useEffect(() => {
+    const metaDataKeys = metaData(dataSource.columns);
+    dispatchData({type: 'metadata', metaDataKeys});
     dataSource.subscribe(
       {
-        columns: GridModel.columnNames(gridModel),
-        range: { lo: 0, hi: gridModel.viewportRowCount }
+        range: { lo: 0, hi: gridModelRef.current.viewportRowCount }
       },
       /* postMessageToClient */
       msg => {
         if (msg.size !== undefined){
+          // How do we handle this withoput having this dependency on gridModel ?
           if (msg.size >= gridModel.viewportRowCount && verticalScrollbarWidth.current === 0){
             verticalScrollbarWidth.current = 15;
           } else if (msg.size < gridModel.viewportRowCount && verticalScrollbarWidth.current === 15){
@@ -154,7 +169,7 @@ const Viewport = forwardRef(function Viewport(
             rows: msg.rows,
             rowCount: msg.size,
             offset: msg.offset,
-            range: msg.range
+            range: msg.range,
           });
         } else if (msg.updates){
           dispatchData({

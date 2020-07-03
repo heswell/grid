@@ -1,36 +1,11 @@
 import {getColumnGroup, getColumnGroupColumnIdx, ColumnGroup} from './grid-model-utils';
+import jssPluginSyntaxNested from 'jss-plugin-nested';
 
 const DEFAULT_COLUMN_WIDTH = 100;
 
 const RESIZING = {resizing: true};
 const NOT_RESIZING = {resizing: false};
 
-// /** @type {GridModelReducerInitializer} */
-// export const initModel = options => {
-//   return initialize(DEFAULT_STATE, options);
-// };
-
-// /** @type {(s: GridModel, a: GridModelAction) => GridModel} */
-// export default (state, action) => {
-//   console.log(`model reducer ${action.type}`)
-//   // @ts-ignore
-//   return reducerActionHandlers[action.type](state, action);
-// };
-
-// /** @type {GridModelReducerTable} */
-// const reducerActionHandlers = {
-//   'resize': handleResize,
-//   'resize-col': handleResizeColumn,
-//   'resize-heading': handleResizeHeading,
-//   'add-col': handleAddColumn
-// }
-
-// function initialize(initialState, options) {
-//   const { columns, headerHeight = 32, height, rowHeight = 24, width } = options;
-// const start = performance.now();
-//   const {columnGroups, headingDepth} = buildColumnGroups(columns, width);
-//   const end = performance.now();
-//   console.log(`it took ${end-start} ms to build columns`)
 export const initModel = gridProps => {
   const { columns, defaultColumnWidth=DEFAULT_COLUMN_WIDTH, headerHeight = 32, height, rowHeight = 24, width } = gridProps;
   const {columnGroups, headingDepth} = buildColumnGroups(columns, width, defaultColumnWidth);
@@ -62,7 +37,8 @@ const reducerActionHandlers = {
   'resize': handleResize,
   'resize-col': handleResizeColumn,
   'resize-heading': handleResizeHeading,
-  'add-col': handleAddColumn
+  'add-col': handleAddColumn,
+  'initialize': initialize
 }
 
 /** @type {GridModelReducer<'resize-heading'>} */
@@ -79,6 +55,11 @@ function handleResizeHeading(state, {phase, column, width}){
     resizeColumnHeaderHeading = null;
     return {...state, columnGroups};
   }
+}
+
+/** @type {GridModelReducer<'initialize'>} */
+function initialize(state, {props}){
+  return initModel(props);
 }
 
 let resizeColumnHeaderHeading = null;

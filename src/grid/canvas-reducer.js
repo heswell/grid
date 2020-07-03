@@ -2,7 +2,6 @@ const VIRTUALIZATION_THRESHOLD = 0.66;
 
 /** @type {CanvasReducerInitializer} */
 export const initCanvasReducer = columnGroup => {
-  console.log(`CanvasReducer initial render  width=${columnGroup.width}`)
   const renderColumns = getRenderColumns(columnGroup);
   return [renderColumns, initialKeys(renderColumns), columnGroup, 0];
 };
@@ -28,7 +27,6 @@ function initialKeys(columns) {
 
 function nextKeys(columns, prevKeys) {
   if (columns.every(column => prevKeys.has(column.key))) {
-    console.log(`SURPRISED to be called with no change of keys !!!`);
     return prevKeys;
   } else {
     const remainingKeys = new Map(prevKeys);

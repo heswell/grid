@@ -76,9 +76,10 @@ export default function App() {
         <option value="dark">Dark</option>
       </select>
 
-      <select defaultValue="light" onChange={handleSelectDataSource}>
+      <select defaultValue="local" onChange={handleSelectDataSource}>
         <option value="vs">Viewserver</option>
         <option value="local">Local Test Data</option>
+        <option value="local-instruments">Local Instruments</option>
       </select>
     </div>
     </ThemeProvider>

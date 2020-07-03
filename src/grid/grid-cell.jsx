@@ -2,7 +2,7 @@ import React from "react";
 import cx from 'classnames';
 
 import useStyles from './use-styles';
-import getInstanceCount from './use-instance-counter';
+// import getInstanceCount from './use-instance-counter';
 
 const columnType = column =>
   !column.type ? null
@@ -13,8 +13,8 @@ const columnType = column =>
 function useGridCellClassName(column){
   const classes = useStyles();
 
-  const count = getInstanceCount(classes);
-  console.log(`instance count = ${JSON.stringify(count)}`)
+  // const count = getInstanceCount(classes);
+  // console.log(`instance count = ${JSON.stringify(count)}`)
 
   const {GridCell} = classes;
   return cx(
@@ -27,7 +27,7 @@ function useGridCellClassName(column){
 }
 
 /** @type {CellType} */
-const GridCell = React.memo(({ column, row }) => {
+const GridCell = React.memo(function GridCell({ column, row }){
   const className = useGridCellClassName(column);
   return (
     <div className={className} style={{ marginLeft: column.marginLeft, width: column.width }}>

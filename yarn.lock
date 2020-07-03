@@ -1184,14 +1184,14 @@
     "@hapi/hoek" "^8.3.0"
 
 "@heswell/data-remote@^1.0.0":
-  version "1.3.4"
-  resolved "https://registry.yarnpkg.com/@heswell/data-remote/-/data-remote-1.3.4.tgz#89c24e080f2b041b1e85a0ef68ab3fb81e1c54d3"
-  integrity sha512-O+j70B3yzgnnVtAO6TAspoW23TEE+h0jAHX3oEZYlo0HW+eVpYvb/8E3LBonRLLJdPg96Kebz8kntfArDtocxQ==
+  version "1.4.2"
+  resolved "https://registry.yarnpkg.com/@heswell/data-remote/-/data-remote-1.4.2.tgz#5adb38072876842c5ae2f047ec434a11c0729823"
+  integrity sha512-K0JSaTrGk2QDk2iXxd51Yt9ayNgp2B0925hHsi2Hb4R7hr8uDZS/Q1ekzJOJYG1GlMiowNpdupgqrL7aYXBOgw==
 
 "@heswell/data-source@^1.0.0":
-  version "1.2.5"
-  resolved "https://registry.yarnpkg.com/@heswell/data-source/-/data-source-1.2.5.tgz#b47fe2e6ac679ad89d85e95873e3441c00293dd8"
-  integrity sha512-Job5wd9x4Y2gy2+73eioO1Du9M67IG9VuuiOb0PkYddhi0wmfGP7TBg2C7spEAZAqcx2wVZqdbcLUu5aGYYN9A==
+  version "1.2.8"
+  resolved "https://registry.yarnpkg.com/@heswell/data-source/-/data-source-1.2.8.tgz#4ead3657c5120d14b72e234e90367913510ce4a4"
+  integrity sha512-ODrXmQU98xfElwrULlBd6NRAXYbAgFk1cMQeg7R3BI8OBlBczs+wsh4pnSEJv17gaWbBK+gFE1fg18fZoHX1Jg==
   dependencies:
     d3-array "^2.2.0"
 
@@ -1204,9 +1204,9 @@
     typescript "^3.8.3"
 
 "@heswell/utils@^1.0.0":
-  version "1.3.2"
-  resolved "https://registry.yarnpkg.com/@heswell/utils/-/utils-1.3.2.tgz#9c716c2abb9bb8e79ea13df668ca1c0a6aafb4f7"
-  integrity sha512-sc/evoMwQmrMckdWQHyO2kv3VOVJIvMEgjHZDpjL6snIhPE8C29Mg7yb3+O7bvPeW7iPlgw2M8fVDuQ93/tkrw==
+  version "1.3.3"
+  resolved "https://registry.yarnpkg.com/@heswell/utils/-/utils-1.3.3.tgz#e56ed68019934bece13405c732cb179513200fc3"
+  integrity sha512-kWOBUElpf/04vpSRdQBpdUXBilFAQu0Qso210+8an0iVl4HXCWE6hptRC3duHaSHE84g2Xqcp//DXbejc9hp2A==
   dependencies:
     pure-uuid "^1.5.7"
 

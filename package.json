@@ -13,11 +13,11 @@
     "@heswell/data-store": "^1.0.0",
     "@heswell/utils": "^1.0.0",
     "@types/jest": "^25.2.3",
+    "classnames": "^2.2.6",
     "jss-plugin-cache": "^10.1.1",
     "jss-plugin-camel-case": "^10.1.1",
     "jss-plugin-default-unit": "^10.1.1",
     "jss-plugin-nested": "^10.1.1",
-    "classnames": "^2.2.6",
     "react": "16.12.0",
     "react-dom": "16.12.0",
     "react-jss": "file:/Users/steve/git/jss/packages/react-jss/",
@@ -34,10 +34,15 @@
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
-  "browserslist": [
-    ">0.2%",
-    "not dead",
-    "not ie <= 11",
-    "not op_mini all"
-  ]
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not ie <= 11",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version"
+    ]
+  }
 }
