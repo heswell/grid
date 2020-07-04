@@ -1,12 +1,11 @@
 
-import { update as updateRows } from "@heswell/utils";
+import { metadataKeys, update as updateRows } from "@heswell/utils";
 import * as Action from "./grid-data-actions";
 
 const INITIAL_RANGE = { lo: 0, hi: -1 };
 
-/** @type {(keys: MetaDataKeys) =>  GridData} */
-export const initData = metaDataKeys => ({
-  metaDataKeys,
+/** @type {() =>  GridData} */
+export const initData = () => ({
   rows: [],
   rowCount: 0,
   range: INITIAL_RANGE,
@@ -29,8 +28,8 @@ export default (state, action) => {
       return applyUpdates(state, action);
     } else if (action.type === Action.ROWCOUNT) {
       return setSize(state, action);
-    } else if (action.type === 'metadata'){
-      return initData(action.metaDataKeys);
+    } else if (action.type === 'clear'){
+      return initData();
     } else {
       throw Error(`GridDataReducer unknown action type ${action.type}`);
     }
@@ -64,17 +63,16 @@ function setRange(state, { range }) {
   //   _keys: setKeys(state._keys, range)
   // }
 
-  const { metaDataKeys, rows, rowCount, offset } = state;
+  const { rows, rowCount, offset } = state;
   const keys = setKeys(state._keys, range);
 
   const [mergedRows, _keys] =
     rows.length === 0
       ? [rows, keys]
-      : mergeAndPurge(range, rows, offset, [], rowCount, metaDataKeys, keys);
+      : mergeAndPurge(range, rows, offset, [], rowCount, keys);
 
   // const selected = rows.filter(row => row[SELECTED]).map(row => row[IDX]);
   return {
-    metaDataKeys,
     rows: mergedRows,
     rowCount,
     offset,
@@ -95,7 +93,6 @@ function applyUpdates(state, action) {
 function setData(state, action) {
   // const { IDX, SELECTED } = meta;
   // console.log(`data-reducer setData ${action.range.lo} ${action.range.hi}`)
-  const {metaDataKeys} = state;
   const { rows, rowCount, offset } = action;
   // const range =
   //   action.range.reset || state.range === INITIAL_RANGE
@@ -114,14 +111,12 @@ function setData(state, action) {
     offset,
     rows,
     rowCount,
-    metaDataKeys,
     state._keys
   );
 
   // console.log(`setData >>>>>>  out...`)
   // console.table(mergedRows)
   return {
-    metaDataKeys,
     rows: mergedRows,
     rowCount,
     offset,
@@ -131,7 +126,8 @@ function setData(state, action) {
 }
 
 // TODO create a pool of these and reuse them
-function emptyRow(idx, { IDX, count }) {
+function emptyRow(idx, ) {
+  const { IDX, count } = metadataKeys;
   const row = Array(count);
   row[IDX] = idx;
   return row;
@@ -144,7 +140,6 @@ function mergeAndPurge(
   offset = 0,
   incomingRows,
   size,
-  meta,
   keys
 ) {
   // console.log(`dataReducer.mergeAndPurge: entry
@@ -156,7 +151,7 @@ function mergeAndPurge(
   //     incoming rows : ${incomingRows.map(r=>r[meta.IDX]-offset).join(',')}
   // `)
 
-  const { IDX, RENDER_IDX } = meta;
+  const { IDX, RENDER_IDX } = metadataKeys;
   const { free: freeKeys, used: usedKeys } = keys;
   const low = lo + offset;
   const high = Math.min(hi + offset, size + offset);
@@ -220,7 +215,7 @@ function mergeAndPurge(
   // TODO how do we determine this -2
   for (let i = 0, freeIdx = 0; i < rowCount; i++) {
     if (results[i] === undefined) {
-      const row = (results[i] = emptyRow(i + low, meta));
+      const row = (results[i] = emptyRow(i + low));
       if (free[freeIdx] === undefined){
         free[freeIdx] = i;
       }

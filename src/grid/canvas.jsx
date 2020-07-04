@@ -7,6 +7,7 @@ import React, {
   useRef
 } from "react";
 import cx from "classnames";
+import { metadataKeys } from "@heswell/utils";
 import GridContext from "./grid-context";
 import ColumnGroupHeader from "./column-group-header";
 import useScroll from "./use-scroll";
@@ -27,7 +28,6 @@ const Canvas = forwardRef(function Canvas(
     gridModel,
     height,
     horizontalScrollbarHeight,
-    metaDataKeys,
     rowHeight,
     rows,
     totalHeaderHeight,
@@ -233,7 +233,7 @@ const Canvas = forwardRef(function Canvas(
   const rowPositions = rows
     .map((row, idx) => {
       const absIdx = firstVisibleRow + idx;
-      return [row[metaDataKeys.RENDER_IDX], absIdx, row];
+      return [row[metadataKeys.RENDER_IDX], absIdx, row];
     })
     .sort(byKey);
 

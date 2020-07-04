@@ -1,5 +1,5 @@
+import { metadataKeys } from '@heswell/utils'
 import {getColumnGroup, getColumnGroupColumnIdx, ColumnGroup} from './grid-model-utils';
-import jssPluginSyntaxNested from 'jss-plugin-nested';
 
 const DEFAULT_COLUMN_WIDTH = 100;
 
@@ -203,13 +203,11 @@ function buildColumnGroups(columns, gridWidth, defaultColumnWidth) {
   let availableWidth = gridWidth;
 
   const headingDepth = getMaxHeadingDepth(columns);
+  const start = metadataKeys.count;
 
   for (let i = 0; i < columns.length; i++) {
-// <<<<<<< HEAD
-//     const { key=i, name, heading=[name], locked = false, width } = columns[i];
-// =======
-    const { key=i, name, heading=[name], locked = false, width=defaultColumnWidth } = columns[i];
-// >>>>>>> feat(grid) streaming data
+    const { name, heading=[name], locked = false, width=defaultColumnWidth } = columns[i];
+    const key = start + i;
     if (columnGroup === null || columnGroup.locked !== locked) {
       const headings = headingDepth > 1 ? [] : undefined;
 

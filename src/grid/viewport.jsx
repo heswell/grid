@@ -14,7 +14,6 @@ import useUpdate from "./use-update";
 import useStyles from './use-styles';
 import {getColumnGroupColumnIdx, GridModel} from './grid-model-utils.js';
 import dataReducer, { initData } from "./grid-data-reducer";
-import { metaData } from "@heswell/utils";
 
 import Canvas from "./canvas";
 import ColumnBearer from './column-bearer';
@@ -70,11 +69,7 @@ const Viewport = forwardRef(function Viewport(
     }
   }));
 
-  // Note this will cause to refresh too often. This will be redundant once we move
-  // to zero based metadata 
-  const metaDataKeys = useMemo(() => GridModel.metaDataKeys(gridModel),[gridModel]);
-
-  const [data, dispatchData] = useReducer(dataReducer, metaDataKeys, initData);
+  const [data, dispatchData] = useReducer(dataReducer, {}, initData);
   // I don't think we should need this
   const setRange = useCallback(
     (lo, hi) => {
@@ -146,8 +141,7 @@ const Viewport = forwardRef(function Viewport(
   // change at the same time , dataSOurce fires this effect first, but old columns are processed
   // ANdwer - consume columns from datasource
   useEffect(() => {
-    const metaDataKeys = metaData(dataSource.columns);
-    dispatchData({type: 'metadata', metaDataKeys});
+    dispatchData({type: 'clear'});
     dataSource.subscribe(
       {
         range: { lo: 0, hi: gridModelRef.current.viewportRowCount }
@@ -217,7 +211,6 @@ const Viewport = forwardRef(function Viewport(
               height={gridModel.viewportHeight}
               horizontalScrollbarHeight={horizontalScrollbarHeight.current}
               key={idx}
-              metaDataKeys={metaDataKeys}
               ref={canvasRefs.current[idx]}
               rowHeight={gridModel.rowHeight}
               rows={data.rows}

@@ -147,7 +147,6 @@ type RowKeys = {
 }
 
 type GridData = {
-  metaDataKeys: MetaDataKeys;
   offset: number;
   rows: any[];
   rowCount: number;
@@ -200,7 +199,6 @@ interface CanvasProps {
   gridModel: GridModel;
   height: number;
   horizontalScrollbarHeight: number;
-  metaDataKeys: MetaDataKeys;
   ref?: CanvasRef;
   rowHeight: number;
   rows: Row[]
