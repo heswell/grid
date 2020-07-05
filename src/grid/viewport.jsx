@@ -5,7 +5,6 @@ import React, {
   useImperativeHandle,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useReducer,
   useRef
 } from "react";

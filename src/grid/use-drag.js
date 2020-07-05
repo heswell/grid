@@ -92,10 +92,20 @@ export default function useDrag(callback, dragPhase=DRAG_DEFAULT, initialDragPos
   const mouseMoveHandler = useCallback(e => onMouseMove.current(e),[])
   const mouseUpHandler = useCallback(e => onMouseUp.current(e),[])
 
+  function leftMouseButton(e) {
+    if ("buttons" in e) {
+        return e.buttons == 1;
+    }
+    var button = e.which || e.button;
+    return button == 1;
+}
   const handleMouseDown = useCallback(e => {
+    if (leftMouseButton(e)){
       position.current = {x: e.clientX, y: e.clientY};
       window.addEventListener('mouseup', mouseUpHandler);
       window.addEventListener('mousemove', mouseMoveHandler);
+
+    }
     },[onMouseMove, onMouseUp]);
 
   useEffect(() => {

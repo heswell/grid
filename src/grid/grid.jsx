@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import ColumnGroupHeader from "./column-group-header";
 import GridContext from "./grid-context";
+import {MenuProvider} from './context-menu/menu-context';
 import modelReducer, { initModel } from "./grid-model-reducer";
 import actionReducer from "./grid-action-reducer";
 import useStyles from './use-styles';
@@ -105,31 +106,33 @@ const Grid = (props) => {
   const classes = useStyles();
 
   return (
-    <GridContext.Provider value={{ dispatchGridAction, dispatchGridModelAction: dispatchGridModel }}>
-      <div className={classes.Grid} ref={gridEl} style={{ width, height }}>
-        <div className={classes.headerContainer} style={{ height: gridModel.headerHeight * gridModel.headingDepth }}>
-          {gridModel.columnGroups.map((columnGroup, idx) => (
-            <ColumnGroupHeader
-              columnGroup={columnGroup}
-              columnGroupIdx={idx}
-              depth={gridModel.headingDepth}
-              height={gridModel.headerHeight}
-              key={idx}
-              onColumnDrag={handleColumnDrag}
-              ref={columnGroup.locked ? null : scrollableHeader}
-              width={columnGroup.width}
-            />
-          ))}
+      <GridContext.Provider value={{ dispatchGridAction, dispatchGridModelAction: dispatchGridModel }}>
+        <MenuProvider>
+        <div className={classes.Grid} ref={gridEl} style={{ width, height }}>
+          <div className={classes.headerContainer} style={{ height: gridModel.headerHeight * gridModel.headingDepth }}>
+            {gridModel.columnGroups.map((columnGroup, idx) => (
+              <ColumnGroupHeader
+                columnGroup={columnGroup}
+                columnGroupIdx={idx}
+                depth={gridModel.headingDepth}
+                height={gridModel.headerHeight}
+                key={idx}
+                onColumnDrag={handleColumnDrag}
+                ref={columnGroup.locked ? null : scrollableHeader}
+                width={columnGroup.width}
+              />
+            ))}
+          </div>
+          <Viewport
+            dataSource={dataSource}
+            gridModel={gridModel}
+            columnDragData={columnDragData}
+            onColumnDrag={handleColumnDrag}
+            ref={viewport}
+          />
         </div>
-        <Viewport
-          dataSource={dataSource}
-          gridModel={gridModel}
-          columnDragData={columnDragData}
-          onColumnDrag={handleColumnDrag}
-          ref={viewport}
-        />
-      </div>
-    </GridContext.Provider>
+        </MenuProvider>
+      </GridContext.Provider>
   );
 }
 

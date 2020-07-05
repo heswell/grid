@@ -131,6 +131,7 @@ type ResizePhase = 'begin' | 'resize' | 'end';
 interface HeaderCellProps {
   className?: string;
   column: Column;
+  onContextMenu?: (e: React.MouseEvent, menuDescriptors: any) => void;
   onDrag?: onHeaderCellDragHandler;
   onResize?: (resizePhase: ResizePhase, column: Column, width?: number) => void;
 }

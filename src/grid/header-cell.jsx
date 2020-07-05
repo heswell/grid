@@ -3,9 +3,10 @@ import cx from 'classnames';
 import useStyles from './use-styles';
 import {useDragStart} from './use-drag';
 import Draggable from './draggable';
+import {buildMenuDescriptors} from './context-menu';
 
 /** @type {HeaderCellComponent} */
-const HeaderCell = function HeaderCell({ className, column, onDrag, onResize }){
+const HeaderCell = function HeaderCell({ className, column, onContextMenu, onDrag, onResize }){
 
   const el = useRef(null);
   const col = useRef(column);
@@ -36,6 +37,10 @@ const HeaderCell = function HeaderCell({ className, column, onDrag, onResize }){
       onResize('end', col.current, getWidthFromMouseEvent(e));
   }
 
+  const handleContextMenu = e => {
+    onContextMenu(e, buildMenuDescriptors('header', { column }));
+  }
+
   const getWidthFromMouseEvent = e => {
       const right = e.pageX;
       const left = el.current.getBoundingClientRect().left;
@@ -48,6 +53,7 @@ const HeaderCell = function HeaderCell({ className, column, onDrag, onResize }){
   return (
     <div
       className={cx(classes.HeaderCell, className, {resizing})}
+      onContextMenu={handleContextMenu}
       onMouseDown={handleMouseDown}
       ref={el}
       role="columnheader"

@@ -1,5 +1,6 @@
 import React, {useEffect, useMemo, useRef, useState} from "react";
 import { Grid } from "./grid";
+import MenuContext from './grid/context-menu';
 import {ThemeProvider} from 'react-jss';
 import themes from './themes';
 import {buildData} from './data/use-test-data';
@@ -49,39 +50,45 @@ export default function App() {
 
   }
 
+  // const renderContextMenu = (e, menuDescriptors, onContextMenuAction) => {
+  //   alert(`render custom menu`)
+  // }
+
   const classes = useStyles();
   return (
     <ThemeProvider theme={themes[theme]}>
-    <Grid
-      height={state.height}
-      width={state.width}
-      headerHeight={32}
-      columns={columns}
-      dataSource={dataSource}
-    />
-    <div className={classes.editPanel}>
-      <label>Width</label><input type="text" defaultValue={state.width} onChange={e => setDirty(e, 'width')}/>
-      <label>Height</label><input type="text" defaultValue={state.height} onChange={e => setDirty(e, 'height')}/>
-      <button onClick={applyChanges}>Apply</button> 
-      <div>
-        <button onClick={() => scrollBy(1)}>Scroll Down 1</button>
-        <button onClick={() => scrollBy(-1)}>Scroll Up 1</button>
-        <button onClick={() => scrollBy(4)}>Scroll Down 4</button>
-        <button onClick={() => scrollBy(-4)}>Scroll Up 4</button>
-        <button onClick={() => scrollBy(24)}>Scroll Down 24</button>
-        <button onClick={() => scrollBy(-24)}>Scroll Up 24</button>
-      </div>
-      <select defaultValue="light" onChange={handleSelectTheme}>
-        <option value="light">Light</option>
-        <option value="dark">Dark</option>
-      </select>
+      <MenuContext.Provider value={null}>
+      <Grid
+        height={state.height}
+        width={state.width}
+        headerHeight={32}
+        columns={columns}
+        dataSource={dataSource}
+      />
+      </MenuContext.Provider>
+      <div className={classes.editPanel}>
+        <label>Width</label><input type="text" defaultValue={state.width} onChange={e => setDirty(e, 'width')}/>
+        <label>Height</label><input type="text" defaultValue={state.height} onChange={e => setDirty(e, 'height')}/>
+        <button onClick={applyChanges}>Apply</button> 
+        <div>
+          <button onClick={() => scrollBy(1)}>Scroll Down 1</button>
+          <button onClick={() => scrollBy(-1)}>Scroll Up 1</button>
+          <button onClick={() => scrollBy(4)}>Scroll Down 4</button>
+          <button onClick={() => scrollBy(-4)}>Scroll Up 4</button>
+          <button onClick={() => scrollBy(24)}>Scroll Down 24</button>
+          <button onClick={() => scrollBy(-24)}>Scroll Up 24</button>
+        </div>
+        <select defaultValue="light" onChange={handleSelectTheme}>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
 
-      <select defaultValue="local" onChange={handleSelectDataSource}>
-        <option value="vs">Viewserver</option>
-        <option value="local">Local Test Data</option>
-        <option value="local-instruments">Local Instruments</option>
-      </select>
-    </div>
+        <select defaultValue="local" onChange={handleSelectDataSource}>
+          <option value="vs">Viewserver</option>
+          <option value="local">Local Test Data</option>
+          <option value="local-instruments">Local Instruments</option>
+        </select>
+      </div>
     </ThemeProvider>
   );
 }

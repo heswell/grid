@@ -11,6 +11,7 @@
     "@heswell/data-remote": "^1.0.0",
     "@heswell/data-source": "^1.0.0",
     "@heswell/data-store": "^1.0.0",
+    "@heswell/popup": "^1.0.0",
     "@heswell/utils": "^1.0.0",
     "@types/jest": "^25.2.3",
     "classnames": "^2.2.6",
