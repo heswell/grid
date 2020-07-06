@@ -119,7 +119,21 @@ export const getColumnOffset = (gridModel, columnGroupIdx, columnIdx) => {
   return offset;
 }
 
+const mapSortColumns = sortColumns => {
+  if (sortColumns){
+    const entries = Object.entries(sortColumns);
+    if (entries.length === 1){
+      return entries;
+    } else {
+      return entries.sort(([,a],[,b]) => a-b).map(([col, pos]) => [col, pos > 0 ? 'asc' : 'dsc']);
+    }  
+  } else {
+    return null;
+  }
+}
+
 export const GridModel = {
   columns: gridModel => gridModel.columnGroups.flatMap(group => group.columns),
   columnNames: gridModel => GridModel.columns(gridModel).map(column => column.name),
+  sortColumns: gridModel => mapSortColumns(gridModel.sortColumns)
 }

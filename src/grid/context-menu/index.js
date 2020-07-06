@@ -1,2 +1,2 @@
-export * from './menu-utils';
+export * from './menu-descriptors';
 export {default} from './menu-context';

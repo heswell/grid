@@ -1,4 +1,4 @@
-import { metadataKeys } from '@heswell/utils'
+import { metadataKeys, sortByToMap } from '@heswell/utils'
 import {getColumnGroup, getColumnGroupColumnIdx, ColumnGroup} from './grid-model-utils';
 
 const DEFAULT_COLUMN_WIDTH = 100;
@@ -20,6 +20,7 @@ export const initModel = gridProps => {
     horizontalScrollbarHeight,
     headingDepth,
     rowHeight,
+    sortColumns: null,
     viewportHeight: height - totalHeaderHeight,
     viewportRowCount: Math.ceil((height - totalHeaderHeight) / rowHeight) + 1,
     width
@@ -38,7 +39,103 @@ const reducerActionHandlers = {
   'resize-col': handleResizeColumn,
   'resize-heading': handleResizeHeading,
   'add-col': handleAddColumn,
-  'initialize': initialize
+  'initialize': initialize,
+  'sort': sortRows,
+  'group': groupRows
+}
+
+
+/** @type {GridModelReducer<'sort'>} */
+function sortRows(state, {column, direction, add=false, remove=false}){
+
+  const {sortColumns} = state;
+  if (sortColumns === null){
+    // No pre-existing sort, simple single-column sort
+    return {
+      ...state,
+      sortColumns:{
+        [column.name]: direction || 'asc' 
+      } 
+    }
+  } else {
+    const currentDirection = sortColumns[column.name];
+    if (currentDirection && currentDirection === direction && !remove){
+      return state;
+    } else if (currentDirection === 'asc' || currentDirection === 'dsc' && !add){
+      // Simple, single-column sort, reverse direction
+      return {
+        ...state,
+        sortColumns: {
+          [column.name]: currentDirection === 'asc' ? 'dsc' : 'asc'
+        }
+      }
+    } else if (add){
+      if (typeof currentDirection === 'number'){
+        // Multi-column sort, reverse sort direction fior this column
+        return {
+          ...state,
+          sortColumns: {
+            ...sortColumns,
+            [column.name]: currentDirection * -1
+          }
+        }
+      } else {
+        const [firstSortCol, ...remainingSortCols] = Object.keys(sortColumns);
+        if (remainingSortCols.length === 0){
+        // Add this column to existing single-column sort, now we have multi-column sort
+        return {
+            ...state,
+            sortColumns: {
+              [firstSortCol]: sortColumns[firstSortCol] === 'asc' ? 1 : -1,
+              [column.name]: direction === 'asc' ? 2 : -2
+            }
+          }
+  
+        } else {
+        // Add this column to existing multi-column sort
+        return {
+            ...state,
+            sortColumns: {
+              ...sortColumns,
+              [column.name]: (remainingSortCols.length + 2) * (direction === 'dsc' ? -1 : 1)
+            }
+          }
+        }
+      }
+    } else if (remove){
+      return {
+        ...state,
+        sortColumns: Object.keys(sortColumns)
+          .filter(columnName => columnName !== column.name)
+          .reduce((map, columnName, _idx, columns) => {
+            const sortPos = sortColumns[columnName];
+            map[columnName] = columns.length === 1
+            ? sortPos > 0 ? 'asc' : 'dsc'
+            : Math.abs(sortPos) < Math.abs(sortColumns[column.name])
+              ? sortPos
+              : (Math.abs(sortPos) - 1) * (sortPos < 1 ? -1 : 1)  
+            return map;
+          },{})
+      }
+
+    } else {
+      // simple single-column sort on a different column
+      return {
+        ...state,
+        sortColumns: {
+          [column.name]: direction || 'asc'
+        }
+      }
+
+    }
+    return state;
+  }
+}
+
+/** @type {GridModelReducer<'group'>} */
+function groupRows(state, {column, direction, add=false}){
+  console.log(`group by ${column.name} direction: ${direction} additive ${add}`)
+  return state;
 }
 
 /** @type {GridModelReducer<'resize-heading'>} */

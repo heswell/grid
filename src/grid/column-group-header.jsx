@@ -1,19 +1,24 @@
 import React, { forwardRef, useCallback, useContext, useImperativeHandle, useRef } from "react";
 import cx from 'classnames';
 import GridContext from "./grid-context";
-import MenuContext from "./context-menu/menu-context";
 import HeaderCell from "./header-cell";
 import HeadingCell from "./heading-cell";
 import useStyles from './use-styles';
 
 /** @type {ColumnGroupHeaderType} */
-const ColumnGroupHeader = React.memo(forwardRef(function ColumnGroupHeader(
-  { columnGroup, columnGroupIdx, columns=columnGroup.columns, depth, height, onColumnDrag, width },
+const ColumnGroupHeader = React.memo(forwardRef(function ColumnGroupHeader({ 
+    columnGroup,
+    columnGroupIdx,
+    columns=columnGroup.columns,
+    depth,
+    height,
+    onColumnDrag,
+    sortColumns,
+    width },
   ref
 ) {
   const scrollingHeaderWrapper = useRef(null);
   const { dispatchGridModelAction } = useContext(GridContext);
-  const showContextMenu = useContext(MenuContext);
 
   useImperativeHandle(ref, () => ({
     endHorizontalScroll: scrollLeft => {
@@ -43,7 +48,6 @@ const ColumnGroupHeader = React.memo(forwardRef(function ColumnGroupHeader(
           column={item}
           onResize={handleHeadingResize}
           // onMove={onColumnMove}
-          onContextMenu={showContextMenu}
       />
   )
 
@@ -68,7 +72,7 @@ const ColumnGroupHeader = React.memo(forwardRef(function ColumnGroupHeader(
             key={column.key}
             onDrag={handleDrag}
             onResize={handleColumnResize}
-            onContextMenu={showContextMenu}
+            sorted={sortColumns ? sortColumns[column.name]: undefined}
           />
         ))}
       </div>

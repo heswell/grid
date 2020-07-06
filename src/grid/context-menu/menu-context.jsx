@@ -1,28 +1,65 @@
-import React, {useContext} from 'react'
+import React, {lazy, Suspense, useContext} from 'react'
 import GridContext from "../grid-context";
+import { PopupService } from '@heswell/popup';
+import {getMenuOptions} from './menu-descriptors';
+import * as Action from './context-menu-actions';
 
-import showDefaultContextMenu from './show-context-menu';
+const GridContextMenu = lazy(() => import('./grid-context-menu'));
+
+const showDefaultContextMenu = (e, menuDescriptors, handleContextMenuAction) => {
+
+    const { clientX: left, clientY: top } = e;
+    const component = (
+      <Suspense fallback={<div/>}>
+        <GridContextMenu
+          menuDescriptors={menuDescriptors}
+          doAction={handleContextMenuAction}
+        />
+      </Suspense>
+    );
+
+    PopupService.showPopup({ left: Math.round(left), top: Math.round(top), component });
+
+}
 
 const MenuContext = React.createContext(null);
 
 const MenuContextProvider = ({children, showMenu}) => {
 
   const { dispatchGridAction, dispatchGridModelAction } = useContext(GridContext);
-  console.log(dispatchGridAction, dispatchGridModelAction)
-  
+
   const showContextMenu = showMenu || showDefaultContextMenu;
   
-  const handleContextMenuAction = action => {
-    console.log(`action clicked`, action)
-    // dispatchGridModelAction({type: 'wooHoo'})
+  const processMenuAction = (type, menuDescriptors) => {
+    const options = getMenuOptions(menuDescriptors, type);
+    switch (type){
+      case Action.SortAscending: {
+        const {column} = options;
+        return dispatchGridModelAction({type: 'sort', column, direction: 'asc'});
+      }
+      case Action.SortDescending: {
+        const {column} = options;
+        return dispatchGridModelAction({type: 'sort', column, direction: 'dsc'});
+      }
+      case Action.SortAddAscending: {
+        const {column} = options;
+        return dispatchGridModelAction({type: 'sort', column, direction: 'asc', add: true});
+      }
+      case Action.SortAddDescending: {
+        const {column} = options;
+        return dispatchGridModelAction({type: 'sort', column, direction: 'dsc', add: true});
+      }
+      case Action.SortRemove: {
+        const {column} = options;
+        return dispatchGridModelAction({type: 'sort', column, remove: true});
+      }
+    }    
   };
 
   const handleShowContextMenu = (e, menuDescriptors) => {
     e.preventDefault();
     e.stopPropagation();
-
-    console.log(`show menu`, showMenu)
-    showContextMenu(e, menuDescriptors, handleContextMenuAction)
+    showContextMenu(e, menuDescriptors, action => processMenuAction(action, menuDescriptors))
   }
 
   return (

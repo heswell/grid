@@ -29,8 +29,8 @@ export default function useDrag(callback, dragPhase=DRAG_DEFAULT, initialDragPos
         callback('drag-end');
         cleanUp();
       } else {
-       
         // drag aborted
+        cleanUp();
     }
   },[callback, cleanUp])
 

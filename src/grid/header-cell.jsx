@@ -1,16 +1,18 @@
-import React, {useCallback, useRef} from "react";
+import React, {useCallback, useContext, useRef} from "react";
 import cx from 'classnames';
+import GridContext from "./grid-context";
+import useContextMenu from './context-menu/use-context-menu';
 import useStyles from './use-styles';
 import {useDragStart} from './use-drag';
+import SortIndicator from './sort-indicator';
 import Draggable from './draggable';
-import {buildMenuDescriptors} from './context-menu';
 
 /** @type {HeaderCellComponent} */
-const HeaderCell = function HeaderCell({ className, column, onContextMenu, onDrag, onResize }){
+const HeaderCell = function HeaderCell({ className, column, onDrag, onResize, sorted }){
 
   const el = useRef(null);
   const col = useRef(column);
-
+  const {dispatchGridModelAction} = useContext(GridContext);
   // essential that handlers for resize do not use stale column
   // we could mitigate this by only passing column key and passing delta,
   // so we don't rely on current width in column
@@ -23,6 +25,10 @@ const HeaderCell = function HeaderCell({ className, column, onContextMenu, onDra
     },
     [onDrag, col])
   );
+
+  const handleClick = e => {
+    dispatchGridModelAction({type: 'sort', column});
+  }
 
   const handleResizeStart = () => onResize('begin', column);
 
@@ -37,10 +43,8 @@ const HeaderCell = function HeaderCell({ className, column, onContextMenu, onDra
       onResize('end', col.current, getWidthFromMouseEvent(e));
   }
 
-  const handleContextMenu = e => {
-    onContextMenu(e, buildMenuDescriptors('header', { column }));
-  }
-
+  const handleContextMenu = useContextMenu('header', { column });
+  
   const getWidthFromMouseEvent = e => {
       const right = e.pageX;
       const left = el.current.getBoundingClientRect().left;
@@ -55,9 +59,11 @@ const HeaderCell = function HeaderCell({ className, column, onContextMenu, onDra
       className={cx(classes.HeaderCell, className, {resizing})}
       onContextMenu={handleContextMenu}
       onMouseDown={handleMouseDown}
+      onClick={handleClick}
       ref={el}
       role="columnheader"
       style={{ marginLeft, width }}>
+      <SortIndicator classes={classes} sorted={sorted} />
       <div className={classes.innerHeaderCell}>
         <div className={classes.cellWrapper}>{label}</div>
       </div>

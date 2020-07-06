@@ -5,6 +5,8 @@ import {ThemeProvider} from 'react-jss';
 import themes from './themes';
 import {buildData} from './data/use-test-data';
 
+// import renderContextMenu from './components/material-ui/context-menu/show-context-menu';
+
 import useStyles from './use-app-styles.js';
 
 
@@ -50,14 +52,10 @@ export default function App() {
 
   }
 
-  // const renderContextMenu = (e, menuDescriptors, onContextMenuAction) => {
-  //   alert(`render custom menu`)
-  // }
-
   const classes = useStyles();
   return (
     <ThemeProvider theme={themes[theme]}>
-      <MenuContext.Provider value={null}>
+      <MenuContext.Provider value={/*renderContextMenu*/ null}>
       <Grid
         height={state.height}
         width={state.width}

@@ -139,7 +139,7 @@ export default createUseStyles(theme => ({
     flex: '1 1 auto',
     fontWeight: 'bold',
     overflow: 'hidden',
-    padding: '0 12px',
+    padding: '0 12px 0 14px',
     position: 'relative',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap'
@@ -220,5 +220,28 @@ export default createUseStyles(theme => ({
     top: 0,
     transition: 'left ease-in-out .2s',
     width: 4,
+  },
+
+  SortIndicator: {
+    position: 'absolute',
+    top: 2,
+    left: -5,
+    bottom: 0,
+    width: 18,
+  
+    '&.single-col': {
+
+    },
+    '&.multi-col': {
+
+    }
+  },
+
+  SortPosition: {
+    fontSize: '10px',
+    position: 'absolute',
+    left: 9,
+    top: 15  
   }
+
 }));

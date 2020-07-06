@@ -1,5 +1,7 @@
 declare module '@heswell/data-source';
 
+type SortDirection = 'asc' | 'dsc';
+
 interface ColumnDescriptor {
   locked?: boolean;
   name: string;
@@ -55,8 +57,16 @@ type GridComponent = React.FC<GridProps>;
 type GridContext = React.Context<{
   dispatchGridAction: (action: GridAction) => void;
   dispatchGridModelAction: (action: GridModelAction) => void;
-  // showContextMenu: any;
+  gridModel: GridModel;
 }>;
+
+type SortColumns = {
+  [key: string] : any;
+  // we can't use this in JavaScript. There are places where TS inference is not smart enough to 
+  // work out which variant is valid. In TS we could use type assertions, we have no such option
+  // in JS.
+  // [key: string] : SortDirection | number;
+}
 
 type GridModel = {
   columnGroups: ColumnGroup[];
@@ -65,6 +75,7 @@ type GridModel = {
   height: number;
   horizontalScrollbarHeight: number;
   rowHeight: number;
+  sortColumns: SortColumns;
   viewportHeight: number;
   viewportRowCount: number;
   width: number;
@@ -79,6 +90,8 @@ type GridActionHandler<T extends GridAction['type']> =
   T extends 'scroll-end-horizontal' ? (scrollLeft: number) => void :
   never;
 
+type True = true;
+
 type GridActionHandlerMap = {[key in GridAction['type']]?: GridActionHandler<key>};  
 type GridActionReducerFactory = (handlerMap: GridActionHandlerMap) => (state: {}, action: GridAction) => {};
 
@@ -88,13 +101,17 @@ type GridModelResizeColAction = { type: 'resize-col', phase: ResizePhase, column
 type GridModelResizeHeadingAction = { type: 'resize-heading', phase: ResizePhase, column: Column, width?: number};
 type GridModelAddColumnAction = { type: 'add-col', targetColumnGroup?: ColumnGroup, column: Column, insertIdx: number};
 type GridModelInitializeAction = { type: 'initialize', props};
+type GridModelGroupAction = { type: 'group', column: Column, direction: SortDirection, add?: boolean};
+type GridModelSortAction = { type: 'sort', column: Column, direction?: SortDirection, add?: True, remove?: True};
 
 type GridModelAction =
   | GridModelResizeAction
   | GridModelResizeColAction
   | GridModelResizeHeadingAction
   | GridModelAddColumnAction
-  | GridModelInitializeAction;
+  | GridModelInitializeAction
+  | GridModelSortAction
+  | GridModelGroupAction;
 
 type GridModelReducerFn<A=GridModelAction> = (state: GridModel, action: A) => GridModel;  
 type GridModelReducerInitializer = (props: GridProps) => GridModel;
@@ -104,7 +121,10 @@ type GridModelReducer<T extends GridModelAction['type']> =
   T extends 'resize-heading' ? GridModelReducerFn<GridModelResizeHeadingAction> :
   T extends 'add-col' ? GridModelReducerFn<GridModelAddColumnAction> :
   T extends 'initialize' ? GridModelReducerFn<GridModelInitializeAction> :
+  T extends 'sort' ? GridModelReducerFn<GridModelSortAction> :
+  T extends 'group' ? GridModelReducerFn<GridModelGroupAction> :
   GridModelReducerFn<GridModelAction>;
+
 type GridModelReducerTable = {[key in GridModelAction['type']]: GridModelReducer<key>};  
 
 type Row = any;
@@ -121,6 +141,7 @@ interface ColumnGroupHeaderProps {
   height: number;
   onColumnDrag?: onColumnGroupHeaderDragHandler;
   ref?: React.RefObject<any>;
+  sortColumns?: SortColumns;
   width: number;
 }
 type ColumnGroupHeaderType = React.FC<ColumnGroupHeaderProps>;
@@ -131,9 +152,9 @@ type ResizePhase = 'begin' | 'resize' | 'end';
 interface HeaderCellProps {
   className?: string;
   column: Column;
-  onContextMenu?: (e: React.MouseEvent, menuDescriptors: any) => void;
   onDrag?: onHeaderCellDragHandler;
   onResize?: (resizePhase: ResizePhase, column: Column, width?: number) => void;
+  sorted?: SortDirection | number;
 }
 type HeaderCellComponent = React.FC<HeaderCellProps>;
 
@@ -266,3 +287,9 @@ type DraggableComponent = React.ComponentType<DraggableProps>;
 
 type DragCallback = (phase: DragPhase, delta?: number, dragPosition?: number) => void;
 type DragHook = (callback: DragCallback, dragPhase?: number, initialDragPosition?: number) => [React.MouseEventHandler<HTMLDivElement>, () => void];
+
+type MenuDescriptor = {
+  label: string;
+  action: atring;
+  children?: MenuDescriptor[];
+}

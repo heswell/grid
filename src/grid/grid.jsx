@@ -6,7 +6,7 @@ import modelReducer, { initModel } from "./grid-model-reducer";
 import actionReducer from "./grid-action-reducer";
 import useStyles from './use-styles';
 import Viewport from "./viewport";
-import {measureColumns} from './grid-model-utils';
+import {GridModel, measureColumns} from './grid-model-utils';
 
 const getDataSource = props => props.dataSource.setColumns(props.columns);
 
@@ -49,9 +49,12 @@ const Grid = (props) => {
   );
 
   useEffect(() => {
-    console.log(`Grid columns changed reset model`)
     dispatchGridModel({type: 'initialize', props});
   },[props.columns])
+
+  useEffect(() => {
+    dataSource.sort(GridModel.sortColumns(gridModel));
+  },[gridModel.sortColumns])
 
   const handleColumnDrag = useCallback(
       (phase, ...args) => {
@@ -105,8 +108,8 @@ const Grid = (props) => {
 
   const classes = useStyles();
 
-  return (
-      <GridContext.Provider value={{ dispatchGridAction, dispatchGridModelAction: dispatchGridModel }}>
+  return (// Question, how much overhead are we introducing be adding gridModel to GridContext ?
+      <GridContext.Provider value={{ dispatchGridAction, dispatchGridModelAction: dispatchGridModel, gridModel }}>
         <MenuProvider>
         <div className={classes.Grid} ref={gridEl} style={{ width, height }}>
           <div className={classes.headerContainer} style={{ height: gridModel.headerHeight * gridModel.headingDepth }}>
@@ -119,6 +122,7 @@ const Grid = (props) => {
                 key={idx}
                 onColumnDrag={handleColumnDrag}
                 ref={columnGroup.locked ? null : scrollableHeader}
+                sortColumns={gridModel.sortColumns}
                 width={columnGroup.width}
               />
             ))}
