@@ -2,6 +2,7 @@ import React, { forwardRef, useCallback, useContext, useImperativeHandle, useRef
 import cx from 'classnames';
 import GridContext from "./grid-context";
 import HeaderCell from "./header-cell";
+import GroupHeaderCell from "./group-header-cell";
 import HeadingCell from "./heading-cell";
 import useStyles from './use-styles';
 
@@ -40,6 +41,11 @@ const ColumnGroupHeader = React.memo(forwardRef(function ColumnGroupHeader({
     onColumnDrag(phase, columnGroupIdx, column, columnPosition, mousePosition)
   ,[columnGroup, columnGroupIdx])
 
+  const handleRemoveGroup = useCallback(column => {
+    dispatchGridModelAction({ type: 'group', column, remove: true });
+  },[]);
+
+
   const renderColHeadings = heading =>
   heading.map((item, idx) =>
       <HeadingCell
@@ -66,7 +72,17 @@ const ColumnGroupHeader = React.memo(forwardRef(function ColumnGroupHeader({
       <div
         role="row"
         style={{ height, width: contentWidth }}>
-        {columns.map((column,idx) => (
+        {columns.map((column,idx) => 
+          column.isGroup ? (
+            <GroupHeaderCell
+              column={column}
+              key={column.key}
+              onClick={() => console.log('onClick')}
+              onResize={handleColumnResize}
+              onToggleGroupState={() => console.log('onToggleGroupState')}
+              onRemoveColumn={handleRemoveGroup}
+            />
+          ) : (
           <HeaderCell
             column={column}
             key={column.key}

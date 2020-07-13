@@ -2,6 +2,8 @@ declare module '@heswell/data-source';
 
 type SortDirection = 'asc' | 'dsc';
 
+type GroupBy = Array<string | [string, SortDirection]>
+
 interface ColumnDescriptor {
   locked?: boolean;
   name: string;
@@ -19,6 +21,9 @@ interface Column {
   resizeable?: boolean;
   resizing?: boolean;
   width: number;
+  // Group types, break these out
+  isGroup?: true;
+  columns?: Column[];
 }
 
 interface Heading {
@@ -46,6 +51,7 @@ interface GridProps {
   columns: ColumnDescriptor[];
   dataSource: DataSource;
   defaultColumnWidth?: number;
+  groupBy?: GroupBy;
   headerHeight?: number;
   height: number;
   rowHeight?: number;
@@ -68,8 +74,14 @@ type SortColumns = {
   // [key: string] : SortDirection | number;
 }
 
+type GroupState = {
+  [key: string]: boolean | GroupState;
+}
+
 type GridModel = {
   columnGroups: ColumnGroup[];
+  groupColumns: SortColumns;// rename - too confusing with columnGroups
+  groupState: GroupState;
   headerHeight: number;
   headingDepth: number;
   height: number;
@@ -101,8 +113,9 @@ type GridModelResizeColAction = { type: 'resize-col', phase: ResizePhase, column
 type GridModelResizeHeadingAction = { type: 'resize-heading', phase: ResizePhase, column: Column, width?: number};
 type GridModelAddColumnAction = { type: 'add-col', targetColumnGroup?: ColumnGroup, column: Column, insertIdx: number};
 type GridModelInitializeAction = { type: 'initialize', props};
-type GridModelGroupAction = { type: 'group', column: Column, direction: SortDirection, add?: boolean};
+type GridModelGroupAction = { type: 'group', column: Column, direction?: SortDirection, add?: boolean, remove?: true};
 type GridModelSortAction = { type: 'sort', column: Column, direction?: SortDirection, add?: True, remove?: True};
+type GridModelToggleAction = { type: 'toggle', row: any[]};
 
 type GridModelAction =
   | GridModelResizeAction
@@ -111,7 +124,8 @@ type GridModelAction =
   | GridModelAddColumnAction
   | GridModelInitializeAction
   | GridModelSortAction
-  | GridModelGroupAction;
+  | GridModelGroupAction
+  | GridModelToggleAction;
 
 type GridModelReducerFn<A=GridModelAction> = (state: GridModel, action: A) => GridModel;  
 type GridModelReducerInitializer = (props: GridProps) => GridModel;
@@ -123,6 +137,7 @@ type GridModelReducer<T extends GridModelAction['type']> =
   T extends 'initialize' ? GridModelReducerFn<GridModelInitializeAction> :
   T extends 'sort' ? GridModelReducerFn<GridModelSortAction> :
   T extends 'group' ? GridModelReducerFn<GridModelGroupAction> :
+  T extends 'toggle' ? GridModelReducerFn<GridModelToggleAction> :
   GridModelReducerFn<GridModelAction>;
 
 type GridModelReducerTable = {[key in GridModelAction['type']]: GridModelReducer<key>};  

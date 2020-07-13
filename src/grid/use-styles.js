@@ -104,7 +104,10 @@ export default createUseStyles(theme => ({
     position: 'absolute',
     top: 0,
     whiteSpace: 'nowrap',
-    width: '100%'
+    width: '100%',
+    '&.group $GridCell:first-child': {
+      padding: '0 6px 0 3px'
+    }
 
   },
 
@@ -131,6 +134,67 @@ export default createUseStyles(theme => ({
     '&.resizing': {
       backgroundColor: 'var(--header-cell-highlight-bg)'
     }
+  },
+
+  GroupHeaderCell: {
+    overflow: 'hidden',
+    '& .inner-container': {
+      overflow: 'hidden',
+      height: '100%',
+      width: '100%',
+      display: 'inline-flex',
+      alignItems: 'stretch'
+    },
+    '& .ColHeader': {
+      display: 'inline-block',
+      backgroundColor: 'inherit',
+      position: 'relative',
+      paddingRight: 8,
+      flex: '0 1 auto'
+    },
+    '& .ColHeader.first': {
+      clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100% )',
+      zIndex: 1
+    },
+    '& .ColHeader:not(.first)': {
+      marginLeft: -6,
+      paddingLeft: 6,
+      clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%, 8px 50% )'
+    },
+    '& .ColHeader:nth-child(odd)': {
+      backgroundColor: 'rgba(136, 136, 136,.5)'
+    },
+    '& .ColHeader:nth-child(even)': {
+      backgroundColor: 'rgba(160,160,160,.3)'
+    },
+    '& .ColHeader:hover': {
+      backgroundColor: 'rgb(66, 139, 202)',
+      color: 'white'
+    },
+    '& .ColHeaderLabel': {
+      alignItems: 'center',
+      display: 'inline-flex',
+      height: '100%',
+      verticalAlign: 'top'
+    },
+    '& .toggle-icon, .remove-icon': {
+      fontSize: '16px',
+      height: '100%',
+      lineHeight: '32px',
+      cursor: 'pointer',
+      verticalAlign: 'top'
+
+    },
+    '& .remove-icon': {
+      visibility: 'hidden',
+      fontSize: '16px',
+      paddingLeft: 3
+    },
+    '& .ColHeader:hover .remove-icon': {
+      visibility: 'visible'
+    } 
+
+    
   },
 
   noBottomBorder: {},
@@ -186,6 +250,28 @@ export default createUseStyles(theme => ({
     },
     '&.resizing': {
       backgroundColor: 'var(--header-cell-highlight-bg)'
+    }
+  },
+
+  GridGroupCell: {
+    display: 'flex',
+    alignItems: 'center',
+    overflow: 'hidden',
+    '& .icon': {
+      fontSize: '16px',
+      width: 12,
+      marginRight: 6,
+      lineHeight: '21px'
+    },
+    '& .group-value': {
+      cursor: 'default',
+      display: 'inline-block',
+      maxWidth: 'calc(100% - 30px)',
+      overflow: 'hidden',
+      paddingRight: 3,
+      textOverflow: 'ellipsis',
+      verticalAlign:'top',
+      whiteSpace: 'nowrap',
     }
   },
 

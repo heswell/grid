@@ -1,3 +1,6 @@
+import {  metadataKeys } from '@heswell/utils'
+
+import { COLUMNS_CHANGE } from "./grid-data-actions";
 
 /** @type {(gm: GridModel, target: Column | number) => ColumnGroup} */
 export function getColumnGroup({columnGroups}, target){
@@ -132,8 +135,60 @@ const mapSortColumns = sortColumns => {
   }
 }
 
+function toggleGroupState(gridModel, row) {
+
+  let { groupState } = gridModel;
+  const groupBy = GridModel.groupBy(gridModel);
+  const columns = GridModel.columns(gridModel);
+  const groupLevel = row[metadataKeys.DEPTH];
+  const groupByIdx = groupBy.length - Math.abs(groupLevel);
+
+  const newGroupState = groupState === null ? {} : { ...groupState };
+  let stateEntry = newGroupState;
+
+  for (let i = 0; i <= groupByIdx; i++) {
+      const [groupCol] = groupBy[i];
+      const column = columns.find(col => col.name === groupCol);
+      const groupVal = row[column.key];
+
+      if (i === groupByIdx) {
+          if (stateEntry[groupVal]) {
+              stateEntry[groupVal] = null;
+          } else {
+              stateEntry[groupVal] = i === groupBy.length - 1 ? true : {};
+          }
+      } else if (stateEntry[groupVal] === true) {
+          stateEntry = stateEntry[groupVal] = {};
+      } else {
+          // clone as we descend
+          stateEntry = stateEntry[groupVal] = { ...stateEntry[groupVal] };
+          if (!stateEntry) {
+              console.log(`Grid.toggleGroup something is wrong - trying to toggle a node whose parent is not expanded`);
+              return;
+          }
+      }
+  }
+
+  return newGroupState;
+
+}
+
+
 export const GridModel = {
-  columns: gridModel => gridModel.columnGroups.flatMap(group => group.columns),
+  columns: gridModel => gridModel.columnGroups.flatMap(group => group.columns.flatMap(column => column.isGroup ? column.columns : column)),
   columnNames: gridModel => GridModel.columns(gridModel).map(column => column.name),
-  sortColumns: gridModel => mapSortColumns(gridModel.sortColumns)
+  groupBy: gridModel => mapSortColumns(gridModel.groupColumns),
+  sortBy: gridModel => mapSortColumns(gridModel.sortColumns),
+  toggleGroupState
+}
+
+export function expandStatesfromGroupState({columns},groupState){
+  const results = Array(columns.length).fill(-1);
+  let all = groupState && groupState['*'];
+  let idx = 0;
+  while (all){
+      results[idx] = 1;
+      all = all['*'];
+  }
+  return results;
 }

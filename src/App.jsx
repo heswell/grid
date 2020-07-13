@@ -19,7 +19,7 @@ export default function App() {
   const pendingHeight = useRef(600);
   const pendingWidth = useRef(800);
 
-  const [dataLocation, setDataLocation] = useState('local');
+  const [dataLocation, setDataLocation] = useState('local-instruments');
   const [columns, dataSource] = useMemo(() => buildData(dataLocation),[dataLocation]);
 
   const [theme, setTheme] = useState('light');
@@ -57,11 +57,12 @@ export default function App() {
     <ThemeProvider theme={themes[theme]}>
       <MenuContext.Provider value={/*renderContextMenu*/ null}>
       <Grid
-        height={state.height}
-        width={state.width}
-        headerHeight={32}
         columns={columns}
         dataSource={dataSource}
+        groupBy={['Sector']}
+        height={state.height}
+        headerHeight={32}
+        width={state.width}
       />
       </MenuContext.Provider>
       <div className={classes.editPanel}>
@@ -81,7 +82,7 @@ export default function App() {
           <option value="dark">Dark</option>
         </select>
 
-        <select defaultValue="local" onChange={handleSelectDataSource}>
+        <select defaultValue="local-instruments" onChange={handleSelectDataSource}>
           <option value="vs">Viewserver</option>
           <option value="local">Local Test Data</option>
           <option value="local-instruments">Local Instruments</option>

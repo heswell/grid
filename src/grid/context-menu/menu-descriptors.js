@@ -4,12 +4,21 @@ import { columnUtils } from '@heswell/data-source';
 export function buildMenuDescriptors(gridModel, location, options){
   const menuItems = [];
   if (location === 'header') {
-      const {column} = options;
-      const {sortColumns} = gridModel;
-      const sortColumnNames = sortColumns ? Object.keys(sortColumns) : null;
-      const existingColumnSort = sortColumns && sortColumns[column.name];
-      
-      if (existingColumnSort === 'asc') {
+    menuItems.push(...buildSortMenuItems(gridModel.sortColumns, options));
+    menuItems.push(...buildGroupMenuItems(gridModel.groupColumns, options));
+  }
+
+  return menuItems;
+
+}
+
+function buildSortMenuItems(sortColumns, options){
+    const menuItems = [];
+    const {column} = options;
+    const sortColumnNames = sortColumns ? Object.keys(sortColumns) : null;
+    const existingColumnSort = sortColumns && sortColumns[column.name];
+
+    if (existingColumnSort === 'asc') {
         menuItems.push({label: 'Reverse Sort (DSC)', action: Action.SortDescending, options});
       } else if (existingColumnSort === 'dsc'){
         menuItems.push({label: 'Reverse Sort (ASC)', action: Action.SortAscending, options});
@@ -52,12 +61,21 @@ export function buildMenuDescriptors(gridModel, location, options){
               ]}
           );
       } 
+      return menuItems;
 
+}
 
-  }
+function buildGroupMenuItems(groupColumns, options){
+    const menuItems = [];
+    const {column} = options;
 
-  return menuItems;
+    if (groupColumns === null){
+        menuItems.push({label: `Group by ${column.name}`, action: Action.Group, options})
+    } else {
+        menuItems.push({label: `Add ${column.name} to group by`, action: Action.GroupAdd, options})
+    }
 
+    return menuItems;
 }
 
 

@@ -53,6 +53,14 @@ const MenuContextProvider = ({children, showMenu}) => {
         const {column} = options;
         return dispatchGridModelAction({type: 'sort', column, remove: true});
       }
+      case Action.Group: {
+        const {column} = options;
+        return dispatchGridModelAction({type: 'group', column});
+      }
+      case Action.GroupAdd: {
+        const {column} = options;
+        return dispatchGridModelAction({type: 'group', column, add: true});
+      }
     }    
   };
 

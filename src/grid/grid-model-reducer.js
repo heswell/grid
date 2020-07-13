@@ -1,20 +1,24 @@
-import { metadataKeys, sortByToMap } from '@heswell/utils'
-import {getColumnGroup, getColumnGroupColumnIdx, ColumnGroup} from './grid-model-utils';
+import { addSortColumn, indexOfCol, metadataKeys, partition, removeSortColumn, setSortColumn, updateGroupBy } from '@heswell/utils'
+import {getColumnGroup, getColumnGroupColumnIdx, ColumnGroup, GridModel} from './grid-model-utils';
 
 const DEFAULT_COLUMN_WIDTH = 100;
+const MIN_COLUMN_WIDTH = 80;
 
 const RESIZING = {resizing: true};
 const NOT_RESIZING = {resizing: false};
 
 export const initModel = gridProps => {
-  const { columns, defaultColumnWidth=DEFAULT_COLUMN_WIDTH, headerHeight = 32, height, rowHeight = 24, width } = gridProps;
-  const {columnGroups, headingDepth} = buildColumnGroups(columns, width, defaultColumnWidth);
+  const { columns, defaultColumnWidth, groupBy, headerHeight = 32, height, rowHeight = 24, width } = gridProps;
+  const {columnGroups, headingDepth} = buildColumnGroups(columns, null, width, defaultColumnWidth);
   const totalHeaderHeight = headerHeight * headingDepth;
   const horizontalScrollbarHeight = columnGroups.some(({width, contentWidth}) => width < contentWidth)
     ? 15
     : 0;
+    console.log(`initial groupBy `, groupBy)
   return {
     columnGroups,
+    groupColumns: null,
+    groupState: null,
     headerHeight,
     height,
     horizontalScrollbarHeight,
@@ -29,6 +33,7 @@ export const initModel = gridProps => {
 
 /** @type {(s: GridModel, a: GridModelAction) => GridModel} */
 export default (state, action) => {
+  console.log(`action => `, action)
   // @ts-ignore
   return reducerActionHandlers[action.type](state, action);
 };
@@ -41,101 +46,81 @@ const reducerActionHandlers = {
   'add-col': handleAddColumn,
   'initialize': initialize,
   'sort': sortRows,
-  'group': groupRows
+  'group': groupRows,
+  'toggle': toggleRow
+}
+
+// Do we need this in the model ?
+/** @type {GridModelReducer<'toggle'>} */
+function toggleRow(state, {row}){
+  // TODO does groupState actually need to live in the grid model ?
+  const groupState = GridModel.toggleGroupState(state, row);
+  return {
+    ...state,
+    groupState
+  }
 }
 
 
 /** @type {GridModelReducer<'sort'>} */
 function sortRows(state, {column, direction, add=false, remove=false}){
 
-  const {sortColumns} = state;
-  if (sortColumns === null){
-    // No pre-existing sort, simple single-column sort
-    return {
-      ...state,
-      sortColumns:{
-        [column.name]: direction || 'asc' 
-      } 
-    }
-  } else {
-    const currentDirection = sortColumns[column.name];
-    if (currentDirection && currentDirection === direction && !remove){
-      return state;
-    } else if (currentDirection === 'asc' || currentDirection === 'dsc' && !add){
-      // Simple, single-column sort, reverse direction
-      return {
-        ...state,
-        sortColumns: {
-          [column.name]: currentDirection === 'asc' ? 'dsc' : 'asc'
-        }
-      }
-    } else if (add){
-      if (typeof currentDirection === 'number'){
-        // Multi-column sort, reverse sort direction fior this column
-        return {
-          ...state,
-          sortColumns: {
-            ...sortColumns,
-            [column.name]: currentDirection * -1
-          }
-        }
-      } else {
-        const [firstSortCol, ...remainingSortCols] = Object.keys(sortColumns);
-        if (remainingSortCols.length === 0){
-        // Add this column to existing single-column sort, now we have multi-column sort
-        return {
-            ...state,
-            sortColumns: {
-              [firstSortCol]: sortColumns[firstSortCol] === 'asc' ? 1 : -1,
-              [column.name]: direction === 'asc' ? 2 : -2
-            }
-          }
-  
-        } else {
-        // Add this column to existing multi-column sort
-        return {
-            ...state,
-            sortColumns: {
-              ...sortColumns,
-              [column.name]: (remainingSortCols.length + 2) * (direction === 'dsc' ? -1 : 1)
-            }
-          }
-        }
-      }
-    } else if (remove){
-      return {
-        ...state,
-        sortColumns: Object.keys(sortColumns)
-          .filter(columnName => columnName !== column.name)
-          .reduce((map, columnName, _idx, columns) => {
-            const sortPos = sortColumns[columnName];
-            map[columnName] = columns.length === 1
-            ? sortPos > 0 ? 'asc' : 'dsc'
-            : Math.abs(sortPos) < Math.abs(sortColumns[column.name])
-              ? sortPos
-              : (Math.abs(sortPos) - 1) * (sortPos < 1 ? -1 : 1)  
-            return map;
-          },{})
-      }
+  const sortColumns = add 
+    ? addSortColumn(state.sortColumns, column, direction)
+    : remove
+      ? removeSortColumn(state.sortColumns, column)
+      : setSortColumn(state.sortColumns, column, direction);
 
-    } else {
-      // simple single-column sort on a different column
-      return {
-        ...state,
-        sortColumns: {
-          [column.name]: direction || 'asc'
-        }
-      }
-
-    }
-    return state;
-  }
+  return {
+    ...state,
+    sortColumns
+  };
 }
 
 /** @type {GridModelReducer<'group'>} */
-function groupRows(state, {column, direction, add=false}){
+function groupRows(state, {column, direction, add, remove}){
   console.log(`group by ${column.name} direction: ${direction} additive ${add}`)
-  return state;
+  const { groupColumns: existingGroupColumns } = state;
+  const columns = GridModel.columns(state);
+  if (existingGroupColumns === null){
+    const groupColumns = {
+      [column.name]: direction || 'asc' 
+    }
+    const groupBy = GridModel.groupBy({groupColumns});
+    const {columnGroups} = buildColumnGroups(columns, groupBy, state.width);
+    console.log(columnGroups)
+
+  return {
+      ...state,
+      groupColumns,
+      columnGroups
+    }
+
+  } else if (add){
+    const groupColumns = addSortColumn(state.groupColumns, column)
+    console.log(groupColumns)
+    const groupBy = GridModel.groupBy({groupColumns});
+    const {columnGroups} = buildColumnGroups(columns, groupBy, state.width);
+
+    return {
+      ...state,
+      groupColumns,
+      columnGroups
+    }
+  } else if (remove){
+    const groupColumns = removeSortColumn(state.groupColumns, column);
+    console.log(groupColumns);
+    const groupBy = GridModel.groupBy({groupColumns});
+    const {columnGroups} = buildColumnGroups(columns, groupBy, state.width);
+    return {
+      ...state,
+      groupColumns,
+      columnGroups
+    }
+  } else {
+    return state;
+
+  }
 }
 
 /** @type {GridModelReducer<'resize-heading'>} */
@@ -211,7 +196,7 @@ function handleAddColumn(state, {insertIdx: absInsertIdx, targetColumnGroup, col
     }
   });
 
-  const {columnGroups} = buildColumnGroups(columns, state.width);
+  const {columnGroups} = buildColumnGroups(columns, null, state.width);
 
   return {
     ...state,
@@ -293,7 +278,7 @@ function handleResize(state, {height, width}){
   }
 }
 
-function buildColumnGroups(columns, gridWidth, defaultColumnWidth) {
+function buildColumnGroups(columns, groupBy, gridWidth, defaultColumnWidth=DEFAULT_COLUMN_WIDTH) {
   let column = null;
   let columnGroup = null;
   let columnGroups = [];
@@ -302,9 +287,19 @@ function buildColumnGroups(columns, gridWidth, defaultColumnWidth) {
   const headingDepth = getMaxHeadingDepth(columns);
   const start = metadataKeys.count;
 
-  for (let i = 0; i < columns.length; i++) {
-    const { name, heading=[name], locked = false, width=defaultColumnWidth } = columns[i];
-    const key = start + i;
+  const [groupColumn, nonGroupedColumns] = extractGroupColumn(columns, groupBy, MIN_COLUMN_WIDTH);
+  if (groupColumn){
+    const headings = headingDepth > 1 ? [] : undefined;
+    columnGroups.push(columnGroup = { locked: false, columns: [groupColumn], headings, width:0, contentWidth:0 });
+    addColumnToHeadings(headingDepth, groupColumn, headings);
+  }
+
+  for (let i = 0; i < nonGroupedColumns.length; i++) {
+    const { key: columnKey, name, heading=[name], locked = false, width=defaultColumnWidth } = nonGroupedColumns[i];
+    const key = typeof columnKey === 'number' 
+      ? columnKey
+      : start + i;
+
     if (columnGroup === null || columnGroup.locked !== locked) {
       const headings = headingDepth > 1 ? [] : undefined;
 
@@ -317,7 +312,6 @@ function buildColumnGroups(columns, gridWidth, defaultColumnWidth) {
           contentWidth: 0
         })
       );
-
     }
 
     columnGroup.columns.push(column = {
@@ -343,6 +337,36 @@ function buildColumnGroups(columns, gridWidth, defaultColumnWidth) {
     }
   }
   return {columnGroups, headingDepth};
+}
+
+function extractGroupColumn(columns, groupBy, minColumnWidth){
+  if (groupBy && groupBy.length > 0){
+      const isGroup = ({name}) => indexOfCol(name, groupBy) !== -1
+      // Note: groupedColumns will be in column order, not groupBy order
+      const [groupedColumns, rest] = partition(columns, isGroup);
+      if (groupedColumns.length !== groupBy.length){
+          throw Error(`extractGroupColumn: no column definition found for all groupBy cols ${JSON.stringify(groupBy)} `);
+      }
+      const groupCount = groupBy.length;
+      const groupCols = groupBy.map(([name], idx) => {
+          // Keep the cols in same order defined on groupBy
+          const column = groupedColumns.find(col => col.name === name);
+          return {
+              ...column,
+              groupLevel: groupCount - idx
+          }
+      })
+      const groupCol = {
+          key: -1,
+          name: 'group-col',
+          heading: ['group-col'],
+          isGroup: true,
+          columns: groupCols,
+          width: Math.max(...groupCols.map(col => col.width || minColumnWidth)) + 50
+      };
+      return [groupCol, rest];
+  }
+  return [null, columns]
 }
 
 const getMaxHeadingDepth = columns => {

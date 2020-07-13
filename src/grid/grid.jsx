@@ -5,6 +5,7 @@ import {MenuProvider} from './context-menu/menu-context';
 import modelReducer, { initModel } from "./grid-model-reducer";
 import actionReducer from "./grid-action-reducer";
 import useStyles from './use-styles';
+import useEffectSkipFirst from './use-effect-skip-first';
 import Viewport from "./viewport";
 import {GridModel, measureColumns} from './grid-model-utils';
 
@@ -48,13 +49,22 @@ const Grid = (props) => {
     initModel
   );
 
-  useEffect(() => {
+  useEffectSkipFirst(() => {
     dispatchGridModel({type: 'initialize', props});
   },[props.columns])
 
-  useEffect(() => {
-    dataSource.sort(GridModel.sortColumns(gridModel));
+  useEffectSkipFirst(() => {
+    dataSource.sort(GridModel.sortBy(gridModel));
   },[gridModel.sortColumns])
+
+  useEffectSkipFirst(() => {
+    dataSource.group(GridModel.groupBy(gridModel));
+  },[gridModel.groupColumns])
+
+  useEffectSkipFirst(() => {
+      dataSource.setGroupState(gridModel.groupState);
+  }, [dataSource, gridModel.groupState]);
+
 
   const handleColumnDrag = useCallback(
       (phase, ...args) => {
