@@ -10,36 +10,63 @@ import {getColumnGroup} from './grid-model-utils';
 const LEFT = 'left';
 const RIGHT = 'right';
 
+// Identify a single dropPosition, no matter the width of the dragged column or the widths
+// of target columns.
+function getBestDropTarget(columnPositions, dragPosition, columnWidth, scrollPosition, ){
+    const columnStart = dragPosition + scrollPosition;
+    const columnEnd = columnStart + columnWidth;
+    console.log(`getClosestPosition ${columnPositions} columnStart: ${columnStart} columnEnd ${columnEnd}`)
+    const results = [];
+    const visited = [];
+    let idx;
+    for (let groupPositions of columnPositions){
+        for (let position of groupPositions){
+            visited.push(position);
+            if (columnStart <= position && columnEnd >= position){
+                results.push(position)
+            } else if (columnEnd < position){
+                break;
+            }
+        }
+    }
+
+    if (results.length === 1){
+        idx = results[0];
+    } else if (results.length === 0){
+        const p2 = visited.pop();
+        const p1 = visited.pop();
+        idx = columnStart - p1 <  p2 - columnEnd ? p1 : p2;
+    } else {
+        const mid = columnEnd - columnStart;
+        idx = results.reduce((p1, p2) => Math.abs(p1 - mid) < Math.abs(p2 - mid) ? p1 : p2 , 99999)
+    }
+
+    return idx;
+}
 
 /** @type {(dragData: ColumnDragData, dp: number, sp: number) => [number, number, number] } */
-function getTargetColumn({column: {width}, columnPositions}, dragPosition, scrollPosition){
-    console.log(`getTargetColumn scrollPosition ${scrollPosition} dragPosition: ${dragPosition}`)
-    if (dragPosition === 220){
-        debugger;
-    }
+function getTargetColumn({column, columnPositions}, dragPosition, scrollPosition){
+    const targetPosition = getBestDropTarget(columnPositions, dragPosition, column.width, scrollPosition);
     const columnStart = dragPosition + scrollPosition;
-    const columnEnd = columnStart + width;
     const [[offsetLeft]] = columnPositions;
     // This must be more sensitive detecting moves over another columnGroup
     for (let i=0,idx=0; i<columnPositions.length; i++){
         const positions = columnPositions[i];
         for (let j=0; j< positions.length; j++, idx++){
-            const position = positions[j] - offsetLeft;
-            if (columnStart <= position && columnEnd > position){
+            if (positions[j] ===  targetPosition){
+                const position = targetPosition - offsetLeft;
                 let groupIdx = i;
                 if (i > 0 && j === 0){
                     // break between 2 groups
-                    const centerPoint = columnStart + width / 2;
+                    const centerPoint = columnStart + column.width / 2;
                     if (centerPoint < position){
                         groupIdx -= 1;
                     }
-
                 }
                 return [idx, position - scrollPosition, groupIdx];
             }
         }
     }
-    debugger;
     return [-1, -1, -1]
 }
 
