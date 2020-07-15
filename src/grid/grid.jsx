@@ -20,7 +20,6 @@ const Grid = (props) => {
   /** @type {[ColumnDragData, React.Dispatch<ColumnDragData>]} */
   const [columnDragData, setColumnDragData] = useState(null);
   const draggingColumn = useRef(false);
-
   const [dataSource, setDataSource] = useState(getDataSource(props));
 
   useEffect(() => {
@@ -43,9 +42,11 @@ const Grid = (props) => {
     }
   };
 
+  const classes = useStyles();
+
   const [gridModel, dispatchGridModel] = useReducer(
     modelReducer,
-    props,
+    [props, classes],
     initModel
   );
 
@@ -115,8 +116,6 @@ const Grid = (props) => {
   },[props.height, props.width]);
 
   const { height, width } = gridModel;
-
-  const classes = useStyles();
 
   return (// Question, how much overhead are we introducing be adding gridModel to GridContext ?
       <GridContext.Provider value={{ dispatchGridAction, dispatchGridModelAction: dispatchGridModel, gridModel }}>

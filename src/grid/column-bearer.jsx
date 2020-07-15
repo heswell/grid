@@ -13,7 +13,10 @@ const RIGHT = 'right';
 
 /** @type {(dragData: ColumnDragData, dp: number, sp: number) => [number, number, number] } */
 function getTargetColumn({column: {width}, columnPositions}, dragPosition, scrollPosition){
-    //console.log(`getTargetColumn scrollPosition ${scrollPosition} dragPosition: ${dragPosition}`)
+    console.log(`getTargetColumn scrollPosition ${scrollPosition} dragPosition: ${dragPosition}`)
+    if (dragPosition === 220){
+        debugger;
+    }
     const columnStart = dragPosition + scrollPosition;
     const columnEnd = columnStart + width;
     const [[offsetLeft]] = columnPositions;
@@ -36,6 +39,7 @@ function getTargetColumn({column: {width}, columnPositions}, dragPosition, scrol
             }
         }
     }
+    debugger;
     return [-1, -1, -1]
 }
 
@@ -95,9 +99,9 @@ const ColumnBearer = forwardRef(({columnDragData, gridModel, onDrag, onScroll, r
     const {column} = columnDragData;
 
     const style = {
-        top,
+        top: top + 15,
         left: columnPosition.current, 
-        height: gridModel.height - top,
+        height: gridModel.height - top - 15,
         width: column.width
     }
 
@@ -117,7 +121,8 @@ const ColumnBearer = forwardRef(({columnDragData, gridModel, onDrag, onScroll, r
     useImperativeHandle(ref, () => ({
         setFinalPosition: (pos) => {
             console.log(`ColumnBearer finalPosition `)
-            el.current.style.transition = 'left ease .3s';
+            el.current.style.transition = 'left, top ease .3s';
+            el.current.style.top = `0px`;
             el.current.style.left = pos + `px`;
         }
     }))

@@ -17,7 +17,7 @@ const ColHeader = (props) => {
   );
 };
 
-export default ({
+const GroupHeaderCell = ({
   className: propClassName = undefined,
   column: groupCol,
   groupState = {},
@@ -88,6 +88,8 @@ export default ({
     </div>
   );
 }
+
+export default GroupHeaderCell;
 
 function columnClassName(columns, idx) {
 

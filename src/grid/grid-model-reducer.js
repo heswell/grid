@@ -1,5 +1,5 @@
-import { addSortColumn, indexOfCol, metadataKeys, partition, removeSortColumn, setSortColumn, updateGroupBy } from '@heswell/utils'
-import {getColumnGroup, getColumnGroupColumnIdx, ColumnGroup, GridModel} from './grid-model-utils';
+import { addSortColumn, metadataKeys, removeSortColumn, setSortColumn } from '@heswell/utils'
+import {getColumnGroup, getColumnGroupColumnIdx, ColumnGroup, extractGroupColumn, GridModel} from './grid-model-utils';
 
 const DEFAULT_COLUMN_WIDTH = 100;
 const MIN_COLUMN_WIDTH = 80;
@@ -7,7 +7,11 @@ const MIN_COLUMN_WIDTH = 80;
 const RESIZING = {resizing: true};
 const NOT_RESIZING = {resizing: false};
 
-export const initModel = gridProps => {
+// is this a good idea ?
+let cssRules;
+
+export const initModel = ([gridProps, classes=cssRules]) => {
+  cssRules = classes;
   const { columns, defaultColumnWidth, groupBy, headerHeight = 32, height, rowHeight = 24, width } = gridProps;
   const {columnGroups, headingDepth} = buildColumnGroups(columns, null, width, defaultColumnWidth);
   const totalHeaderHeight = headerHeight * headingDepth;
@@ -79,48 +83,35 @@ function sortRows(state, {column, direction, add=false, remove=false}){
 
 /** @type {GridModelReducer<'group'>} */
 function groupRows(state, {column, direction, add, remove}){
-  console.log(`group by ${column.name} direction: ${direction} additive ${add}`)
-  const { groupColumns: existingGroupColumns } = state;
-  const columns = GridModel.columns(state);
-  if (existingGroupColumns === null){
-    const groupColumns = {
-      [column.name]: direction || 'asc' 
+
+  let groupBy;
+  let groupColumns;
+
+  if (state.groupColumns === null){
+    groupColumns = {[column.name]: direction || 'asc'};
+    groupBy = GridModel.groupBy({groupColumns});
+  } else if (add){
+    groupColumns = addSortColumn(state.groupColumns, column)
+    groupBy = GridModel.groupBy({groupColumns});
+  } else if (remove){
+    if (Object.keys(state.groupColumns).length === 1){
+      groupBy = null;
+      groupColumns = null;
+    } else {
+      groupColumns = removeSortColumn(state.groupColumns, column);
+      groupBy = GridModel.groupBy({groupColumns});
     }
-    const groupBy = GridModel.groupBy({groupColumns});
-    const {columnGroups} = buildColumnGroups(columns, groupBy, state.width);
-    console.log(columnGroups)
+  } else {
+    return state;
+  }
+
+  const {columnGroups} = buildColumnGroups(GridModel.columns(state), groupBy, state.width);
 
   return {
       ...state,
       groupColumns,
       columnGroups
-    }
-
-  } else if (add){
-    const groupColumns = addSortColumn(state.groupColumns, column)
-    console.log(groupColumns)
-    const groupBy = GridModel.groupBy({groupColumns});
-    const {columnGroups} = buildColumnGroups(columns, groupBy, state.width);
-
-    return {
-      ...state,
-      groupColumns,
-      columnGroups
-    }
-  } else if (remove){
-    const groupColumns = removeSortColumn(state.groupColumns, column);
-    console.log(groupColumns);
-    const groupBy = GridModel.groupBy({groupColumns});
-    const {columnGroups} = buildColumnGroups(columns, groupBy, state.width);
-    return {
-      ...state,
-      groupColumns,
-      columnGroups
-    }
-  } else {
-    return state;
-
-  }
+    };
 }
 
 /** @type {GridModelReducer<'resize-heading'>} */
@@ -141,7 +132,7 @@ function handleResizeHeading(state, {phase, column, width}){
 
 /** @type {GridModelReducer<'initialize'>} */
 function initialize(state, {props}){
-  return initModel(props);
+  return initModel([props, null]);
 }
 
 let resizeColumnHeaderHeading = null;
@@ -287,7 +278,7 @@ function buildColumnGroups(columns, groupBy, gridWidth, defaultColumnWidth=DEFAU
   const headingDepth = getMaxHeadingDepth(columns);
   const start = metadataKeys.count;
 
-  const [groupColumn, nonGroupedColumns] = extractGroupColumn(columns, groupBy, MIN_COLUMN_WIDTH);
+  const [groupColumn, nonGroupedColumns] = extractGroupColumn(columns, groupBy, cssRules);
   if (groupColumn){
     const headings = headingDepth > 1 ? [] : undefined;
     columnGroups.push(columnGroup = { locked: false, columns: [groupColumn], headings, width:0, contentWidth:0 });
@@ -337,36 +328,6 @@ function buildColumnGroups(columns, groupBy, gridWidth, defaultColumnWidth=DEFAU
     }
   }
   return {columnGroups, headingDepth};
-}
-
-function extractGroupColumn(columns, groupBy, minColumnWidth){
-  if (groupBy && groupBy.length > 0){
-      const isGroup = ({name}) => indexOfCol(name, groupBy) !== -1
-      // Note: groupedColumns will be in column order, not groupBy order
-      const [groupedColumns, rest] = partition(columns, isGroup);
-      if (groupedColumns.length !== groupBy.length){
-          throw Error(`extractGroupColumn: no column definition found for all groupBy cols ${JSON.stringify(groupBy)} `);
-      }
-      const groupCount = groupBy.length;
-      const groupCols = groupBy.map(([name], idx) => {
-          // Keep the cols in same order defined on groupBy
-          const column = groupedColumns.find(col => col.name === name);
-          return {
-              ...column,
-              groupLevel: groupCount - idx
-          }
-      })
-      const groupCol = {
-          key: -1,
-          name: 'group-col',
-          heading: ['group-col'],
-          isGroup: true,
-          columns: groupCols,
-          width: Math.max(...groupCols.map(col => col.width || minColumnWidth)) + 50
-      };
-      return [groupCol, rest];
-  }
-  return [null, columns]
 }
 
 const getMaxHeadingDepth = columns => {

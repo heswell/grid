@@ -1,6 +1,5 @@
-import {  metadataKeys } from '@heswell/utils'
-
-import { COLUMNS_CHANGE } from "./grid-data-actions";
+import {  indexOfCol, metadataKeys, partition } from '@heswell/utils'
+import { getColumnWidth } from './dom-utils';
 
 /** @type {(gm: GridModel, target: Column | number) => ColumnGroup} */
 export function getColumnGroup({columnGroups}, target){
@@ -175,7 +174,7 @@ function toggleGroupState(gridModel, row) {
 
 
 export const GridModel = {
-  columns: gridModel => gridModel.columnGroups.flatMap(group => group.columns.flatMap(column => column.isGroup ? column.columns : column)),
+  columns: gridModel => flattenColumnGroup(gridModel.columnGroups.flatMap(columnGroup => columnGroup.columns)),
   columnNames: gridModel => GridModel.columns(gridModel).map(column => column.name),
   groupBy: gridModel => mapSortColumns(gridModel.groupColumns),
   sortBy: gridModel => mapSortColumns(gridModel.sortColumns),
@@ -191,4 +190,60 @@ export function expandStatesfromGroupState({columns},groupState){
       all = all['*'];
   }
   return results;
+}
+
+const flattenColumnGroup = (columns) => {
+  if (!columns[0].isGroup){
+    return columns;
+  }
+
+  const [groupColumn, ...nonGroupColumns] = columns;
+  groupColumn.columns.reverse().forEach(column => {
+    const {originalIdx, ...nonGroupedColumn} = column;
+    nonGroupColumns.splice(originalIdx,0,nonGroupedColumn);
+  });
+
+  return nonGroupColumns;
+}
+
+export function extractGroupColumn(columns, groupBy, cssRules){
+  if (groupBy && groupBy.length > 0){
+      // Note: groupedColumns will be in column order, not groupBy order
+      const [groupedColumns, rest] = columns.reduce((result, column, i) => {
+        const [g,r] = result;
+        if (indexOfCol(column.name, groupBy) !== -1){
+          g.push({
+            ...column,
+            originalIdx: i
+          })
+        } else {
+          r.push(column);
+        }
+
+        return result;
+      }, [[],[]]);
+      if (groupedColumns.length !== groupBy.length){
+          throw Error(`extractGroupColumn: no column definition found for all groupBy cols ${JSON.stringify(groupBy)} `);
+      }
+      const groupCount = groupBy.length;
+      const groupCols = groupBy.map(([name], idx) => {
+          // Keep the cols in same order defined on groupBy
+          const column = groupedColumns.find(col => col.name === name);
+          return {
+              ...column,
+              groupLevel: groupCount - idx
+          }
+      })
+
+      const groupCol = {
+          key: -1,
+          name: 'group-col',
+          heading: ['group-col'],
+          isGroup: true,
+          columns: groupCols,
+          width: getColumnWidth(groupCols, cssRules)
+      };
+      return [groupCol, rest];
+  }
+  return [null, columns]
 }

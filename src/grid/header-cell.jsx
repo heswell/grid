@@ -12,6 +12,7 @@ const HeaderCell = function HeaderCell({ className, column, onDrag, onResize, so
 
   const el = useRef(null);
   const col = useRef(column);
+  const isResizing = useRef(false);
   const {dispatchGridModelAction} = useContext(GridContext);
   // essential that handlers for resize do not use stale column
   // we could mitigate this by only passing column key and passing delta,
@@ -27,10 +28,18 @@ const HeaderCell = function HeaderCell({ className, column, onDrag, onResize, so
   );
 
   const handleClick = e => {
-    dispatchGridModelAction({type: 'sort', column});
+    if (isResizing.current){
+      isResizing.current = false;
+    } else {
+      dispatchGridModelAction({type: 'sort', column});
+    }
   }
 
-  const handleResizeStart = () => onResize('begin', column);
+  const handleResizeStart = () => {
+    // Note: the click handler will fire after the resizeEnd (mouseUp) handler and reset this
+    isResizing.current = true;
+    onResize('begin', column);
+  }
 
   const handleResize = useCallback((e) => {
       const width = getWidthFromMouseEvent(e);
@@ -40,7 +49,7 @@ const HeaderCell = function HeaderCell({ className, column, onDrag, onResize, so
   },[onResize]);
 
   const handleResizeEnd = (e) => {
-      onResize('end', col.current, getWidthFromMouseEvent(e));
+    onResize('end', col.current, getWidthFromMouseEvent(e));
   }
 
   const handleContextMenu = useContextMenu('header', { column });
