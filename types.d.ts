@@ -11,12 +11,15 @@ interface ColumnDescriptor {
 }
 
 interface Column {
+  flex?: number;
   key?: number;
   heading?: string[];
+  initialFlex?: number;
   label?:string;
   locked?: boolean;
   // would like to avoid this, it is purely an internal implementation detail
   marginLeft?: number;
+  minWidth?: number;
   name: string;
   resizeable?: boolean;
   resizing?: boolean;
@@ -46,9 +49,11 @@ type MetaDataKeys = {
 }
 
 type DataSource = any;
+type ColumnSizing = 'fill' | 'auto' | 'static'; 
 
 interface GridProps {
   columns: ColumnDescriptor[];
+  columnSizing? : ColumnSizing;
   dataSource: DataSource;
   defaultColumnWidth?: number;
   groupBy?: GroupBy;
@@ -79,13 +84,16 @@ type GroupState = {
 }
 
 type GridModel = {
+  columnSizing: ColumnSizing;
   columnGroups: ColumnGroup[];
+  defaultColumnWidth?: number;
   groupColumns: SortColumns;// rename - too confusing with columnGroups
   groupState: GroupState;
   headerHeight: number;
   headingDepth: number;
   height: number;
   horizontalScrollbarHeight: number;
+  minColumnWidth?: number;
   rowHeight: number;
   sortColumns: SortColumns;
   viewportHeight: number;

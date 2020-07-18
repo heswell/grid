@@ -1,5 +1,13 @@
 import { addSortColumn, metadataKeys, removeSortColumn, setSortColumn } from '@heswell/utils'
-import {getColumnGroup, getColumnGroupColumnIdx, ColumnGroup, extractGroupColumn, GridModel} from './grid-model-utils';
+import {
+  columnKeysToIndices,
+  ColumnGroup,
+  getColumnGroup,
+  getColumnGroupColumnIdx,
+  extractGroupColumn,
+  GridModel,
+  splitKeys
+} from './grid-model-utils';
 
 const DEFAULT_COLUMN_WIDTH = 100;
 const MIN_COLUMN_WIDTH = 80;
@@ -7,52 +15,73 @@ const MIN_COLUMN_WIDTH = 80;
 const RESIZING = {resizing: true};
 const NOT_RESIZING = {resizing: false};
 
-// is this a good idea ?
+// Dont like this - it's a module ref to the jss classes ?
 let cssRules;
-
-export const initModel = ([gridProps, classes=cssRules]) => {
-  cssRules = classes;
-  const { columns, defaultColumnWidth, groupBy, headerHeight = 32, height, rowHeight = 24, width } = gridProps;
-  const {columnGroups, headingDepth} = buildColumnGroups(columns, null, width, defaultColumnWidth);
-  const totalHeaderHeight = headerHeight * headingDepth;
-  const horizontalScrollbarHeight = columnGroups.some(({width, contentWidth}) => width < contentWidth)
-    ? 15
-    : 0;
-    console.log(`initial groupBy `, groupBy)
-  return {
-    columnGroups,
-    groupColumns: null,
-    groupState: null,
-    headerHeight,
-    height,
-    horizontalScrollbarHeight,
-    headingDepth,
-    rowHeight,
-    sortColumns: null,
-    viewportHeight: height - totalHeaderHeight,
-    viewportRowCount: Math.ceil((height - totalHeaderHeight) / rowHeight) + 1,
-    width
-  };
-};
 
 /** @type {(s: GridModel, a: GridModelAction) => GridModel} */
 export default (state, action) => {
-  console.log(`action => `, action)
   // @ts-ignore
   return reducerActionHandlers[action.type](state, action);
 };
 
 /** @type {GridModelReducerTable} */
 const reducerActionHandlers = {
-  'resize': handleResize,
-  'resize-col': handleResizeColumn,
-  'resize-heading': handleResizeHeading,
-  'add-col': handleAddColumn,
+  'resize': resizeGrid,
+  'resize-col': resizeColumn,
+  'resize-heading': resizeHeading,
+  'add-col': addColumn,
   'initialize': initialize,
   'sort': sortRows,
   'group': groupRows,
   'toggle': toggleRow
-}
+};
+
+export const initModel = ([gridProps, classes=cssRules]) => {
+  cssRules = classes;
+  const {
+    columns,
+    columnSizing = 'static',
+    defaultColumnWidth = DEFAULT_COLUMN_WIDTH,
+    // groupBy,
+    headerHeight = 32,
+    height,
+    minColumnWidth = MIN_COLUMN_WIDTH,
+    rowHeight = 24,
+    width } = gridProps;
+
+  const state = {
+    columnGroups: undefined,
+    columnSizing,
+    defaultColumnWidth,
+    groupColumns: null, // TODO these can be set from props
+    groupState: null,
+    headerHeight,
+    headingDepth: undefined,
+    height,
+    horizontalScrollbarHeight: undefined,
+    minColumnWidth,
+    rowHeight,
+    sortColumns: null,
+    viewportHeight: undefined,
+    viewportRowCount: undefined,
+    width
+  };
+
+  const {columnGroups, headingDepth} = buildColumnGroups(state, columns);
+  const totalHeaderHeight = headerHeight * headingDepth;
+  const horizontalScrollbarHeight = columnGroups.some(({width, contentWidth}) => width < contentWidth)
+    ? 15
+    : 0;
+
+  state.columnGroups = columnGroups;
+  state.headingDepth = headingDepth;
+  state.horizontalScrollbarHeight = horizontalScrollbarHeight;
+  state.viewportHeight = height - totalHeaderHeight;
+  state.viewportRowCount =  Math.ceil((height - totalHeaderHeight) / rowHeight) + 1;
+
+  return state;
+};
+
 
 // Do we need this in the model ?
 /** @type {GridModelReducer<'toggle'>} */
@@ -64,7 +93,6 @@ function toggleRow(state, {row}){
     groupState
   }
 }
-
 
 /** @type {GridModelReducer<'sort'>} */
 function sortRows(state, {column, direction, add=false, remove=false}){
@@ -105,7 +133,7 @@ function groupRows(state, {column, direction, add, remove}){
     return state;
   }
 
-  const {columnGroups} = buildColumnGroups(GridModel.columns(state), groupBy, state.width);
+  const {columnGroups} = buildColumnGroups(state, GridModel.columns(state), groupBy);
 
   return {
       ...state,
@@ -115,11 +143,11 @@ function groupRows(state, {column, direction, add, remove}){
 }
 
 /** @type {GridModelReducer<'resize-heading'>} */
-function handleResizeHeading(state, {phase, column, width}){
+function resizeHeading(state, {phase, column, width}){
   if (phase === 'begin'){
     const {columnGroups} = updateGroupHeadings(state.columnGroups, column, RESIZING, RESIZING, RESIZING);
     let headingResizeState = {lastSizedCol: 0, ...getColumnPositions(columnGroups, splitKeys(column.key))}
-    resizeColumnHeaderHeading = (state, column, width) => resizeHeading(state, column, width, headingResizeState);
+    resizeColumnHeaderHeading = (state, column, width) => resizeColumnHeading(state, column, width, headingResizeState);
     return {...state, columnGroups};
   } else if (phase === 'resize'){
     return resizeColumnHeaderHeading(state, column, width);
@@ -137,7 +165,7 @@ function initialize(state, {props}){
 
 let resizeColumnHeaderHeading = null;
 
-function resizeHeading(state, column, width, headingResizeState){
+function resizeColumnHeading(state, column, width, headingResizeState){
 
   const diff = width - column.width;
   const {lastSizedCol: pos, groupIdx, groupColIdx} = headingResizeState;
@@ -149,14 +177,14 @@ function resizeHeading(state, column, width, headingResizeState){
   for (let i=0;i<diffs.length;i++){
       if (typeof diffs[i] === 'number' && diffs[i] !== 0){
           const targetCol = state.columnGroups[groupIdx].columns[groupColIdx[i]];
-          newState = handleResizeColumn({...newState, headingResizeState}, {type: 'resize-col', phase: 'resize', column: targetCol, width: targetCol.width + diffs[i]});
+          newState = resizeColumn({...newState, headingResizeState}, {type: 'resize-col', phase: 'resize', column: targetCol, width: targetCol.width + diffs[i]});
       }
   }
   return newState;
 }
 
 /** @type {GridModelReducer<'add-col'>} */
-function handleAddColumn(state, {insertIdx: absInsertIdx, targetColumnGroup, column}){
+function addColumn(state, {insertIdx: absInsertIdx, targetColumnGroup, column}){
   if (absInsertIdx !== -1){
     targetColumnGroup = getColumnGroup(state, absInsertIdx);
   }
@@ -187,7 +215,7 @@ function handleAddColumn(state, {insertIdx: absInsertIdx, targetColumnGroup, col
     }
   });
 
-  const {columnGroups} = buildColumnGroups(columns, null, state.width);
+  const {columnGroups} = buildColumnGroups(state, columns, null);
 
   return {
     ...state,
@@ -197,57 +225,38 @@ function handleAddColumn(state, {insertIdx: absInsertIdx, targetColumnGroup, col
 }
 
 /** @type {GridModelReducer<'resize-col'>} */
-function handleResizeColumn(state, {phase, column, width}){
+function resizeColumn(state, {phase, column, width}){
   if (phase === 'resize'){
-    
-    // if (column.width <= state.minColumnWidth && width <= column.width) {
-    //   return state;
-    // }
 
-    const [columnGroups, groupIdx] = updateGroupColumn(state.columnGroups, column, {width});
-    const updatedGroup = columnGroups[groupIdx];
-    updateColumnHeading(updatedGroup);
-    const widthAdjustment = width - column.width;
-    // const totalColumnWidth = state.totalColumnWidth + widthAdjustment;
-
-    // if (totalColumnWidth < state.displayWidth) {
-    //     // what do we do about empty space
-    // }
-
-    updatedGroup.contentWidth += widthAdjustment;
-
-    if (updatedGroup.locked) {
-        updatedGroup.width += widthAdjustment;
-        for (let i = groupIdx + 1; i < columnGroups.length; i++) {
-            const {locked, width} = columnGroups[i];
-            columnGroups[i] = {
-                ...columnGroups[i],
-                width: locked ? width : width - widthAdjustment
-            };
-        }
-    }
-
-
+    const columnGroups = GridModel.updateGroupColumnWidth(state, column, width);
     return {...state, columnGroups};
 
   } else if (phase === 'begin'){
-    const [columnGroups] = updateGroupColumn(state.columnGroups, column, RESIZING);
+    const [columnGroups] = GridModel.updateGroupColumn(state, column, RESIZING);
     return {...state, columnGroups};
 
   } else {
-    const [columnGroups] = updateGroupColumn(state.columnGroups, column, NOT_RESIZING);
+    const [columnGroups] = GridModel.updateGroupColumn(state, column, NOT_RESIZING);
     return {...state, columnGroups};
   }
 }
 
-function handleResize(state, {height, width}){
-  const {headerHeight, headingDepth, rowHeight, viewportHeight} = state;
+function resizeGrid(state, {height, width}){
+  const {columnSizing, headerHeight, headingDepth, rowHeight, viewportHeight} = state;
   const heightDiff = height - state.height;
   const widthDiff = width - state.width;
   const totalHeaderHeight = headerHeight * headingDepth;
 
-  const columnGroups = widthDiff !== 0
-    ? state.columnGroups.map(columnGroup => {
+  let columnGroups;
+
+  if (widthDiff === 0){
+    columnGroups = state.columnGroups;
+  } else if (columnSizing === 'fill'){
+
+    ({columnGroups} = buildColumnGroups({...state, width}, GridModel.columns(state)));
+
+  } else {
+    columnGroups = state.columnGroups.map(columnGroup => {
       if (columnGroup.locked){
         return columnGroup;
       } else {
@@ -256,8 +265,8 @@ function handleResize(state, {height, width}){
           width: columnGroup.width + widthDiff
         }
       }
-    })
-    : state.columnGroups;
+    });
+  }
 
   return {
     ...state,
@@ -269,11 +278,14 @@ function handleResize(state, {height, width}){
   }
 }
 
-function buildColumnGroups(columns, groupBy, gridWidth, defaultColumnWidth=DEFAULT_COLUMN_WIDTH) {
+function buildColumnGroups(state, columns, groupBy) {
+  const {columnSizing, defaultColumnWidth, minColumnWidth, width: gridWidth} = state;
   let column = null;
   let columnGroup = null;
   let columnGroups = [];
-  let availableWidth = gridWidth;
+
+  let gridContentWidth = gridWidth - 15;// how do we know about vertical scrollbar
+  let availableWidth = gridContentWidth; 
 
   const headingDepth = getMaxHeadingDepth(columns);
   const start = metadataKeys.count;
@@ -285,8 +297,25 @@ function buildColumnGroups(columns, groupBy, gridWidth, defaultColumnWidth=DEFAU
     addColumnToHeadings(headingDepth, groupColumn, headings);
   }
 
+  // TODO we need a min Width on the group column as well
+  let minTotalColumnWidth = groupColumn ? groupColumn.width : 0;
+  let totalColumnWidth = minTotalColumnWidth;
+  let flexTotal = 0;
+  let flexCount = 0;
+  const initialFlex = {$count:0, $total: 0};
+
   for (let i = 0; i < nonGroupedColumns.length; i++) {
-    const { key: columnKey, name, heading=[name], locked = false, width=defaultColumnWidth } = nonGroupedColumns[i];
+    const {
+      flex=undefined,
+      initialFlex: initFlex=0, 
+      key: columnKey,
+      name,
+      heading=[name],
+      locked = false,
+      minWidth=minColumnWidth,
+      width=defaultColumnWidth 
+    } = nonGroupedColumns[i];
+
     const key = typeof columnKey === 'number' 
       ? columnKey
       : start + i;
@@ -305,7 +334,9 @@ function buildColumnGroups(columns, groupBy, gridWidth, defaultColumnWidth=DEFAU
       );
     }
 
+    // TODO we are losing a lot of information here
     columnGroup.columns.push(column = {
+      flex,
       heading,
       locked,
       name,
@@ -318,6 +349,23 @@ function buildColumnGroups(columns, groupBy, gridWidth, defaultColumnWidth=DEFAU
     }
 
     columnGroup.contentWidth += width;
+    minTotalColumnWidth += minWidth;
+    totalColumnWidth += width;
+
+    if (initFlex){
+      initialFlex.$count += 1;
+      initialFlex.$total += initFlex;
+      initialFlex[name] = initFlex;
+    }
+
+    if (flex){
+      flexTotal += flex;
+    }
+
+    if (flex !== 0){
+      flexCount += 1;
+    }
+
     // TODO fixed width may exceed available width. This assumes single fixed width followed by
     // single scrollable
     if (columnGroup.locked) {
@@ -327,6 +375,36 @@ function buildColumnGroups(columns, groupBy, gridWidth, defaultColumnWidth=DEFAU
       columnGroup.width = availableWidth;
     }
   }
+
+  const noInitialFlex = initialFlex.$count === 0;
+
+  if (columnSizing === 'fill'){
+    // spread the diff ...
+    const diff =  gridContentWidth - totalColumnWidth;
+    if ((diff < 0 && minTotalColumnWidth <= gridContentWidth) || diff > 0){
+      const columnWidthAdjustment = initialFlex.$total > 0
+        ? diff / initialFlex.$total
+        : flexTotal > 0
+          ? diff / flexTotal
+          : diff / flexCount;
+
+     for (let columnGroup of columnGroups){
+        for (let column of columnGroup.columns){
+          let columnAdjustment = 0;
+          if (initialFlex[column.name]){
+            columnAdjustment = columnWidthAdjustment * initialFlex[column.name];
+          } else if (noInitialFlex && column.flex === undefined){
+            columnAdjustment = columnWidthAdjustment;
+          } else if (noInitialFlex && column.flex > 0){
+            columnAdjustment = columnWidthAdjustment * column.flex;
+          }
+          column.width += columnAdjustment;
+          columnGroup.contentWidth += columnAdjustment;
+        }
+      }
+    }
+  }
+
   return {columnGroups, headingDepth};
 }
 
@@ -414,8 +492,6 @@ function addColumnToHeadings(maxHeadingDepth, column, headings, collapsedColumns
   
 }
 
-const splitKeys = compositeKey => `${compositeKey}`.split(':').map(k => parseInt(k,10));
-
 function updateGroupHeadings(groups, column, headingUpdates, subHeadingUpdates, columnUpdates){
   const keys = splitKeys(column.key);
   const { groupIdx, groupHeadingIdx, headingColIdx } = getHeadingPosition(groups, column);
@@ -462,31 +538,6 @@ function updateGroupHeadings(groups, column, headingUpdates, subHeadingUpdates, 
 
 }
 
-function updateColumnHeading(group){
-  if (group.headings){
-      const columns = group.columns;
-      group.headings = group.headings.map(heading => heading.map(colHeading => {
-          const indices = columnKeysToIndices(splitKeys(colHeading.key),columns);
-          const colWidth = indices.reduce((sum, idx) => sum + (columns[idx].width), 0);
-          return colWidth === colHeading.width 
-              ? colHeading
-              : {...colHeading, width: colWidth};
-      }));
-  }
-}
-
-const columnKeysToIndices = (keys,columns) =>
-    keys.map(key => columns.findIndex(c => c.key === key));
-
-function updateGroupColumn(groups, column, updates){
-  const { groupIdx: idx, groupColIdx: colIdx } = getColumnPosition(groups, column);
-  const {columns, ...rest} = groups[idx];
-  const updatedGroups = groups.map((group,i) => i === idx 
-    ? { ...rest, columns: columns.map((col,i) => i === colIdx ? { ...col, ...updates } : col)} 
-    : group);
-  return [updatedGroups, idx];
-}
-
 function getHeadingPosition(groups, column) {
   for (let i = 0; i < groups.length; i++) {
       const {headings=null} = groups[i];
@@ -498,16 +549,6 @@ function getHeadingPosition(groups, column) {
       }
   }
   return { groupIdx: -1, groupHeadingIdx: -1, headingColIdx: -1 };
-}
-
-function getColumnPosition(groups, column) {
-  for (let i = 0; i < groups.length; i++) {
-      const idx = groups[i].columns.findIndex(c => c.key === column.key);
-      if (idx !== -1) {
-          return {groupIdx: i, groupColIdx: idx };
-      }
-  }
-  return { groupIdx: -1, groupColIdx: -1 };
 }
 
 function getColumnPositions(groups, keys) {

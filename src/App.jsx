@@ -17,7 +17,7 @@ export default function App() {
   },[])
 
   const pendingHeight = useRef(600);
-  const pendingWidth = useRef(800);
+  const pendingWidth = useRef(1000);
 
   const [dataLocation, setDataLocation] = useState('local-instruments');
   const [columns, dataSource] = useMemo(() => buildData(dataLocation),[dataLocation]);
@@ -25,7 +25,7 @@ export default function App() {
   const [theme, setTheme] = useState('light');
   const [state, setState] = useState({
     height: 600,
-    width: 800
+    width: 1000
   });
 
   const setDirty = (e, name) => {
@@ -58,6 +58,7 @@ export default function App() {
       <MenuContext.Provider value={/*renderContextMenu*/ null}>
       <Grid
         columns={columns}
+        columnSizing="fill"
         dataSource={dataSource}
         groupBy={['Sector']}
         height={state.height}

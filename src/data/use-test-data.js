@@ -52,7 +52,7 @@ export function buildData(source, columnCount=25, rowCount=100){
         aggregate: 'avg'
       },
       { name: 'MarketCap', type: 'number', aggregate: 'sum' },
-      { name: 'IPO'},
+      { name: 'IPO', width: 55, flex: 0},
       { name: 'Sector'},
       { name: 'Industry'}
     ];

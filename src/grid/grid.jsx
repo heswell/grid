@@ -50,6 +50,7 @@ const Grid = (props) => {
     initModel
   );
 
+  //TODO do we need to useCallback here - can we ever send stale props ?
   useEffectSkipFirst(() => {
     dispatchGridModel({type: 'initialize', props});
   },[props.columns])

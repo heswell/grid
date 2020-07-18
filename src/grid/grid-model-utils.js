@@ -1,4 +1,4 @@
-import {  indexOfCol, metadataKeys, partition } from '@heswell/utils'
+import {  indexOfCol, metadataKeys } from '@heswell/utils'
 import { getColumnWidth } from './dom-utils';
 
 /** @type {(gm: GridModel, target: Column | number) => ColumnGroup} */
@@ -172,13 +172,147 @@ function toggleGroupState(gridModel, row) {
 
 }
 
+function updateGroupColumnWidth(state, column, width){
+
+  if (state.columnSizing === 'fill'){
+    return updateGroupFillColumnWidth(state, column, width);
+  }
+
+  const [columnGroups, groupIdx] = GridModel.updateGroupColumn(state, column, {width});
+  const updatedGroup = columnGroups[groupIdx];
+  updateColumnHeading(updatedGroup);
+  const widthAdjustment = width - column.width;
+
+  // why isn't this done already ?
+  updatedGroup.contentWidth += widthAdjustment;
+
+  if (updatedGroup.locked) {
+      updatedGroup.width += widthAdjustment;
+      for (let i = groupIdx + 1; i < columnGroups.length; i++) {
+          const {locked, width} = columnGroups[i];
+          columnGroups[i] = {
+              ...columnGroups[i],
+              width: locked ? width : width - widthAdjustment
+          };
+      }
+  }
+  return columnGroups;
+}
+
+/**
+ * Column Sizing  mode === 'fill'
+ * if we are resizing a fill column and there are other fill columns to our right
+ *    1) adjust the width of these fill columns according to their flex values 
+ *    2) adjust the flex of resized column, distribute diff to the flex columns to right
+ * if we are resizing and there are other fill columns, but none to our right
+ *    1) adjust the width of all other fill columns according to their flex values 
+ *    2) adjust the flex of resized column, distribute diff to the other flex columns
+ * if we are resizing a non-flex column
+ *    1) adjust the width of all other fill columns according to their flex values 
+ * if we try to adjust teh width of a flex column and it is the only flex column
+ *    disallow the resize
+ */
+function updateGroupFillColumnWidth(state, column, width){
+  const columns = GridModel.columns(state);
+  const {length: noFlexCount} = columns.filter(c => c.flex === undefined);
+  const noFlexValues = noFlexCount === columns.length;
+  const widthDiff = column.width - width;
+  const affectedColumns = []
+  for (let i=columns.length-1;i>=0; i--){
+    const {flex, name} = columns[i];
+    if (name === column.name){
+      affectedColumns.unshift(columns[i]);
+      if (affectedColumns.length > 1 && column.flex !== 0 || noFlexValues){
+        break;
+      }
+    } else if (flex !== 0 || noFlexValues){
+      affectedColumns.unshift(columns[i]);
+    }
+  }
+  // Lets ignore flex for now, just apply widthDiff equally across all affected columns
+  const widthDiffsPerColumn = widthDiff / (affectedColumns.length - 1);
+  const resizedColumns = affectedColumns.map(affectedColumn => {
+    if (affectedColumn.name === column.name){
+      return {
+        ...affectedColumn,
+        width
+      };
+    } else {
+      return {
+        ...affectedColumn,
+        width: affectedColumn.width + widthDiffsPerColumn
+      };
+    }
+  });
+
+  const applyChanges = (columnGroup, idx) => {
+    let nextAffectedColumn = affectedColumns.shift();
+    if (columnGroup.columns.includes(nextAffectedColumn)){
+      return {
+        // Do we assume resizing does not affect columns ACROSS columnGroips ?
+        // If not, we have to recompute columnGroup Width here
+        ...columnGroup,
+        columns: columnGroup.columns.map(col => {
+          if (col === nextAffectedColumn){
+            nextAffectedColumn = affectedColumns.shift();
+            return resizedColumns.shift();
+          } else {
+            return col;
+          }
+        })
+      };
+    } else {
+      return columnGroup;
+    }
+  }
+  
+  return state.columnGroups.map(applyChanges);
+}
+
+function updateColumnHeading(group){
+  if (group.headings){
+      const columns = group.columns;
+      group.headings = group.headings.map(heading => heading.map(colHeading => {
+          const indices = columnKeysToIndices(splitKeys(colHeading.key),columns);
+          const colWidth = indices.reduce((sum, idx) => sum + (columns[idx].width), 0);
+          return colWidth === colHeading.width 
+              ? colHeading
+              : {...colHeading, width: colWidth};
+      }));
+  }
+}
+
+function updateGroupColumn({columnGroups: groups}, column, updates){
+  const { groupIdx: idx, groupColIdx: colIdx } = getColumnPosition(groups, column);
+  const {columns, ...rest} = groups[idx];
+  const updatedGroups = groups.map((group,i) => i === idx 
+    ? { ...rest, columns: columns.map((col,i) => i === colIdx ? { ...col, ...updates } : col)} 
+    : group);
+  return [updatedGroups, idx];
+}
+
+export const columnKeysToIndices = (keys,columns) =>
+    keys.map(key => columns.findIndex(c => c.key === key));
+
 
 export const GridModel = {
   columns: gridModel => flattenColumnGroup(gridModel.columnGroups.flatMap(columnGroup => columnGroup.columns)),
   columnNames: gridModel => GridModel.columns(gridModel).map(column => column.name),
   groupBy: gridModel => mapSortColumns(gridModel.groupColumns),
   sortBy: gridModel => mapSortColumns(gridModel.sortColumns),
-  toggleGroupState
+  toggleGroupState,
+  updateGroupColumn,
+  updateGroupColumnWidth
+}
+
+function getColumnPosition(groups, column) {
+  for (let i = 0; i < groups.length; i++) {
+      const idx = groups[i].columns.findIndex(c => c.key === column.key);
+      if (idx !== -1) {
+          return {groupIdx: i, groupColIdx: idx };
+      }
+  }
+  return { groupIdx: -1, groupColIdx: -1 };
 }
 
 export function expandStatesfromGroupState({columns},groupState){
@@ -247,3 +381,5 @@ export function extractGroupColumn(columns, groupBy, cssRules){
   }
   return [null, columns]
 }
+
+export const splitKeys = compositeKey => `${compositeKey}`.split(':').map(k => parseInt(k,10));

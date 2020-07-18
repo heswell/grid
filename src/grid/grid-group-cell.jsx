@@ -12,7 +12,7 @@ const GroupCell = React.memo(function GroupCell({column, row}){
     e.preventDefault();
     e.stopPropagation();
     dispatchGridModelAction({type: 'toggle', row});
-  },[column.key, row])
+  },[dispatchGridModelAction, row])
 
     const isExpanded = row[metadataKeys.DEPTH] > 0;
     const {GridCell, GridGroupCell} = useStyles();

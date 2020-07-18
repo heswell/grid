@@ -176,6 +176,7 @@ const Canvas = forwardRef(function Canvas(
             case 'replaceClass':
               cells[idx].classList.replace(args.className, args.newClassName);
               break;
+            default:  
           }
         }
       }

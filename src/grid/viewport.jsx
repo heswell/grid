@@ -11,7 +11,7 @@ import React, {
 import useScroll from "./use-scroll";
 import useUpdate from "./use-update";
 import useStyles from './use-styles';
-import {getColumnGroupColumnIdx, GridModel} from './grid-model-utils.js';
+import {getColumnGroupColumnIdx} from './grid-model-utils.js';
 import dataReducer, { initData } from "./grid-data-reducer";
 
 import Canvas from "./canvas";
