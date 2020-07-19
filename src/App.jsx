@@ -19,7 +19,7 @@ export default function App() {
   const pendingHeight = useRef(600);
   const pendingWidth = useRef(1000);
 
-  const [dataLocation, setDataLocation] = useState('local-instruments');
+  const [dataLocation, setDataLocation] = useState('Instruments');
   const [columns, dataSource] = useMemo(() => buildData(dataLocation),[dataLocation]);
 
   const [theme, setTheme] = useState('light');

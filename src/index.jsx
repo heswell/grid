@@ -6,13 +6,13 @@ import nestedPlugin from 'jss-plugin-nested';
 import camelCasePlugin from 'jss-plugin-camel-case';
 import defaultUnitPlugin from 'jss-plugin-default-unit';
 import globalPlugin from 'jss-plugin-global';
-import cachePlugin from 'jss-plugin-cache';
+// import cachePlugin from 'jss-plugin-cache';
 
 import App from "./App";
 
 const jss = createJss();
 jss.use(
-  cachePlugin(),
+  // cachePlugin(), // breaks with keyframes
   globalPlugin(),
   nestedPlugin(),
   camelCasePlugin(),

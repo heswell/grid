@@ -3,6 +3,24 @@ import { useRef } from 'react';
 import { LocalDataSource } from "@heswell/data-source";
 import { RemoteDataSource } from "@heswell/data-remote";
 
+
+const instrumentColumns = [
+  { name: 'Symbol', width: 80, flex: 0} ,
+  { name: 'Name', width: 200} ,
+  { name: 'Price', 
+    type: { 
+      name: 'number', 
+      renderer: {name: 'background', flashStyle:'arrow'},
+      format: { decimals: 2, zeroPad: true }
+    },
+    aggregate: 'avg'
+  },
+  { name: 'MarketCap', type: 'number', aggregate: 'sum' },
+  { name: 'IPO', width: 55, flex: 0},
+  { name: 'Sector'},
+  { name: 'Industry'}
+];
+
 export function buildData(source, columnCount=25, rowCount=100){
   console.log(`>>>>> buildData`)
   const data = [];
@@ -40,23 +58,7 @@ export function buildData(source, columnCount=25, rowCount=100){
     const tableName = 'Instruments'
     const dataConfig = {url: '/instruments.js', tableName};
       
-    const instrumentColumns = [
-      { name: 'Symbol', width: 120} ,
-      { name: 'Name', width: 200} ,
-      { name: 'Price', 
-        type: { 
-          name: 'number', 
-          renderer: {name: 'background', flashStyle:'arrow-bg'},
-          formatting: { decimals:2, zeroPad: true }
-        },
-        aggregate: 'avg'
-      },
-      { name: 'MarketCap', type: 'number', aggregate: 'sum' },
-      { name: 'IPO', width: 55, flex: 0},
-      { name: 'Sector'},
-      { name: 'Industry'}
-    ];
-    
+   
     const columns = instrumentColumns;
     const dataSource = new LocalDataSource(dataConfig);
     return [columns, dataSource]
@@ -64,28 +66,9 @@ export function buildData(source, columnCount=25, rowCount=100){
   } else {
     const tableName = 'Instruments'
     const dataConfig = {url: '127.0.0.1:9090', tableName};
-
-  const instrumentColumns = [
-    { name: 'Symbol', width: 120} ,
-    { name: 'Name', width: 200} ,
-    { name: 'Price', 
-      type: { 
-        name: 'number', 
-        renderer: {name: 'background', flashStyle:'arrow-bg'},
-        formatting: { decimals:2, zeroPad: true }
-      },
-      aggregate: 'avg'
-    },
-    { name: 'MarketCap', type: 'number', aggregate: 'sum' },
-    { name: 'IPO'},
-    { name: 'Sector'},
-    { name: 'Industry', width: 120}
-  ];
-
     const columns = instrumentColumns;
     const dataSource = new RemoteDataSource(dataConfig);
     return [columns, dataSource]
-
   }
 }
 

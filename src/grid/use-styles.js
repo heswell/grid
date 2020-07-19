@@ -250,6 +250,13 @@ export default createUseStyles(theme => ({
     },
     '&.resizing': {
       backgroundColor: 'var(--header-cell-highlight-bg)'
+    },
+    '&.number': {
+      textAlign: 'right'
+    },
+    '& .num': {
+      display: 'inline-block',
+      width: '100%'
     }
   },
 

@@ -82,7 +82,7 @@ function setRange(state, { range }) {
 }
 
 function applyUpdates(state, action) {
-  const rows = updateRows(state.rows, action.updates, state.metaDataKeys);
+  const rows = updateRows(state.rows, action.updates, metadataKeys);
   return {
     ...state,
     rows

@@ -9,11 +9,13 @@ import {
   splitKeys
 } from './grid-model-utils';
 
+const DEFAULT_COLUMN_TYPE = {name: 'string'}
 const DEFAULT_COLUMN_WIDTH = 100;
 const MIN_COLUMN_WIDTH = 80;
 
 const RESIZING = {resizing: true};
 const NOT_RESIZING = {resizing: false};
+
 
 // Dont like this - it's a module ref to the jss classes ?
 let cssRules;
@@ -313,6 +315,7 @@ function buildColumnGroups(state, columns, groupBy) {
       heading=[name],
       locked = false,
       minWidth=minColumnWidth,
+      type, // normalize this here
       width=defaultColumnWidth 
     } = nonGroupedColumns[i];
 
@@ -341,6 +344,7 @@ function buildColumnGroups(state, columns, groupBy) {
       locked,
       name,
       key,
+      type: typeof type === 'string' ? {name:type} : type ? type : DEFAULT_COLUMN_TYPE,
       width
     });
 

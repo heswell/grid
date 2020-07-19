@@ -23,6 +23,7 @@ interface Column {
   name: string;
   resizeable?: boolean;
   resizing?: boolean;
+  type?: any;
   width: number;
   // Group types, break these out
   isGroup?: true;
@@ -265,6 +266,7 @@ interface RowProps {
 type RowType = React.FC<RowProps>;
 
 interface CellProps {
+  className?: string;
   column: Column;
   row: Row;
 }

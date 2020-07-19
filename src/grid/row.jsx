@@ -20,7 +20,10 @@ const Row =  memo(function Row({ columns, height, idx, row }) {
     collapsed: isGroup && groupLevel < 0,
     expanded : isGroup && groupLevel >= 0,
     empty: isEmptyRow
-  })
+  });
+
+  // better - make a single call to useGridCellComponent here, with columns
+
   return (
     <div
       className={className}
