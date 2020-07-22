@@ -19,7 +19,7 @@ export default function App() {
   const pendingHeight = useRef(600);
   const pendingWidth = useRef(1000);
 
-  const [dataLocation, setDataLocation] = useState('Instruments');
+  const [dataLocation, setDataLocation] = useState('order-blotter');
   const [columns, dataSource] = useMemo(() => buildData(dataLocation),[dataLocation]);
 
   const [theme, setTheme] = useState('light');
@@ -83,10 +83,11 @@ export default function App() {
           <option value="dark">Dark</option>
         </select>
 
-        <select defaultValue="local-instruments" onChange={handleSelectDataSource}>
+        <select defaultValue="order-blotter" onChange={handleSelectDataSource}>
           <option value="vs">Viewserver</option>
           <option value="local">Local Test Data</option>
           <option value="local-instruments">Local Instruments</option>
+          <option value="order-blotter">Order Blotter</option>
         </select>
       </div>
     </ThemeProvider>

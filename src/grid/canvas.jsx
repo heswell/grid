@@ -4,7 +4,8 @@ import React, {
   useContext,
   useImperativeHandle,
   useReducer,
-  useRef
+  useRef,
+  useEffect
 } from "react";
 import cx from "classnames";
 import { metadataKeys } from "@heswell/utils";
@@ -45,7 +46,7 @@ const Canvas = forwardRef(function Canvas(
     columnGroup,
     initCanvasReducer
   );
-
+  console.log(`Canvas render`)  
   useUpdate(() => {
     dispatchCanvasAction({type: 'refresh', columnGroup});
   },[columnGroup.width, columnGroup.columns]);
@@ -204,7 +205,7 @@ const Canvas = forwardRef(function Canvas(
         newScrollLeft = Math.min(maxScroll, scrollLeft + scrollDistance);
       }
     }
-
+    console.log(`SCROLLBY`)
     canvasEl.current.scrollLeft = newScrollLeft;
     // return the distance actually scrolled
     return newScrollLeft - scrollLeft;
@@ -216,6 +217,7 @@ const Canvas = forwardRef(function Canvas(
   const horizontalScrollHandler = useCallback(
     (scrollEvent, scrollLeft) => {
       if (scrollEvent === "scroll") {
+        console.log(`scroll`)
         dispatchCanvasAction({type:'scroll-left', scrollLeft});
       } else if (scrollEvent === "scroll-start") {
         dispatchGridAction({ type: "scroll-start-horizontal", scrollLeft });
@@ -227,7 +229,7 @@ const Canvas = forwardRef(function Canvas(
     [dispatchCanvasAction, dispatchGridAction]
   );
 
-  const onHorizontalScroll = useScroll("scrollLeft", horizontalScrollHandler, 100);
+  const onHorizontalScroll = useScroll("scrollLeft", horizontalScrollHandler, 50);
 
   // we don't need this, absIdx is already in the row (with offset)
   // key is already in the row

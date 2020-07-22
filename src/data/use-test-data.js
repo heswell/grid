@@ -63,6 +63,11 @@ export function buildData(source, columnCount=25, rowCount=100){
     const dataSource = new LocalDataSource(dataConfig);
     return [columns, dataSource]
 
+  } else if (source === 'order-blotter'){
+    const tableName = 'OrderBlotter'
+    const dataConfig = {url: '127.0.0.1:9090', tableName};
+    const dataSource = new RemoteDataSource(dataConfig);
+    return [undefined, dataSource]
   } else {
     const tableName = 'Instruments'
     const dataConfig = {url: '127.0.0.1:9090', tableName};
@@ -72,7 +77,7 @@ export function buildData(source, columnCount=25, rowCount=100){
   }
 }
 
-export default function useTestData(source='local'){
+export default function useTestData(source='order-blotter'){
   const {current: [columns, dataSource]} = useRef(buildData(source, 10, 100))
   return [columns, dataSource]
 }

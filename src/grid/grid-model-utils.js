@@ -1,6 +1,11 @@
 import {  indexOfCol, metadataKeys } from '@heswell/utils'
 import { getColumnWidth } from './dom-utils';
 
+export const getHorizontalScrollbarHeight = columnGroups =>
+  columnGroups.some(({width, contentWidth}) => width < contentWidth) ? 15 : 0;
+
+
+
 /** @type {(gm: GridModel, target: Column | number) => ColumnGroup} */
 export function getColumnGroup({columnGroups}, target){
   if (typeof target === 'number'){
@@ -327,7 +332,7 @@ export function expandStatesfromGroupState({columns},groupState){
 }
 
 const flattenColumnGroup = (columns) => {
-  if (!columns[0].isGroup){
+  if (columns.length === 0 || !columns[0].isGroup){
     return columns;
   }
 

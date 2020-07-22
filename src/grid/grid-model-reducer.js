@@ -4,6 +4,7 @@ import {
   ColumnGroup,
   getColumnGroup,
   getColumnGroupColumnIdx,
+  getHorizontalScrollbarHeight,
   extractGroupColumn,
   GridModel,
   splitKeys
@@ -35,13 +36,14 @@ const reducerActionHandlers = {
   'initialize': initialize,
   'sort': sortRows,
   'group': groupRows,
-  'toggle': toggleRow
+  'toggle': toggleRow,
+  'set-columns': setColumns
 };
 
 export const initModel = ([gridProps, classes=cssRules]) => {
   cssRules = classes;
   const {
-    columns,
+    columns=[],
     columnSizing = 'static',
     defaultColumnWidth = DEFAULT_COLUMN_WIDTH,
     // groupBy,
@@ -71,9 +73,7 @@ export const initModel = ([gridProps, classes=cssRules]) => {
 
   const {columnGroups, headingDepth} = buildColumnGroups(state, columns);
   const totalHeaderHeight = headerHeight * headingDepth;
-  const horizontalScrollbarHeight = columnGroups.some(({width, contentWidth}) => width < contentWidth)
-    ? 15
-    : 0;
+  const horizontalScrollbarHeight = getHorizontalScrollbarHeight(columnGroups);
 
   state.columnGroups = columnGroups;
   state.headingDepth = headingDepth;
@@ -84,6 +84,27 @@ export const initModel = ([gridProps, classes=cssRules]) => {
   return state;
 };
 
+
+/** @type {GridModelReducer<'set-columns'>} */
+function setColumns(state, action){
+  if (!this.columnGroups){
+
+    const {columnGroups, headingDepth} = buildColumnGroups(state, action.columns);
+    const totalHeaderHeight = state.headerHeight * headingDepth;
+
+    return {
+      ...state,
+      columnGroups,
+      headingDepth,
+      horizontalScrollbarHeight: getHorizontalScrollbarHeight(columnGroups),
+      viewportHeight: state.height - totalHeaderHeight,
+      viewportRowCount:  Math.ceil((state.height - totalHeaderHeight) / state.rowHeight) + 1
+    };
+    
+  } else {
+    return state;
+  }
+}
 
 // Do we need this in the model ?
 /** @type {GridModelReducer<'toggle'>} */

@@ -13,7 +13,7 @@ const getFormatter = column => {
 }
 
 const useFormatter = column => {
-  console.log(`useFormatter for ${JSON.stringify(column.type)}`)
+  // console.log(`useFormatter for ${JSON.stringify(column.type)}`)
   const formatter = useRef(getFormatter(column));
   return [formatter.current];
 }

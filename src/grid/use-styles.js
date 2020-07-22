@@ -23,6 +23,10 @@ export default createUseStyles(theme => ({
         overflowY: 'hidden !important',
         top: '0 !important'
       },
+      // '& $Canvas$scrollable': {
+      //   backgroundColor: 'green'
+      //   // marginBottom: 15
+      // },
       '& $Canvas $ColumnGroupHeader': {
         display: 'block'
       },

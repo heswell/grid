@@ -2,6 +2,7 @@ import React, {
   createRef,
   forwardRef,
   useCallback,
+  useContext,
   useImperativeHandle,
   useEffect,
   useLayoutEffect,
@@ -11,7 +12,8 @@ import React, {
 import useScroll from "./use-scroll";
 import useUpdate from "./use-update";
 import useStyles from './use-styles';
-import {getColumnGroupColumnIdx} from './grid-model-utils.js';
+import GridContext from "./grid-context";
+import {getColumnGroupColumnIdx, GridModel} from './grid-model-utils.js';
 import dataReducer, { initData } from "./grid-data-reducer";
 
 import Canvas from "./canvas";
@@ -33,6 +35,13 @@ const Viewport = forwardRef(function Viewport(
   const verticalScrollbarWidth = useRef(0);
   const firstVisibleRow = useRef(0);
   const insertIndicator = useRef(null);
+
+  useEffect(() => {
+    horizontalScrollbarHeight.current = gridModel.horizontalScrollbarHeight;
+  },[gridModel.horizontalScrollbarHeight])
+
+  // TODO we could get gridModel here as well. Or would it be better to split gridModel into it's own context ?
+  const { dispatchGridModelAction } = useContext(GridContext);
 
   const gridModelRef = useRef(gridModel);
   if (gridModelRef.current !== gridModel){
@@ -136,9 +145,6 @@ const Viewport = forwardRef(function Viewport(
 
   const handleVerticalScroll = useScroll("scrollTop", scrollCallback);
 
-  // THis is a problem because child effects fire before parent effects. Hence When datasource and columns
-  // change at the same time , dataSOurce fires this effect first, but old columns are processed
-  // ANdwer - consume columns from datasource
   useEffect(() => {
     dispatchData({type: 'clear'});
     dataSource.subscribe(
@@ -147,7 +153,9 @@ const Viewport = forwardRef(function Viewport(
       },
       /* postMessageToClient */
       msg => {
-        if (msg.size !== undefined){
+        if (msg.type === 'subscribed'){
+          dispatchGridModelAction({type: 'set-columns', columns: msg.columns})
+        } else if (msg.size !== undefined){
           // How do we handle this withoput having this dependency on gridModel ?
           if (msg.size >= gridModel.viewportRowCount && verticalScrollbarWidth.current === 0){
             verticalScrollbarWidth.current = 15;
@@ -174,16 +182,11 @@ const Viewport = forwardRef(function Viewport(
     );
 
     // shouldn't be necessary if range was included in subscribe
-    dataSource.setRange(0, gridModel.viewportRowCount);
+    //dataSource.setRange(0, gridModel.viewportRowCount);
 
     return () => dataSource.unsubscribe();
     
-  }, [
-    dataSource,
-    // gridModel.columns,
-    // gridModel.rowHeight,
-    // gridModel.viewportRowCount
-  ]);
+  }, [dataSource]);
   // TODO need a destroy method on dataSource to be called when appropriate
 
   const classes = useStyles();

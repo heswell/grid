@@ -5,6 +5,7 @@ export default function useScroll(scrollPos, callback, scrollThreshold = 0) {
   const pos = useRef(0);
   const checkPos = useRef(0);
   const onScrollEnd = useCallback(() => {
+    console.log('scroll end')
     callback("scroll-end", pos.current);
     timeoutHandle.current = null;
   }, [callback]);
@@ -14,6 +15,7 @@ export default function useScroll(scrollPos, callback, scrollThreshold = 0) {
       // important for the horizontal scroll on Canvas
       e.stopPropagation();
       const scrollPosition = e.target[scrollPos];
+      console.log(`useScroll scrollPos ${scrollPosition} prev scroll position ${pos.current}`)
       if (scrollPosition !== pos.current) {
         pos.current = scrollPosition;
         if (timeoutHandle.current === null) {
@@ -25,7 +27,7 @@ export default function useScroll(scrollPos, callback, scrollThreshold = 0) {
           checkPos.current = scrollPosition;
           callback("scroll", scrollPosition);
         }
-        timeoutHandle.current = setTimeout(onScrollEnd, 200);
+        timeoutHandle.current = setTimeout(onScrollEnd, 100);
       }
     },
     [callback, onScrollEnd, scrollPos, scrollThreshold]

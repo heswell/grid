@@ -125,6 +125,7 @@ type GridModelInitializeAction = { type: 'initialize', props};
 type GridModelGroupAction = { type: 'group', column: Column, direction?: SortDirection, add?: boolean, remove?: true};
 type GridModelSortAction = { type: 'sort', column: Column, direction?: SortDirection, add?: True, remove?: True};
 type GridModelToggleAction = { type: 'toggle', row: any[]};
+type GridModelSetColumnsAction = { type: 'set-columns', columns: Column[]};
 
 type GridModelAction =
   | GridModelResizeAction
@@ -134,7 +135,8 @@ type GridModelAction =
   | GridModelInitializeAction
   | GridModelSortAction
   | GridModelGroupAction
-  | GridModelToggleAction;
+  | GridModelToggleAction
+  | GridModelSetColumnsAction;
 
 type GridModelReducerFn<A=GridModelAction> = (state: GridModel, action: A) => GridModel;  
 type GridModelReducerInitializer = (props: GridProps) => GridModel;
@@ -147,6 +149,7 @@ type GridModelReducer<T extends GridModelAction['type']> =
   T extends 'sort' ? GridModelReducerFn<GridModelSortAction> :
   T extends 'group' ? GridModelReducerFn<GridModelGroupAction> :
   T extends 'toggle' ? GridModelReducerFn<GridModelToggleAction> :
+  T extends 'set-columns' ? GridModelReducerFn<GridModelSetColumnsAction> :
   GridModelReducerFn<GridModelAction>;
 
 type GridModelReducerTable = {[key in GridModelAction['type']]: GridModelReducer<key>};  

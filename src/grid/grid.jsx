@@ -118,7 +118,7 @@ const Grid = (props) => {
 
   const { height, width } = gridModel;
 
-  return (// Question, how much overhead are we introducing be adding gridModel to GridContext ?
+  return (// Question, how much overhead are we introducing be adding gridModel to GridContext ? Perhaps it belongs in it's own context
       <GridContext.Provider value={{ dispatchGridAction, dispatchGridModelAction: dispatchGridModel, gridModel }}>
         <MenuProvider>
         <div className={classes.Grid} ref={gridEl} style={{ width, height }}>
