@@ -40,13 +40,14 @@ const Canvas = forwardRef(function Canvas(
   const { dispatchGridAction } = useContext(GridContext);
   const classes = useStyles();
   const columnGroup = gridModel.columnGroups[columnGroupIdx];
+  const scrollbarHeightAdjustment = columnGroup.locked ? horizontalScrollbarHeight : 0;
 
   const [[columns, cellKeys], dispatchCanvasAction] = useReducer(
     canvasReducer,
     columnGroup,
     initCanvasReducer
   );
-  console.log(`Canvas render`)  
+
   useUpdate(() => {
     dispatchCanvasAction({type: 'refresh', columnGroup});
   },[columnGroup.width, columnGroup.columns]);
@@ -58,22 +59,24 @@ const Canvas = forwardRef(function Canvas(
      * This is applied to ALL canvas components when one scrollable canvas begins scrolling
      */
     beginHorizontalScroll: () => {
-      canvasEl.current.style.height = `${height + totalHeaderHeight}px`;
+      canvasEl.current.style.height = `${height + totalHeaderHeight - scrollbarHeightAdjustment}px`;
     },
     /**
      * This is applied to ALL canvas components when one scrollable canvas ends scrolling
      */
     endHorizontalScroll: () => {
-      canvasEl.current.style.height = `${height}px`;
+      canvasEl.current.style.height = `${height - scrollbarHeightAdjustment}px`;
     },
 
     beginVerticalScroll: () => {
+      canvasEl.current.style.top = '0px';
       canvasEl.current.style.height = `${contentHeight + horizontalScrollbarHeight}px`;
       contentEl.current.style.transform = "translate3d(0px, 0px, 0px)";
     },
 
     endVerticalScroll: scrollTop => {
-      canvasEl.current.style.height = `${height}px`;
+      canvasEl.current.style.top = scrollTop + 'px';
+      canvasEl.current.style.height = `${height-scrollbarHeightAdjustment}px`;
       contentEl.current.style.transform = `translate3d(0px, -${scrollTop}px, 0px)`;
     },
 
@@ -212,7 +215,7 @@ const Canvas = forwardRef(function Canvas(
 
   },[canvasEl])
 
-  const { contentWidth, width } = columnGroup;
+  const { contentWidth, left, width } = columnGroup;
 
   const horizontalScrollHandler = useCallback(
     (scrollEvent, scrollLeft) => {
@@ -245,6 +248,10 @@ const Canvas = forwardRef(function Canvas(
     [classes.scrollable]: !columnGroup.locked
   });
 
+  const canvasHeight = columnGroup.locked
+    ? height - horizontalScrollbarHeight
+    : height;
+
   // this can be created lazily, we never need it if beginHorizontalScroll is never called 
   const createColumnGroupHeader = () => (
     <ColumnGroupHeader
@@ -261,7 +268,7 @@ const Canvas = forwardRef(function Canvas(
     <div
       className={rootClassName}
       ref={canvasEl}
-      style={{ height, width }}
+      style={{ height: canvasHeight, left, width }}
       onScroll={onHorizontalScroll}
     >
       <div className={classes.canvasContentWrapper} style={{ top: totalHeaderHeight,  width: contentWidth }}>

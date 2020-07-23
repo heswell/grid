@@ -42,6 +42,7 @@ interface ColumnGroup {
   contentWidth: number;
   headings?: Heading[];
   locked: boolean;
+  left?: number;
   width: number;
 };
 

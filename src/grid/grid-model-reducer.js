@@ -352,13 +352,14 @@ function buildColumnGroups(state, columns, groupBy) {
           headings,
           locked,
           columns: [],
+          left: totalColumnWidth, // TODO this won't be right if we introduce more than one locked group
           width: 0,
           contentWidth: 0
         })
       );
     }
 
-    // TODO we are losing a lot of information here
+    // TODO we are losing a lot of column information here
     columnGroup.columns.push(column = {
       flex,
       heading,

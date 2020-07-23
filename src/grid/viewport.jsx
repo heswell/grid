@@ -182,7 +182,7 @@ const Viewport = forwardRef(function Viewport(
     );
 
     // shouldn't be necessary if range was included in subscribe
-    //dataSource.setRange(0, gridModel.viewportRowCount);
+    dataSource.setRange(0, gridModel.viewportRowCount);
 
     return () => dataSource.unsubscribe();
     

@@ -63,23 +63,24 @@ export default createUseStyles(theme => ({
   },
 
   scrollingCanvasContainer: {
+    overflow: 'hidden',
     whiteSpace: 'nowrap',
     transform: 'translate3d(0, 0, 0)'
   },
 
   Canvas: {
     display: 'inline-block',
-    position: 'sticky',
+    position: 'absolute',
     top: 0,
-    verticalAlign: 'top',
     '& $ColumnGroupHeader': {
       display: 'none',
       position: 'absolute',
       top: 0
-    }
+    },
   },
 
   fixed: {
+    overflow: 'hidden',
     '& $canvasContentWrapper': {
       overflow: 'hidden'
     },
