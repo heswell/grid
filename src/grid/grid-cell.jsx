@@ -28,6 +28,10 @@ function useGridCellClassName(column){
   );
 }
 
+const cellValuesAreEqual = (prev, next) => {
+  return prev.row[prev.column.key] === next.row[next.column.key];
+}
+
 
 /** @type {CellType} */
 const GridCell = React.memo(function GridCell({ column, row }){
@@ -47,5 +51,6 @@ const GridCell = React.memo(function GridCell({ column, row }){
   }
 
 
-});
+}, cellValuesAreEqual);
+
 export default GridCell;

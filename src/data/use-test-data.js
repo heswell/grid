@@ -2,6 +2,7 @@
 import { useRef } from 'react';
 import { LocalDataSource } from "@heswell/data-source";
 import { RemoteDataSource } from "@heswell/data-remote";
+import getAgGridDataSource, {postMessage} from './ag-grid-data-source';
 
 
 const instrumentColumns = [
@@ -57,8 +58,6 @@ export function buildData(source, columnCount=25, rowCount=100){
 
     const tableName = 'Instruments'
     const dataConfig = {url: '/instruments.js', tableName};
-      
-   
     const columns = instrumentColumns;
     const dataSource = new LocalDataSource(dataConfig);
     return [columns, dataSource]
@@ -68,7 +67,9 @@ export function buildData(source, columnCount=25, rowCount=100){
     const dataConfig = {url: '127.0.0.1:9090', tableName};
     const dataSource = new RemoteDataSource(dataConfig);
     return [undefined, dataSource]
-  } else {
+  } else if (source === 'ag-grid'){
+    return getAgGridDataSource();
+ }  else {
     const tableName = 'Instruments'
     const dataConfig = {url: '127.0.0.1:9090', tableName};
     const columns = instrumentColumns;
@@ -77,7 +78,21 @@ export function buildData(source, columnCount=25, rowCount=100){
   }
 }
 
+export const startStressTest = () => {
+  postMessage({type: 'startStress'});
+}
+
+export const startLoadTest = () => {
+  postMessage({type:'startLoad'});
+}
+
+export const stopTests = () => {
+  postMessage({type: 'stop'});
+  console.log('Test stopped');
+}
+
 export default function useTestData(source='order-blotter'){
   const {current: [columns, dataSource]} = useRef(buildData(source, 10, 100))
   return [columns, dataSource]
 }
+

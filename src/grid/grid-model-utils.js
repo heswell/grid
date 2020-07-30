@@ -388,3 +388,16 @@ export function extractGroupColumn(columns, groupBy, cssRules){
 }
 
 export const splitKeys = compositeKey => `${compositeKey}`.split(':').map(k => parseInt(k,10));
+
+
+export const assignKeysToColumns = columns => {
+  const start = metadataKeys.count;
+  return columns.map((column, i) => 
+    typeof column.key === 'number'
+      ? column 
+      : {
+        ...column,
+        key : start + i
+      }
+  )
+}

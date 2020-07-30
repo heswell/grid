@@ -2,7 +2,11 @@
 import { metadataKeys, update as updateRows } from "@heswell/utils";
 import * as Action from "./grid-data-actions";
 
+
 const INITIAL_RANGE = { lo: 0, hi: -1 };
+
+// this will need to go within closure
+let currentState = null;
 
 /** @type {() =>  GridData} */
 export const initData = () => ({
@@ -83,10 +87,11 @@ function setRange(state, { range }) {
 
 function applyUpdates(state, action) {
   const rows = updateRows(state.rows, action.updates, metadataKeys);
-  return {
-    ...state,
-    rows
-  };
+  // return {
+  //   ...state,
+  //   rows
+  // };
+  return state;
 }
 
 /** @type {DataReducer} */

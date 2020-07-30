@@ -1,5 +1,6 @@
 import { addSortColumn, metadataKeys, removeSortColumn, setSortColumn } from '@heswell/utils'
 import {
+  assignKeysToColumns,
   columnKeysToIndices,
   ColumnGroup,
   getColumnGroup,
@@ -40,24 +41,35 @@ const reducerActionHandlers = {
   'set-columns': setColumns
 };
 
-export const initModel = ([gridProps, classes=cssRules]) => {
-  cssRules = classes;
+export const initModel = ([gridProps, classes]) => {
+  cssRules = classes || cssRules;
   const {
     columns=[],
     columnSizing = 'static',
     defaultColumnWidth = DEFAULT_COLUMN_WIDTH,
-    // groupBy,
+    groupBy: groupByProp,
     headerHeight = 32,
     height,
     minColumnWidth = MIN_COLUMN_WIDTH,
     rowHeight = 24,
     width } = gridProps;
 
+  const groupColumns = groupByProp
+    ? groupByProp.reduce((map, group) => {
+      if (typeof group === 'string'){
+        map[group] = 'asc';
+      } else {
+        map[group[0]] = group[1] || 'asc';
+      }
+      return map;
+    }, {}) 
+    : null;
+
   const state = {
     columnGroups: undefined,
     columnSizing,
     defaultColumnWidth,
-    groupColumns: null, // TODO these can be set from props
+    groupColumns, 
     groupState: null,
     headerHeight,
     headingDepth: undefined,
@@ -71,7 +83,8 @@ export const initModel = ([gridProps, classes=cssRules]) => {
     width
   };
 
-  const {columnGroups, headingDepth} = buildColumnGroups(state, columns);
+  const groupBy = GridModel.groupBy({groupColumns});
+  const {columnGroups, headingDepth} = buildColumnGroups(state, columns, groupBy);
   const totalHeaderHeight = headerHeight * headingDepth;
   const horizontalScrollbarHeight = getHorizontalScrollbarHeight(columnGroups);
 
@@ -311,9 +324,9 @@ function buildColumnGroups(state, columns, groupBy) {
   let availableWidth = gridContentWidth; 
 
   const headingDepth = getMaxHeadingDepth(columns);
-  const start = metadataKeys.count;
+  const keyedColumns = assignKeysToColumns(columns)
 
-  const [groupColumn, nonGroupedColumns] = extractGroupColumn(columns, groupBy, cssRules);
+  const [groupColumn, nonGroupedColumns] = extractGroupColumn(keyedColumns, groupBy, cssRules);
   if (groupColumn){
     const headings = headingDepth > 1 ? [] : undefined;
     columnGroups.push(columnGroup = { locked: false, columns: [groupColumn], headings, width:0, contentWidth:0 });
@@ -331,7 +344,7 @@ function buildColumnGroups(state, columns, groupBy) {
     const {
       flex=undefined,
       initialFlex: initFlex=0, 
-      key: columnKey,
+      key,
       name,
       heading=[name],
       locked = false,
@@ -339,10 +352,6 @@ function buildColumnGroups(state, columns, groupBy) {
       type, // normalize this here
       width=defaultColumnWidth 
     } = nonGroupedColumns[i];
-
-    const key = typeof columnKey === 'number' 
-      ? columnKey
-      : start + i;
 
     if (columnGroup === null || columnGroup.locked !== locked) {
       const headings = headingDepth > 1 ? [] : undefined;

@@ -53,7 +53,7 @@ const Grid = (props) => {
   //TODO do we need to useCallback here - can we ever send stale props ?
   useEffectSkipFirst(() => {
     dispatchGridModel({type: 'initialize', props});
-  },[props.columns])
+  },[props.columns, props.groupBy])
 
   useEffectSkipFirst(() => {
     dataSource.sort(GridModel.sortBy(gridModel));

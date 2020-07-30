@@ -3,7 +3,7 @@ import { Grid } from "./grid";
 import MenuContext from './grid/context-menu';
 import {ThemeProvider} from 'react-jss';
 import themes from './themes';
-import {buildData} from './data/use-test-data';
+import {buildData, startLoadTest, startStressTest, stopTests} from './data/use-test-data';
 
 // import renderContextMenu from './components/material-ui/context-menu/show-context-menu';
 
@@ -16,17 +16,18 @@ export default function App() {
     console.log(`App mounted`)
   },[])
 
-  const pendingHeight = useRef(600);
-  const pendingWidth = useRef(1000);
+  const pendingHeight = useRef(1100);
+  const pendingWidth = useRef(1500);
 
   const [dataLocation, setDataLocation] = useState('local');
   const [columns, dataSource] = useMemo(() => buildData(dataLocation),[dataLocation]);
 
   const [theme, setTheme] = useState('light');
   const [state, setState] = useState({
-    height: 600,
-    width: 1000
+    height: 1100,
+    width: 1500
   });
+  const [groupBy, setGroupBy] = useState(null);
 
   const setDirty = (e, name) => {
     const value = parseInt(e.target.value || '0');
@@ -58,9 +59,8 @@ export default function App() {
       <MenuContext.Provider value={/*renderContextMenu*/ null}>
       <Grid
         columns={columns}
-        columnSizing="fill"
         dataSource={dataSource}
-        groupBy={['Sector']}
+        groupBy={groupBy}
         height={state.height}
         headerHeight={32}
         width={state.width}
@@ -78,6 +78,12 @@ export default function App() {
           <button onClick={() => scrollBy(24)}>Scroll Down 24</button>
           <button onClick={() => scrollBy(-24)}>Scroll Up 24</button>
         </div>
+        <div>AG Grid Tests:
+          <button onClick={startLoadTest}>Start Load Test</button>
+          <button onClick={startStressTest}>Start Stress Text</button>
+          <button onClick={stopTests}>Stop Tests</button>
+          <button onClick={() => setGroupBy(['product', 'portfolio', 'book'])}>Group</button>
+        </div>
         <select defaultValue="light" onChange={handleSelectTheme}>
           <option value="light">Light</option>
           <option value="dark">Dark</option>
@@ -88,6 +94,7 @@ export default function App() {
           <option value="local">Local Test Data</option>
           <option value="local-instruments">Local Instruments</option>
           <option value="order-blotter">Order Blotter</option>
+          <option value="ag-grid">AG Grid Demo</option>
         </select>
       </div>
     </ThemeProvider>
