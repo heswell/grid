@@ -6,15 +6,14 @@ import React, {
   useImperativeHandle,
   useEffect,
   useLayoutEffect,
-  useReducer,
   useRef
 } from "react";
 import useScroll from "./use-scroll";
 import useUpdate from "./use-update";
 import useStyles from './use-styles';
+import useDataSource from './use-data-source';
 import GridContext from "./grid-context";
 import {getColumnGroupColumnIdx, GridModel} from './grid-model-utils.js';
-import dataReducer, { initData } from "./grid-data-reducer";
 
 import Canvas from "./canvas";
 import ColumnBearer from './column-bearer';
@@ -77,12 +76,10 @@ const Viewport = forwardRef(function Viewport(
     }
   }));
 
-  const [data, dispatchData] = useReducer(dataReducer, {}, initData);
   // I don't think we should need this
   const setRange = useCallback(
     (lo, hi) => {
       dataSource.setRange(lo, hi);
-      // dispatchData({ type: "range", range: { lo, hi } });
     },
     [dataSource]
   );
@@ -145,49 +142,32 @@ const Viewport = forwardRef(function Viewport(
 
   const handleVerticalScroll = useScroll("scrollTop", scrollCallback);
 
-  useEffect(() => {
-    dispatchData({type: 'clear'});
-    dataSource.subscribe(
-      {
-        range: { lo: 0, hi: gridModelRef.current.viewportRowCount }
-      },
-      /* postMessageToClient */
-      msg => {
-        if (msg.type === 'subscribed'){
-          dispatchGridModelAction({type: 'set-columns', columns: msg.columns})
-        } else if (msg.size !== undefined){
+  // this is required once-only, for subscription
+  const subscriptionDetails = {
+    range: { lo: 0, hi: gridModelRef.current.viewportRowCount }
+  }
+
+  //TODO useCallback for this callback
+  const data = useDataSource(dataSource, subscriptionDetails, (type, options) => {
+    switch(type){
+      case 'subscribed':
+          dispatchGridModelAction({type: 'set-columns', columns: options})
+         break;
+      case 'size':
           // How do we handle this withoput having this dependency on gridModel ?
-          if (msg.size >= gridModel.viewportRowCount && verticalScrollbarWidth.current === 0){
+          // THis is the important one, it comes with every rowSet
+          contentHeight.current = options * gridModel.rowHeight;
+          if (options >= gridModel.viewportRowCount && verticalScrollbarWidth.current === 0){
             verticalScrollbarWidth.current = 15;
-          } else if (msg.size < gridModel.viewportRowCount && verticalScrollbarWidth.current === 15){
+          } else if (options < gridModel.viewportRowCount && verticalScrollbarWidth.current === 15){
             verticalScrollbarWidth.current = 0;
           }
-        }
-        if (msg.rows) {
-          contentHeight.current = msg.size * gridModel.rowHeight;
-          dispatchData({
-            type: "data",
-            rows: msg.rows,
-            rowCount: msg.size,
-            offset: msg.offset,
-            range: msg.range,
-          });
-        } else if (msg.updates){
-          dispatchData({
-            type: 'update',
-            updates: msg.updates
-          })
-        }
-      }
-    );
+        break;
 
-    // shouldn't be necessary if range was included in subscribe
-    dataSource.setRange(0, gridModel.viewportRowCount);
-
-    return () => dataSource.unsubscribe();
-    
-  }, [dataSource]);
-  // TODO need a destroy method on dataSource to be called when appropriate
+      default:
+   }
+  });
+  
 
   const classes = useStyles();
 

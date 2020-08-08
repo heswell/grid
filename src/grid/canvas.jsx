@@ -5,7 +5,6 @@ import React, {
   useImperativeHandle,
   useReducer,
   useRef,
-  useEffect
 } from "react";
 import cx from "classnames";
 import { metadataKeys } from "@heswell/utils";

@@ -4,7 +4,8 @@ let testStartTime;
 let worker;
 let dataSource;
 
-const flasher = {name: 'number', renderer: {name: 'background', flashStyle: 'background'}};
+const flasher = {name: 'number', renderer: {name: 'background', flashStyle: 'arrow'}};
+// const flasher = {name: 'number'};
 
 const agGridColumns = [
   {name: 'product'},
@@ -29,7 +30,11 @@ export default function getAgGridDataSource(){
 
   // startWorker();
   const columns = agGridColumns;
-  dataSource = new WorkerDataSource({columns, primaryKey: 'trade', url: 'worker.js'});
+  dataSource = new WorkerDataSource({
+    columns, 
+    primaryKey: 'trade', 
+    url: '/tables/ag-grid-demo/config.js'
+  });
   dataSource.on('start', (type, msg) => {
     testStartTime = new Date().getTime();
     logTestStart(msg.messageCount, msg.updateCount, msg.interval);

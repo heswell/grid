@@ -29,7 +29,8 @@ function useGridCellClassName(column){
 }
 
 const cellValuesAreEqual = (prev, next) => {
-  return prev.row[prev.column.key] === next.row[next.column.key];
+  return prev.column === next.column &&
+    prev.row[prev.column.key] === next.row[next.column.key];
 }
 
 

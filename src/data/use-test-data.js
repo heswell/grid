@@ -87,7 +87,7 @@ export const startLoadTest = () => {
 }
 
 export const stopTests = () => {
-  postMessage({type: 'stop'});
+  postMessage({type: 'stopTest'});
   console.log('Test stopped');
 }
 

@@ -9,23 +9,29 @@ import {buildData, startLoadTest, startStressTest, stopTests} from './data/use-t
 
 import useStyles from './use-app-styles.js';
 
+const toolbarHeight = 300;
 
 export default function App() {
 
   useEffect(() => {
-    console.log(`App mounted`)
+
   },[])
 
-  const pendingHeight = useRef(1100);
-  const pendingWidth = useRef(1500);
+  const messageBoard = useRef(null);
+  const pendingHeight = useRef(0);
+  const pendingWidth = useRef(0);
 
-  const [dataLocation, setDataLocation] = useState('local');
+  const [dataLocation, setDataLocation] = useState('local-instruments');
   const [columns, dataSource] = useMemo(() => buildData(dataLocation),[dataLocation]);
+
+  dataSource.on('message', (evt, message) => {
+    messageBoard.current.innerText = message;
+  })
 
   const [theme, setTheme] = useState('light');
   const [state, setState] = useState({
-    height: 1100,
-    width: 1500
+    height: document.getElementById('root').clientHeight - toolbarHeight,
+    width: document.getElementById('root').clientWidth
   });
   const [groupBy, setGroupBy] = useState(null);
 
@@ -58,6 +64,7 @@ export default function App() {
     <ThemeProvider theme={themes[theme]}>
       <MenuContext.Provider value={/*renderContextMenu*/ null}>
       <Grid
+        // columnSizing="fill"
         columns={columns}
         dataSource={dataSource}
         groupBy={groupBy}
@@ -66,7 +73,7 @@ export default function App() {
         width={state.width}
       />
       </MenuContext.Provider>
-      <div className={classes.editPanel}>
+      <div className={classes.editPanel} style={{height: toolbarHeight}}>
         <label>Width</label><input type="text" defaultValue={state.width} onChange={e => setDirty(e, 'width')}/>
         <label>Height</label><input type="text" defaultValue={state.height} onChange={e => setDirty(e, 'height')}/>
         <button onClick={applyChanges}>Apply</button> 
@@ -96,6 +103,8 @@ export default function App() {
           <option value="order-blotter">Order Blotter</option>
           <option value="ag-grid">AG Grid Demo</option>
         </select>
+
+        <p ref={messageBoard}></p>
       </div>
     </ThemeProvider>
   );

@@ -140,13 +140,12 @@ const mapSortColumns = sortColumns => {
 }
 
 function toggleGroupState(gridModel, row) {
-
+debugger;
   let { groupState } = gridModel;
   const groupBy = GridModel.groupBy(gridModel);
   const columns = GridModel.columns(gridModel);
   const groupLevel = row[metadataKeys.DEPTH];
   const groupByIdx = groupBy.length - Math.abs(groupLevel);
-
   const newGroupState = groupState === null ? {} : { ...groupState };
   let stateEntry = newGroupState;
 
@@ -154,12 +153,11 @@ function toggleGroupState(gridModel, row) {
       const [groupCol] = groupBy[i];
       const column = columns.find(col => col.name === groupCol);
       const groupVal = row[column.key];
-
       if (i === groupByIdx) {
           if (stateEntry[groupVal]) {
               stateEntry[groupVal] = null;
           } else {
-              stateEntry[groupVal] = i === groupBy.length - 1 ? true : {};
+              stateEntry[groupVal] = i === groupByIdx ? true : {};
           }
       } else if (stateEntry[groupVal] === true) {
           stateEntry = stateEntry[groupVal] = {};
@@ -337,10 +335,12 @@ const flattenColumnGroup = (columns) => {
   }
 
   const [groupColumn, ...nonGroupColumns] = columns;
-  groupColumn.columns.reverse().forEach(column => {
+  // traverse the group columns in reverse, but do not reverse (mutate) the original array
+  for (let i = groupColumn.columns.length - 1; i >= 0; i--){
+    const column = groupColumn.columns[i];
     const {originalIdx, ...nonGroupedColumn} = column;
     nonGroupColumns.splice(originalIdx,0,nonGroupedColumn);
-  });
+  }
 
   return nonGroupColumns;
 }
@@ -400,4 +400,18 @@ export const assignKeysToColumns = columns => {
         key : start + i
       }
   )
+}
+
+export const getGroupValueAndOffset = (columns, row) => {
+  const {DEPTH} = metadataKeys;
+  const depth = Math.abs(row[DEPTH]);
+  const lastDepth = columns.length;
+  for (let i=0;i<columns.length;i++){
+      const column = columns[i];
+      const inverseDepth = lastDepth - i;
+      if (inverseDepth === depth) {
+          return [row[column.key], i];
+      }
+  }
+  return [null,null];
 }

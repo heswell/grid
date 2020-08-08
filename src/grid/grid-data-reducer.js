@@ -5,9 +5,6 @@ import * as Action from "./grid-data-actions";
 
 const INITIAL_RANGE = { lo: 0, hi: -1 };
 
-// this will need to go within closure
-let currentState = null;
-
 /** @type {() =>  GridData} */
 export const initData = () => ({
   rows: [],
@@ -23,7 +20,7 @@ export const initData = () => ({
 // This assumes model.meta never changes. If it does (columns etc)
 // we will need additional action types to update
 /** @type {DataReducer} */
-export default (state, action) => {
+export default (state=initData(), action) => {
     if (action.type === "range") {
       return setRange(state, action);
     } else if (action.type === "data") {
@@ -87,11 +84,10 @@ function setRange(state, { range }) {
 
 function applyUpdates(state, action) {
   const rows = updateRows(state.rows, action.updates, metadataKeys);
-  // return {
-  //   ...state,
-  //   rows
-  // };
-  return state;
+  return {
+    ...state,
+    rows
+  };
 }
 
 /** @type {DataReducer} */
