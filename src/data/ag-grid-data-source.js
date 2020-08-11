@@ -1,7 +1,6 @@
 import { WorkerDataSource } from "@heswell/data-source";
 
 let testStartTime;
-let worker;
 let dataSource;
 
 const flasher = {name: 'number', renderer: {name: 'background', flashStyle: 'arrow'}};
@@ -49,35 +48,6 @@ export default function getAgGridDataSource(){
 }
 
 export const postMessage = message => dataSource.worker.postMessage(message);
-
-function startWorker() {
-
-  // worker = new Worker('worker.js', {type: 'module'});
-
-  // worker.onmessage = function(e) {
-  //     switch (e.data.type) {
-  //         case 'start':
-  //             testStartTime = new Date().getTime();
-  //             logTestStart(e.data.messageCount, e.data.updateCount, e.data.interval);
-  //             break;
-  //         case 'end':
-  //             logStressResults(e.data.messageCount, e.data.updateCount);
-  //             break;
-  //         case 'setRowData': {
-  //             //gridOptions.api.setRowData(e.data.records);
-  //             // TODO rename as load
-  //           dataSource.dataStore._table.load(e.data.records);
-  //         }
-  //           break;
-  //         case 'updateData':
-  //           dataSource.dataStore._table.bulkUpdate(e.data.records);
-  //             //gridOptions.api.batchUpdateRowData({update: e.data.records});
-  //             break;
-  //         default:
-  //             console.log('unrecognised event type ' + e.type);
-  //     }
-  // };
-}
 
 function logStressResults(messageCount, updateCount) {
 

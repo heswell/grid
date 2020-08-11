@@ -20,6 +20,7 @@ export default [
             commonjs(),
             copy({
                 targets: [
+                    {src: './node_modules/@heswell/data-remote/dist/server-proxy', dest: 'public'},
                     {src: './node_modules/@heswell/worker/dist/worker-local-model.js', dest: 'public', rename: 'worker.js'},
                     {src: './node_modules/@heswell/worker/dist/worker-local-model.js.map', dest: 'public', rename: '/worker.js.map'},
                     {src: './src/data-tables/*', dest: 'public/tables'}

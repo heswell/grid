@@ -34,8 +34,9 @@ export default function useDataSource(dataSource, subscriptionDetails, callback)
     if (messagesPerRender.current > 0){
       renderCount.current += 1;
       setState(latestState.current);
-      dataSource.worker.postMessage({type: 'rate', value: messagesPerRender.current})
-      console.log(`messages per render = ${messagesPerRender.current}`)
+      // Only
+      // dataSource.worker.postMessage({type: 'rate', value: messagesPerRender.current})
+      // console.log(`messages per render = ${messagesPerRender.current}`)
       messagesPerRender.current = 0;
     }
 
@@ -83,6 +84,7 @@ export default function useDataSource(dataSource, subscriptionDetails, callback)
            //----------------- Test Only ----------------------
         }
         if (msg.rows) {
+          console.log(`useDataSOurce ${msg.rows.length} rows received`)
           dispatchData({
             type: "data",
             rows: msg.rows,

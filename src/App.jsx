@@ -1,6 +1,7 @@
 import React, {useEffect, useMemo, useRef, useState} from "react";
 import { Grid } from "./grid";
 import MenuContext from './grid/context-menu';
+import ControlPanel from './control-panel/control-panel'
 import {ThemeProvider} from 'react-jss';
 import themes from './themes';
 import {buildData, startLoadTest, startStressTest, stopTests} from './data/use-test-data';
@@ -18,38 +19,24 @@ export default function App() {
   },[])
 
   const messageBoard = useRef(null);
-  const pendingHeight = useRef(0);
-  const pendingWidth = useRef(0);
 
-  const [dataLocation, setDataLocation] = useState('local-instruments');
-  const [columns, dataSource] = useMemo(() => buildData(dataLocation),[dataLocation]);
+  const [state, setState] = useState({
+    dataLocation: "local",
+    dataSource: 'instruments',
+    gridHeight: document.getElementById('root').clientHeight - toolbarHeight,
+    gridWidth: document.getElementById('root').clientWidth,
+    groupBy: null,
+    theme: 'light'
+  });
+
+  const [columns, dataSource] = useMemo(() => 
+    buildData(state.dataSource, state.dataLocation),
+    [state.dataSource, state.dataLocation]
+  );
 
   dataSource.on('message', (evt, message) => {
     messageBoard.current.innerText = message;
   })
-
-  const [theme, setTheme] = useState('light');
-  const [state, setState] = useState({
-    height: document.getElementById('root').clientHeight - toolbarHeight,
-    width: document.getElementById('root').clientWidth
-  });
-  const [groupBy, setGroupBy] = useState(null);
-
-  const setDirty = (e, name) => {
-    const value = parseInt(e.target.value || '0');
-    if (name === 'width'){
-      pendingWidth.current = value;
-    } else if (name === 'height'){
-      pendingHeight.current = value;
-    }
-  }
-
-  const handleSelectTheme = evt => setTheme(evt.target.value);
-  const handleSelectDataSource = evt => setDataLocation(evt.target.value)
-  const applyChanges = () => {
-    console.log(`apply height ${pendingHeight.current} width ${pendingWidth.current}`)
-    setState({height: pendingHeight.current, width: pendingWidth.current});
-  }
 
   const scrollBy = value => {
     console.log(`scrollBy ${value}`)
@@ -59,53 +46,40 @@ export default function App() {
 
   }
 
+  const handleAction = action => {
+    switch(action.type){
+      case 'start-load-test': return startLoadTest();
+      case 'start-stress-test': return startStressTest();
+      case 'stop-test': return stopTests();
+      case 'scroll-by': return scrollBy(action.scrollBy);
+      default:
+    }
+  }
+
+  const handleChange = stateChanges => {
+    setState(prevState => ({...prevState, ...stateChanges}))
+  }
+
   const classes = useStyles();
   return (
-    <ThemeProvider theme={themes[theme]}>
+    <ThemeProvider theme={themes[state.theme]}>
       <MenuContext.Provider value={/*renderContextMenu*/ null}>
       <Grid
         // columnSizing="fill"
         columns={columns}
         dataSource={dataSource}
-        groupBy={groupBy}
-        height={state.height}
+        groupBy={state.groupBy}
+        height={state.gridHeight}
         headerHeight={32}
-        width={state.width}
+        width={state.gridWidth}
       />
       </MenuContext.Provider>
-      <div className={classes.editPanel} style={{height: toolbarHeight}}>
-        <label>Width</label><input type="text" defaultValue={state.width} onChange={e => setDirty(e, 'width')}/>
-        <label>Height</label><input type="text" defaultValue={state.height} onChange={e => setDirty(e, 'height')}/>
-        <button onClick={applyChanges}>Apply</button> 
-        <div>
-          <button onClick={() => scrollBy(1)}>Scroll Down 1</button>
-          <button onClick={() => scrollBy(-1)}>Scroll Up 1</button>
-          <button onClick={() => scrollBy(4)}>Scroll Down 4</button>
-          <button onClick={() => scrollBy(-4)}>Scroll Up 4</button>
-          <button onClick={() => scrollBy(24)}>Scroll Down 24</button>
-          <button onClick={() => scrollBy(-24)}>Scroll Up 24</button>
-        </div>
-        <div>AG Grid Tests:
-          <button onClick={startLoadTest}>Start Load Test</button>
-          <button onClick={startStressTest}>Start Stress Text</button>
-          <button onClick={stopTests}>Stop Tests</button>
-          <button onClick={() => setGroupBy(['product', 'portfolio', 'book'])}>Group</button>
-        </div>
-        <select defaultValue="light" onChange={handleSelectTheme}>
-          <option value="light">Light</option>
-          <option value="dark">Dark</option>
-        </select>
-
-        <select defaultValue="order-blotter" onChange={handleSelectDataSource}>
-          <option value="vs">Viewserver</option>
-          <option value="local">Local Test Data</option>
-          <option value="local-instruments">Local Instruments</option>
-          <option value="order-blotter">Order Blotter</option>
-          <option value="ag-grid">AG Grid Demo</option>
-        </select>
-
-        <p ref={messageBoard}></p>
-      </div>
+      <ControlPanel
+        height={toolbarHeight}
+        messageRef={messageBoard}
+        onAction={handleAction} 
+        onChange={handleChange} 
+        state={state}/>
     </ThemeProvider>
   );
 }
