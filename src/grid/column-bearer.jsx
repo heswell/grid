@@ -1,4 +1,4 @@
-import React, {forwardRef, useCallback, useContext, useImperativeHandle, useRef} from 'react';
+import React, {forwardRef, useCallback, useContext, useEffect, useImperativeHandle, useRef} from 'react';
 import cx from 'classnames';
 import GridContext from "./grid-context";
 import Cell from './grid-cell.jsx';
@@ -15,7 +15,7 @@ const RIGHT = 'right';
 function getBestDropTarget(columnPositions, dragPosition, columnWidth, scrollPosition, ){
     const columnStart = dragPosition + scrollPosition;
     const columnEnd = columnStart + columnWidth;
-    console.log(`getClosestPosition ${columnPositions} columnStart: ${columnStart} columnEnd ${columnEnd}`)
+    // console.log(`getClosestPosition ${columnPositions} columnStart: ${columnStart} columnEnd ${columnEnd}`)
     const results = [];
     const visited = [];
     let idx;
@@ -145,6 +145,10 @@ const ColumnBearer = forwardRef(({columnDragData, gridModel, onDrag, onScroll, r
         scrollTimeout.current = null;
     }
 
+    useEffect(() => {
+        return () => console.log(`columnbearer unmount`)
+    },[])
+
     useImperativeHandle(ref, () => ({
         setFinalPosition: (pos) => {
             console.log(`ColumnBearer finalPosition `)
@@ -170,6 +174,9 @@ const ColumnBearer = forwardRef(({columnDragData, gridModel, onDrag, onScroll, r
 
             if (newPosition !== columnPosition.current){
                 columnPosition.current = newPosition;
+                if (el.current === null){
+                    debugger;
+                }
                 el.current.style.left = columnPosition.current + 'px';
             }
 
@@ -194,14 +201,15 @@ const ColumnBearer = forwardRef(({columnDragData, gridModel, onDrag, onScroll, r
             if (scrollTimeout.current){
                 cancelScroll();
             }
+            tearDownDrag();
             const [insertIdx] = getTargetColumn(columnDragData, columnPosition.current, scrollPosition.current);
             onDrag('drag-end', column, insertIdx, prevPosition.current, columnPosition.current)
-          }
+        }
         },
         [columnDragData, dispatchGridModelAction, onDrag, scroll, scrollBounds, setColumnBearerClassName, withinScrollZone]
     );
 
-    const [, cancelDrag] = useDrag(dragCallback, DRAG + DRAG_END, columnDragData.mousePosition);
+    const [, tearDownDrag] = useDrag(dragCallback, DRAG + DRAG_END, columnDragData.mousePosition);
     
     const columnGroup = getColumnGroup(gridModel, column);
 

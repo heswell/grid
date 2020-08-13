@@ -393,12 +393,14 @@ export const splitKeys = compositeKey => `${compositeKey}`.split(':').map(k => p
 export const assignKeysToColumns = columns => {
   const start = metadataKeys.count;
   return columns.map((column, i) => 
-    typeof column.key === 'number'
-      ? column 
-      : {
-        ...column,
-        key : start + i
-      }
+    typeof column === 'string'
+      ? {name: column, key: start + i}
+      : typeof column.key === 'number'
+        ? column 
+        : {
+          ...column,
+          key : start + i
+        }
   )
 }
 

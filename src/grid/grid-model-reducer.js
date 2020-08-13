@@ -324,6 +324,7 @@ function buildColumnGroups(state, columns, groupBy) {
   let availableWidth = gridContentWidth; 
 
   const headingDepth = getMaxHeadingDepth(columns);
+  // TODO separate keys from columns
   const keyedColumns = assignKeysToColumns(columns)
 
   const [groupColumn, nonGroupedColumns] = extractGroupColumn(keyedColumns, groupBy, cssRules);

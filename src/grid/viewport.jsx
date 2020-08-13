@@ -151,6 +151,7 @@ const Viewport = forwardRef(function Viewport(
   const data = useDataSource(dataSource, subscriptionDetails, (type, options) => {
     switch(type){
       case 'subscribed':
+          console.log(`ViewPort store columnMap locally ${JSON.stringify(options,null,2)}`)
           dispatchGridModelAction({type: 'set-columns', columns: options})
          break;
       case 'size':

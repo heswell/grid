@@ -15,9 +15,10 @@ export function useDragStart(callback){
 
 /** @type {DragHook} */
 export default function useDrag(callback, dragPhase=DRAG_DEFAULT, initialDragPosition=-1){
+  // Note: If user is not tracking 'drag-start', it's assumed that we're already dragging
 
   let cleanUp;
-  // If user is not tracking 'drag-start', it's assumed that we're already dragging
+  const disabled = useRef(false);
   const dragging = useRef(false);
   const position = useRef({x:initialDragPosition,y:-1})
   const onMouseMove = useRef(null)
@@ -26,12 +27,9 @@ export default function useDrag(callback, dragPhase=DRAG_DEFAULT, initialDragPos
 
   onMouseUp.current = useCallback(() => {
     if (dragging.current) {
-        callback('drag-end');
-        cleanUp();
-      } else {
-        // drag aborted
-        cleanUp();
+      callback('drag-end');
     }
+    cleanUp();
   },[callback, cleanUp])
 
 
@@ -47,7 +45,6 @@ export default function useDrag(callback, dragPhase=DRAG_DEFAULT, initialDragPos
     if (e.preventDefault) {
         e.preventDefault();
     }
-
     const x = e.clientX;
     const y = e.clientY;
     const deltaX = x - position.current.x;
@@ -109,9 +106,12 @@ export default function useDrag(callback, dragPhase=DRAG_DEFAULT, initialDragPos
     },[onMouseMove, onMouseUp]);
 
   useEffect(() => {
-    
+    // We don't normally expect the callback to change during the lifetime of a drag operation.
+    // Because the drag takes immediate effect if drag-start is not being monitored, we provide
+    // a way to disable drag under clients control, in case callback does change under
+    // circumstances that should not trigger immediate drag monitoring.
     if (!(dragPhase & DRAG_START)) {
-      if  (dragPhase & DRAG && !dragging.current){
+      if  (dragPhase & DRAG && !dragging.current && !disabled.current){
         window.addEventListener('mousemove', mouseMoveHandler);
 
         if  (dragPhase & DRAG_END){
@@ -119,7 +119,7 @@ export default function useDrag(callback, dragPhase=DRAG_DEFAULT, initialDragPos
         }
         dragging.current = true;
       }
-      if (dragPhase & DRAG_END  && !dragging.current){
+      if (dragPhase & DRAG_END  && !dragging.current && !disabled.current){
         window.addEventListener('mouseup', mouseUpHandler);
         dragging.current = true;
       }
@@ -134,6 +134,12 @@ export default function useDrag(callback, dragPhase=DRAG_DEFAULT, initialDragPos
     dragging.current = false;
   },[onMouseMove, onMouseUp])
 
-  return [handleMouseDown, cleanUp];
+  const disable = () => {
+    cleanUp();
+    disabled.current = true;
+
+  }
+
+  return [handleMouseDown, disable];
 
 };
