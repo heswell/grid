@@ -4,7 +4,7 @@ import MenuContext from './grid/context-menu';
 import ControlPanel from './control-panel/control-panel'
 import {ThemeProvider} from 'react-jss';
 import themes from './themes';
-import {buildData, startLoadTest, startStressTest, stopTests} from './data/use-test-data';
+import {buildData} from './data/use-test-data';
 
 // import renderContextMenu from './components/material-ui/context-menu/show-context-menu';
 
@@ -46,6 +46,24 @@ export default function App() {
 
   }
 
+  const startStressTest = () => {
+    if (dataSource.startStressTest){
+      dataSource.startStressTest();
+    }
+  }
+  
+  const startLoadTest = () => {
+    if (dataSource.startLoadTest){
+      dataSource.startLoadTest();
+    }
+  }
+  
+  const stopTests = () => {
+    if (dataSource.stopTest){
+      dataSource.stopTest();
+    }
+  }
+  
   const handleAction = action => {
     switch(action.type){
       case 'start-load-test': return startLoadTest();

@@ -61,6 +61,18 @@ const MenuContextProvider = ({children, showMenu}) => {
         const {column} = options;
         return dispatchGridModelAction({type: 'group', column, add: true});
       }
+      case Action.Pivot: {
+        const {column} = options;
+        return dispatchGridModelAction({type: 'pivot', column});
+      }
+      case Action.PivotAdd: {
+        const {column} = options;
+        return dispatchGridModelAction({type: 'pivot', column, add: true});
+      }
+      case Action.ColumnHide: {
+        const {column} = options;
+        return dispatchGridAction({type: 'column-hide', column});
+      }
     }    
   };
 

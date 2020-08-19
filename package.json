@@ -9,6 +9,7 @@
   "main": "src/index.js",
   "dependencies": {
     "@babel/plugin-syntax-jsx": "^7.10.4",
+    "@finos/perspective": "^0.5.2",
     "@heswell/data-remote": "^1.0.0",
     "@heswell/data-source": "^1.0.0",
     "@heswell/data-store": "^1.0.0",
@@ -32,7 +33,7 @@
     "rollup-plugin-commonjs": "^10.1.0",
     "rollup-plugin-copy": "^3.3.0",
     "rollup-plugin-node-resolve": "^5.2.0",
-    "serve": "^11.3.0",
+    "serve": "^11.3.2",
     "typescript": "3.8.3"
   },
   "scripts": {

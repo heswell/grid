@@ -140,13 +140,13 @@ const mapSortColumns = sortColumns => {
 }
 
 function toggleGroupState(gridModel, row) {
-debugger;
   let { groupState } = gridModel;
+  const [rowIdx] = row;
   const groupBy = GridModel.groupBy(gridModel);
   const columns = GridModel.columns(gridModel);
   const groupLevel = row[metadataKeys.DEPTH];
   const groupByIdx = groupBy.length - Math.abs(groupLevel);
-  const newGroupState = groupState === null ? {} : { ...groupState };
+  const newGroupState = groupState === null ? {rowIdx} : { ...groupState, rowIdx };
   let stateEntry = newGroupState;
 
   for (let i = 0; i <= groupByIdx; i++) {
@@ -302,6 +302,7 @@ export const GridModel = {
   columns: gridModel => flattenColumnGroup(gridModel.columnGroups.flatMap(columnGroup => columnGroup.columns)),
   columnNames: gridModel => GridModel.columns(gridModel).map(column => column.name),
   groupBy: gridModel => mapSortColumns(gridModel.groupColumns),
+  pivotBy: gridModel => mapSortColumns(gridModel.pivotColumns),
   sortBy: gridModel => mapSortColumns(gridModel.sortColumns),
   toggleGroupState,
   updateGroupColumn,

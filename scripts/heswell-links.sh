@@ -1,4 +1,10 @@
 #! /bin/bash
+rm -rf ~/git/heswell/grid/node_modules/@heswell/data-source
+rm -rf ~/git/heswell/grid/node_modules/@heswell/data-remote
+rm -rf ~/git/heswell/grid/node_modules/@heswell/data-store
+rm -rf ~/git/heswell/grid/node_modules/@heswell/utils
+
+
 ln -s ~/git/heswell/heswell/packages/data-source ~/git/heswell/grid/node_modules/@heswell/data-source
 ln -s ~/git/heswell/heswell/packages/data-remote ~/git/heswell/grid/node_modules/@heswell/data-remote
 ln -s ~/git/heswell/heswell/packages/data-store ~/git/heswell/grid/node_modules/@heswell/data-store

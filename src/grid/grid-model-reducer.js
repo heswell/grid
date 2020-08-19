@@ -18,6 +18,19 @@ const MIN_COLUMN_WIDTH = 80;
 const RESIZING = {resizing: true};
 const NOT_RESIZING = {resizing: false};
 
+function sortMap(sortBy){
+  if (!sortBy){
+    return null;
+  }
+  return sortBy.reduce((map, group) => {
+    if (typeof group === 'string'){
+      map[group] = 'asc';
+    } else {
+      map[group[0]] = group[1] || 'asc';
+    }
+    return map;
+  }, {}) 
+}
 
 // Dont like this - it's a module ref to the jss classes ?
 let cssRules;
@@ -37,8 +50,12 @@ const reducerActionHandlers = {
   'initialize': initialize,
   'sort': sortRows,
   'group': groupRows,
+  'pivot': pivotRows,
   'toggle': toggleRow,
-  'set-columns': setColumns
+  'set-columns': setColumns,
+  'set-pivot-columns': setPivotColumns,
+  'column-hide': hideColumn,
+  'column-show': showColumn
 };
 
 export const initModel = ([gridProps, classes]) => {
@@ -51,21 +68,16 @@ export const initModel = ([gridProps, classes]) => {
     headerHeight = 32,
     height,
     minColumnWidth = MIN_COLUMN_WIDTH,
+    pivotBy: pivotByProp,
     rowHeight = 24,
     width } = gridProps;
 
-  const groupColumns = groupByProp
-    ? groupByProp.reduce((map, group) => {
-      if (typeof group === 'string'){
-        map[group] = 'asc';
-      } else {
-        map[group[0]] = group[1] || 'asc';
-      }
-      return map;
-    }, {}) 
-    : null;
+  const groupColumns = sortMap(groupByProp);
+  // We won't be able to build the column headers for pivot columns until we start to get data
+  const pivotColumns = sortMap(pivotByProp);
 
   const state = {
+    columnNames: null,
     columnGroups: undefined,
     columnSizing,
     defaultColumnWidth,
@@ -76,6 +88,7 @@ export const initModel = ([gridProps, classes]) => {
     height,
     horizontalScrollbarHeight: undefined,
     minColumnWidth,
+    pivotColumns,
     rowHeight,
     sortColumns: null,
     viewportHeight: undefined,
@@ -84,30 +97,49 @@ export const initModel = ([gridProps, classes]) => {
   };
 
   const groupBy = GridModel.groupBy({groupColumns});
-  const {columnGroups, headingDepth} = buildColumnGroups(state, columns, groupBy);
+  const {columnNames, columnGroups, headingDepth} = buildColumnGroups(state, columns, groupBy);
   const totalHeaderHeight = headerHeight * headingDepth;
-  const horizontalScrollbarHeight = getHorizontalScrollbarHeight(columnGroups);
 
+  state.columnNames = columnNames;
   state.columnGroups = columnGroups;
   state.headingDepth = headingDepth;
-  state.horizontalScrollbarHeight = horizontalScrollbarHeight;
+  state.horizontalScrollbarHeight = getHorizontalScrollbarHeight(columnGroups);
   state.viewportHeight = height - totalHeaderHeight;
   state.viewportRowCount =  Math.ceil((height - totalHeaderHeight) / rowHeight) + 1;
 
   return state;
 };
 
+/** @type {GridModelReducer<'set-pivot-columns'>} */
+function setPivotColumns(state, action){
+
+  console.log(`set pivot columns `, action.columns)
+  const {columnNames, columnGroups, headingDepth} = buildColumnGroups(state, action.columns);
+  const totalHeaderHeight = state.headerHeight * headingDepth;
+
+  return {
+      ...state,
+      columnGroups,
+      columnNames,
+      headingDepth,
+      horizontalScrollbarHeight: getHorizontalScrollbarHeight(columnGroups),
+      viewportHeight: state.height - totalHeaderHeight,
+      viewportRowCount:  Math.ceil((state.height - totalHeaderHeight) / state.rowHeight) + 1
+    };
+    
+}
 
 /** @type {GridModelReducer<'set-columns'>} */
 function setColumns(state, action){
   if (!this.columnGroups){
 
-    const {columnGroups, headingDepth} = buildColumnGroups(state, action.columns);
+    const {columnNames, columnGroups, headingDepth} = buildColumnGroups(state, action.columns);
     const totalHeaderHeight = state.headerHeight * headingDepth;
 
     return {
       ...state,
       columnGroups,
+      columnNames,
       headingDepth,
       horizontalScrollbarHeight: getHorizontalScrollbarHeight(columnGroups),
       viewportHeight: state.height - totalHeaderHeight,
@@ -178,6 +210,31 @@ function groupRows(state, {column, direction, add, remove}){
     };
 }
 
+/** @type {GridModelReducer<'pivot'>} */
+function pivotRows(state, {column, direction, add, remove}){
+
+  let pivotColumns;
+
+  if (state.pivotColumns === null){
+    pivotColumns = {[column.name]: direction || 'asc'};
+  } else if (add){
+    pivotColumns = addSortColumn(state.pivotColumns, column)
+  } else if (remove){
+    if (Object.keys(state.pivotColumns).length === 1){
+      pivotColumns = null;
+    } else {
+      pivotColumns = removeSortColumn(state.pivotColumns, column);
+    }
+  } else {
+    return state;
+  }
+
+  return {
+      ...state,
+      pivotColumns,
+    };
+}
+
 /** @type {GridModelReducer<'resize-heading'>} */
 function resizeHeading(state, {phase, column, width}){
   if (phase === 'begin'){
@@ -217,6 +274,24 @@ function resizeColumnHeading(state, column, width, headingResizeState){
       }
   }
   return newState;
+}
+
+/** @type {GridModelReducer<'column-hide'>} */
+function hideColumn(state, {column}){
+  const columns = GridModel.columns(state).filter(col => col.name !== column.name);
+  // TODO add groupBy if state.groupColumn 
+  const {columnNames, columnGroups} = buildColumnGroups(state, columns, null);
+  return {
+    ...state,
+    columnGroups,
+    columnNames
+  };
+}
+
+/** @type {GridModelReducer<'column-show'>} */
+function showColumn(state, {column}){
+  console.log(`showColumn ${column.name}`);
+  return state;
 }
 
 /** @type {GridModelReducer<'add-col'>} */
@@ -326,6 +401,7 @@ function buildColumnGroups(state, columns, groupBy) {
   const headingDepth = getMaxHeadingDepth(columns);
   // TODO separate keys from columns
   const keyedColumns = assignKeysToColumns(columns)
+  const columnNames = keyedColumns.map(col => col.name);
 
   const [groupColumn, nonGroupedColumns] = extractGroupColumn(keyedColumns, groupBy, cssRules);
   if (groupColumn){
@@ -441,7 +517,7 @@ function buildColumnGroups(state, columns, groupBy) {
     }
   }
 
-  return {columnGroups, headingDepth};
+  return {columnNames, columnGroups, headingDepth};
 }
 
 const getMaxHeadingDepth = columns => {

@@ -10,6 +10,14 @@ const reducerFactory = handlerMap => (state, action) => {
         handlerMap[action.type](action.scrollLeft);
         break;
 
+      case "set-available-columns":
+        handlerMap[action.type](action.columns);
+        break;
+
+      case "column-hide":
+        handlerMap[action.type](action.column);
+        break;
+
       default:  
     }
   }

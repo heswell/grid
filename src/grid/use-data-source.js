@@ -59,6 +59,8 @@ export default function useDataSource(dataSource, subscriptionDetails, callback)
           //dispatchGridModelAction({type: 'set-columns', columns: msg.columns})
         } else if (msg.size !== undefined){
           callback('size', msg.size);
+        } else if (msg.type === 'pivot'){
+          callback('pivot', msg.columns);
         } else if (msg.type === 'test-started'){
           //----------------- Test Only ----------------------
           init();
@@ -106,7 +108,15 @@ export default function useDataSource(dataSource, subscriptionDetails, callback)
       }
     );
 
-    return () => dataSource.unsubscribe();
+    return () => {
+      dataSource.unsubscribe();
+      dispatchData({
+        type: "data",
+        rows: [],
+        rowCount: 0,
+        range: {lo:0, hi:0}
+      });
+    }
     
   }, [dataSource]);
 

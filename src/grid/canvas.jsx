@@ -30,6 +30,7 @@ const Canvas = forwardRef(function Canvas(
     horizontalScrollbarHeight,
     rowHeight,
     rows,
+    toggleStrategy,
     totalHeaderHeight,
   },
   ref
@@ -285,6 +286,7 @@ const Canvas = forwardRef(function Canvas(
                 idx={absIdx}
                 keys={cellKeys}
                 row={row}
+                toggleStrategy={toggleStrategy}
               />
             );
           })}

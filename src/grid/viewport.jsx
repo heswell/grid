@@ -6,7 +6,8 @@ import React, {
   useImperativeHandle,
   useEffect,
   useLayoutEffect,
-  useRef
+  useRef,
+  useMemo
 } from "react";
 import useScroll from "./use-scroll";
 import useUpdate from "./use-update";
@@ -18,6 +19,18 @@ import {getColumnGroupColumnIdx, GridModel} from './grid-model-utils.js';
 import Canvas from "./canvas";
 import ColumnBearer from './column-bearer';
 import InsertIndicator from './insert-indicator';
+
+const DEFAULT_TOGGLE_STRATEGY = {};
+
+const getToggleStrategy = dataSource => {
+  const {features={}} = dataSource;
+  if (features.expand_level_1 === false){
+    return {expand_level_1: false}
+  } else {
+    return DEFAULT_TOGGLE_STRATEGY;
+  }
+}
+
 
 /** @type {ViewportComponent} */
 const Viewport = forwardRef(function Viewport(
@@ -40,7 +53,7 @@ const Viewport = forwardRef(function Viewport(
   },[gridModel.horizontalScrollbarHeight])
 
   // TODO we could get gridModel here as well. Or would it be better to split gridModel into it's own context ?
-  const { dispatchGridModelAction } = useContext(GridContext);
+  const { dispatchGridAction, dispatchGridModelAction } = useContext(GridContext);
 
   const gridModelRef = useRef(gridModel);
   if (gridModelRef.current !== gridModel){
@@ -151,8 +164,10 @@ const Viewport = forwardRef(function Viewport(
   const data = useDataSource(dataSource, subscriptionDetails, (type, options) => {
     switch(type){
       case 'subscribed':
-          console.log(`ViewPort store columnMap locally ${JSON.stringify(options,null,2)}`)
-          dispatchGridModelAction({type: 'set-columns', columns: options})
+          dispatchGridAction({type: 'set-available-columns', columns: options})
+         break;
+      case 'pivot':
+          dispatchGridModelAction({type: 'set-pivot-columns', columns: options})
          break;
       case 'size':
           // How do we handle this withoput having this dependency on gridModel ?
@@ -171,6 +186,8 @@ const Viewport = forwardRef(function Viewport(
   
 
   const classes = useStyles();
+
+  const toggleStrategy = useMemo(() => getToggleStrategy(dataSource), [dataSource]);
 
   return (
     <>
@@ -197,6 +214,7 @@ const Viewport = forwardRef(function Viewport(
               ref={canvasRefs.current[idx]}
               rowHeight={gridModel.rowHeight}
               rows={data.rows}
+              toggleStrategy={toggleStrategy} // brand new, not well thought out yet
               totalHeaderHeight={gridModel.headerHeight * gridModel.headingDepth}
             />
           ))}

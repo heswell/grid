@@ -8,7 +8,7 @@ import useStyles from './use-styles';
 const {DEPTH} = metadataKeys;
 
 /** @type {RowType} */
-const Row =  memo(function Row({ columns, height, idx, row }) {
+const Row =  memo(function Row({ columns, height, idx, row, toggleStrategy }) {
 
   const isEmptyRow = row[0] === undefined;
   const groupLevel = row[DEPTH];
@@ -38,7 +38,8 @@ const Row =  memo(function Row({ columns, height, idx, row }) {
             <GroupCell
               column={column} 
               key={column.key} 
-              row={row}/>
+              row={row}
+              toggleStrategy={toggleStrategy} />
           ) : (
              <Cell
             key={column.key}

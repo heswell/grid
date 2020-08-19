@@ -268,6 +268,7 @@ export default createUseStyles(theme => ({
   GridGroupCell: {
     display: 'flex',
     alignItems: 'center',
+    flexGrow: 1, 
     overflow: 'hidden',
     '& .icon': {
       fontSize: '16px',
@@ -284,6 +285,12 @@ export default createUseStyles(theme => ({
       textOverflow: 'ellipsis',
       verticalAlign:'top',
       whiteSpace: 'nowrap',
+    }
+  },
+
+  noToggle: {
+    '& $GridGroupCell:first-child': {
+      marginLeft: 12
     }
   },
 

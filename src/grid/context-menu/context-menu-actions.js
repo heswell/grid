@@ -6,3 +6,6 @@ export const SortRemove = 'sort-remove';
 export const SortReverse = 'sort-reverse';
 export const Group = 'group';
 export const GroupAdd = 'group-add';
+export const ColumnHide = 'column-hide';
+export const Pivot = 'pivot';
+export const PivotAdd = 'pivot-add';

@@ -9,6 +9,7 @@ import useEffectSkipFirst from './use-effect-skip-first';
 import Viewport from "./viewport";
 import {GridModel, measureColumns} from './grid-model-utils';
 
+// TODO why do we need to be able to set the columns like this. Have forgotten the reason ?
 const getDataSource = props => props.dataSource.setColumns(props.columns);
 
 /** @type {GridComponent} */
@@ -17,6 +18,7 @@ const Grid = (props) => {
   const viewport = useRef(null);
   const scrollableHeader = useRef(null);
   const initialRender = useRef(true);
+  const availableColumns = useRef(props.columns);
   /** @type {[ColumnDragData, React.Dispatch<ColumnDragData>]} */
   const [columnDragData, setColumnDragData] = useState(null);
   const draggingColumn = useRef(false);
@@ -25,7 +27,6 @@ const Grid = (props) => {
   useEffect(() => {
     setDataSource(getDataSource(props));
   },[props.dataSource])
-
 
   const handleHorizontalScrollStart = _scrollLeft => {
     if (!draggingColumn.current){
@@ -60,13 +61,26 @@ const Grid = (props) => {
   },[gridModel.sortColumns])
 
   useEffectSkipFirst(() => {
-    dataSource.group(GridModel.groupBy(gridModel));
-  },[gridModel.groupColumns])
+    dataSource.group(GridModel.groupBy(gridModel), GridModel.pivotBy(gridModel));
+  },[gridModel.groupColumns, gridModel.pivotColumns])
 
   useEffectSkipFirst(() => {
       dataSource.setGroupState(gridModel.groupState);
   }, [dataSource, gridModel.groupState]);
 
+  useEffectSkipFirst(() => {
+      dataSource.setSubscribedColumns(gridModel.columnNames);
+}, [dataSource, gridModel.columnNames]);
+
+  const setAvailableColumns = useCallback(columns => {
+    availableColumns.current = columns;
+    dispatchGridModel({type: 'set-columns', columns});
+  },[dispatchGridModel])
+
+  // be careful dataSource can change, but these methods get 'frozen' into gridReducer
+  const hideColumn = useCallback(column => {
+    dispatchGridModel({type: 'column-hide', column});
+  },[dispatchGridModel])
 
   const handleColumnDrag = useCallback(
       (phase, ...args) => {
@@ -97,11 +111,14 @@ const Grid = (props) => {
       },[gridModel]
   );
 
+  // TODO be careful of the dependency implications here
   const [, dispatchGridAction] = useReducer(
     useCallback(
       actionReducer({
         "scroll-end-horizontal": handleHorizontalScrollEnd,
-        "scroll-start-horizontal": handleHorizontalScrollStart
+        "scroll-start-horizontal": handleHorizontalScrollStart,
+        "set-available-columns": setAvailableColumns,
+        "column-hide": hideColumn
       }),
       []
     ),

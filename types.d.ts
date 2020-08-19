@@ -61,6 +61,7 @@ interface GridProps {
   groupBy?: GroupBy;
   headerHeight?: number;
   height: number;
+  pivotBy?: GroupBy;
   rowHeight?: number;
   width: number;
 }
@@ -82,10 +83,12 @@ type SortColumns = {
 }
 
 type GroupState = {
+  rowIdx?: number,
   [key: string]: boolean | GroupState;
 }
 
 type GridModel = {
+  columnNames: string[];
   columnSizing: ColumnSizing;
   columnGroups: ColumnGroup[];
   defaultColumnWidth?: number;
@@ -96,6 +99,7 @@ type GridModel = {
   height: number;
   horizontalScrollbarHeight: number;
   minColumnWidth?: number;
+  pivotColumns: SortColumns;
   rowHeight: number;
   sortColumns: SortColumns;
   viewportHeight: number;
@@ -105,11 +109,15 @@ type GridModel = {
 
 type GridAction = 
   | {type: 'scroll-start-horizontal', scrollLeft: number}
-  | {type: 'scroll-end-horizontal', scrollLeft: number};
+  | {type: 'scroll-end-horizontal', scrollLeft: number}
+  | {type: 'set-available-columns', columns: Column[]}
+  | {type: 'column-hide', column: Colum};
 
 type GridActionHandler<T extends GridAction['type']> = 
   T extends 'scroll-start-horizontal' ? (scrollLeft: number) => void :
   T extends 'scroll-end-horizontal' ? (scrollLeft: number) => void :
+  T extends 'set-available-columns' ? (columns: Column[]) => void :
+  T extends 'column-hide' ? (column: Column) => void :
   never;
 
 type True = true;
@@ -124,9 +132,13 @@ type GridModelResizeHeadingAction = { type: 'resize-heading', phase: ResizePhase
 type GridModelAddColumnAction = { type: 'add-col', targetColumnGroup?: ColumnGroup, column: Column, insertIdx: number};
 type GridModelInitializeAction = { type: 'initialize', props};
 type GridModelGroupAction = { type: 'group', column: Column, direction?: SortDirection, add?: boolean, remove?: true};
+type GridModelGroupAction = { type: 'pivot', column: Column, direction?: SortDirection, add?: boolean, remove?: true};
 type GridModelSortAction = { type: 'sort', column: Column, direction?: SortDirection, add?: True, remove?: True};
 type GridModelToggleAction = { type: 'toggle', row: any[]};
 type GridModelSetColumnsAction = { type: 'set-columns', columns: Column[]};
+type GridModelHideColumnAction = { type: 'column-hide', column: Column};
+type GridModelShowColumnAction = { type: 'column-show', column: Column};
+type GridModelPivotColumnsAction = { type: 'set-pivot-columns', columns: string[]};
 
 type GridModelAction =
   | GridModelResizeAction
@@ -136,8 +148,12 @@ type GridModelAction =
   | GridModelInitializeAction
   | GridModelSortAction
   | GridModelGroupAction
+  | GridModelPivotAction
   | GridModelToggleAction
-  | GridModelSetColumnsAction;
+  | GridModelSetColumnsAction
+  | GridModelShowColumnAction
+  | GridModelHideColumnAction
+  | GridModelPivotColumnsAction;
 
 type GridModelReducerFn<A=GridModelAction> = (state: GridModel, action: A) => GridModel;  
 type GridModelReducerInitializer = (props: GridProps) => GridModel;
@@ -149,8 +165,12 @@ type GridModelReducer<T extends GridModelAction['type']> =
   T extends 'initialize' ? GridModelReducerFn<GridModelInitializeAction> :
   T extends 'sort' ? GridModelReducerFn<GridModelSortAction> :
   T extends 'group' ? GridModelReducerFn<GridModelGroupAction> :
+  T extends 'pivot' ? GridModelReducerFn<GridModelPivotAction> :
   T extends 'toggle' ? GridModelReducerFn<GridModelToggleAction> :
   T extends 'set-columns' ? GridModelReducerFn<GridModelSetColumnsAction> :
+  T extends 'column-show' ? GridModelReducerFn<GridModelShowColumnAction> :
+  T extends 'column-hide' ? GridModelReducerFn<GridModelHideColumnAction> :
+  T extends 'set-pivot-column' ? GridModelReducerFn<GridModelPivotColumnsAction> :
   GridModelReducerFn<GridModelAction>;
 
 type GridModelReducerTable = {[key in GridModelAction['type']]: GridModelReducer<key>};  
@@ -241,6 +261,9 @@ type CanvasRef = React.Ref<{
   scrollLeft: number;
 }>;
 
+type ToggleStrategy = {
+  expand_level_1?: false;
+};
 
 interface CanvasProps {
   columnGroupIdx: number;
@@ -251,7 +274,8 @@ interface CanvasProps {
   horizontalScrollbarHeight: number;
   ref?: CanvasRef;
   rowHeight: number;
-  rows: Row[]
+  rows: Row[];
+  toggleStrategy: ToggleStrategy;
   totalHeaderHeight: number;
 }
 
@@ -265,6 +289,7 @@ interface RowProps {
   idx: number;
   keys: any;
   row: Row;
+  toggleStrategy: ToggleStrategy;
 }
 
 type RowType = React.FC<RowProps>;
@@ -275,7 +300,12 @@ interface CellProps {
   row: Row;
 }
 
+interface GroupCellProps extends CellProps {
+  toggleStrategy: ToggleStrategy;
+}
+
 type CellType = React.FC<CellProps>;
+type GroupCellType = React.FC<GroupCellProps>;
 
 type ColumnBearerRef = React.RefObject<{
   setFinalPosition: () => void;

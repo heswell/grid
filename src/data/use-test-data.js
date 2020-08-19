@@ -2,7 +2,8 @@
 import { useRef } from 'react';
 import { LocalDataSource } from "@heswell/data-source";
 import { RemoteDataSource } from "@heswell/data-remote";
-import getAgGridDataSource, {postMessage} from './ag-grid-data-source';
+import getAgGridDataSource from './ag-grid-data-source';
+import getPerspectiveDataSource from './perspective-data-source';
 import getManyColumnsDataSource from './many-columns-data-source';
 
 
@@ -25,7 +26,6 @@ const instrumentColumns = [
 
 export function buildData(source, location, columnCount=25, rowCount=100){
   console.log(`>>>>> buildData`)
-  const data = [];
 
   if (source === 'many-columns'){
     
@@ -34,6 +34,9 @@ export function buildData(source, location, columnCount=25, rowCount=100){
   } else if (source === 'ag-grid-demo'){
 
     return getAgGridDataSource();
+
+  } else if (source === 'psp-streaming'){
+    return getPerspectiveDataSource();
 
   } else if (source === 'instruments') {  
     
@@ -60,20 +63,8 @@ export function buildData(source, location, columnCount=25, rowCount=100){
     const dataConfig = {url: '127.0.0.1:9090', tableName};
     const dataSource = new RemoteDataSource(dataConfig);
     return [undefined, dataSource]
+
   }
-}
-
-export const startStressTest = () => {
-  postMessage({type: 'startStress'});
-}
-
-export const startLoadTest = () => {
-  postMessage({type:'startLoad'});
-}
-
-export const stopTests = () => {
-  postMessage({type: 'stopTest'});
-  console.log('Test stopped');
 }
 
 export default function useTestData(source='instruments', location='local'){

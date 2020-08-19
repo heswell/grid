@@ -12,6 +12,7 @@ const availableSources = [
   {label: 'Many Columns', id: 'many-columns', locations: ['local']},
   {label: 'Order Blotter', id: 'order-blotter', locations: ['remote']},
   {label: 'AG Grid Demo', id: 'ag-grid-demo', locations: ['worker']},
+  {label: 'PSP Streaming', id: 'psp-streaming', locations: ['worker']},
 ];
 
 const getDataSource = id => availableSources.find(source => source.id === id);
@@ -40,10 +41,9 @@ export default function ControlPanelHeader({
         value={dataSource}
         onChange={handleDataSource}
       >
-        <MenuItem value="instruments">Instruments</MenuItem>
-        <MenuItem value="many-columns">Many Columns</MenuItem>
-        <MenuItem value="order-blotter">Order Blotter</MenuItem>
-        <MenuItem value="ag-grid-demo">AG Grid Demo</MenuItem>
+        {availableSources.map(({id, label}) =>
+          <MenuItem key={id} value={id}>{label}</MenuItem>
+        )}
       </Select>
 
       <RadioGroup 
