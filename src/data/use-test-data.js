@@ -24,7 +24,7 @@ const instrumentColumns = [
   { name: 'Industry'}
 ];
 
-export function buildData(source, location, columnCount=25, rowCount=100){
+export function buildData(source, location, columnCount=100, rowCount=1000){
   console.log(`>>>>> buildData`)
 
   if (source === 'many-columns'){

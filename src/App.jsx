@@ -81,8 +81,7 @@ export default function App() {
     console.log(`changes ${JSON.stringify(stateChanges)}`)
     if (stateChanges.dataSource){
       setState(prevState => {
-        console.log(`prevState`, prevState)
-        return ({...prevState, ...stateChanges, groupBy: null, pivotBy: null})
+        return ({...prevState, ...stateChanges, groupBy: undefined, pivotBy: undefined})
       })
 
     } else {

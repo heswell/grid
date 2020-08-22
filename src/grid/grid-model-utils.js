@@ -300,9 +300,9 @@ export const columnKeysToIndices = (keys,columns) =>
 export const GridModel = {
   columns: gridModel => flattenColumnGroup(gridModel.columnGroups.flatMap(columnGroup => columnGroup.columns)),
   columnNames: gridModel => GridModel.columns(gridModel).map(column => column.name),
-  groupBy: gridModel => mapSortColumns(gridModel.groupColumns),
-  pivotBy: gridModel => mapSortColumns(gridModel.pivotColumns),
-  sortBy: gridModel => mapSortColumns(gridModel.sortColumns),
+  groupBy: gridModel => gridModel.groupColumns && mapSortColumns(gridModel.groupColumns),
+  pivotBy: gridModel => gridModel.pivotColumns && mapSortColumns(gridModel.pivotColumns),
+  sortBy: gridModel => gridModel.sortColumns && mapSortColumns(gridModel.sortColumns),
   toggleGroupState,
   updateGroupColumn,
   updateGroupColumnWidth

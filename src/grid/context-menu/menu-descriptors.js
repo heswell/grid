@@ -70,7 +70,7 @@ function buildGroupMenuItems(groupColumns, options){
     const menuItems = [];
     const {column} = options;
 
-    if (groupColumns === null){
+    if (!groupColumns){
         menuItems.push({label: `Group by ${column.name}`, action: Action.Group, options})
     } else {
         menuItems.push({label: `Add ${column.name} to group by`, action: Action.GroupAdd, options})
@@ -83,7 +83,7 @@ function buildPivotMenuItems(groupColumns, options){
     const menuItems = [];
     const {column} = options;
 
-    if (groupColumns === null){
+    if (!groupColumns){
         menuItems.push({label: `Pivot by ${column.name}`, action: Action.Pivot, options})
     } else {
         menuItems.push({label: `Add ${column.name} to pivot by`, action: Action.PivotAdd, options})

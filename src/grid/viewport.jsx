@@ -75,15 +75,16 @@ const Viewport = forwardRef(function Viewport(
   useImperativeHandle(ref, () => ({
     beginHorizontalScroll: () => {
       if (!showColumnBearer.current){
-        scrollingEl.current.style.height = `${contentHeight.current +
-          (gridModel.headerHeight * gridModel.headingDepth) + horizontalScrollbarHeight.current}px`;
+        const header = gridModel.headerHeight * gridModel.headingDepth; 
+        scrollingEl.current.style.height = `${header + Math.max(contentHeight.current +
+        horizontalScrollbarHeight.current, gridModel.viewportHeight)}px`;
         canvasRefs.current.forEach(({current}) => current.beginHorizontalScroll());  
       }
     },
     endHorizontalScroll: () => {
       if (!showColumnBearer.current){
         canvasRefs.current.forEach(({current}) => current.endHorizontalScroll());
-        scrollingEl.current.style.height = `${contentHeight.current + horizontalScrollbarHeight.current}px`;
+        scrollingEl.current.style.height = `${Math.max(contentHeight.current + horizontalScrollbarHeight.current, gridModel.viewportHeight)}px`;
         return canvasRefs.current[scrollableCanvasIdx].current.scrollLeft;
       }
     }
@@ -189,6 +190,9 @@ const Viewport = forwardRef(function Viewport(
   const classes = useStyles();
 
   const toggleStrategy = useMemo(() => getToggleStrategy(dataSource), [dataSource]);
+  console.log(`render viewport viewport Height: ${gridModel.viewportHeight},
+    horizontalScrollbarHeight.current ${horizontalScrollbarHeight.current}
+    current contentHeight ${contentHeight.current}`);
 
   return (
     <>
@@ -201,7 +205,7 @@ const Viewport = forwardRef(function Viewport(
         <div
           className={classes.scrollingCanvasContainer}
           ref={scrollingEl}
-          style={{ height: contentHeight.current + horizontalScrollbarHeight.current }}
+          style={{ height: Math.max(contentHeight.current + horizontalScrollbarHeight.current, gridModel.viewportHeight) }}
         >
           {gridModel.columnGroups.map((columnGroup, idx) => (
             <Canvas

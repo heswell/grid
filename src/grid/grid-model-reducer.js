@@ -69,9 +69,9 @@ export const initModel = (gridProps) => {
     rowHeight = 24,
     width } = gridProps;
 
-  const groupColumns = sortMap(groupByProp);
+  const groupColumns = sortMap(groupByProp) || undefined;
   // We won't be able to build the column headers for pivot columns until we start to get data
-  const pivotColumns = sortMap(pivotByProp);
+  const pivotColumns = sortMap(pivotByProp) || undefined;
 
   const state = {
     columnNames: null,
@@ -110,8 +110,8 @@ export const initModel = (gridProps) => {
 /** @type {GridModelReducer<'set-pivot-columns'>} */
 function setPivotColumns(state, action){
 
-  console.log(`set pivot columns `, action.columns)
-  const {columnNames, columnGroups, headingDepth} = buildColumnGroups(state, action.columns);
+  const groupBy = GridModel.groupBy(state);
+  const {columnNames, columnGroups, headingDepth} = buildColumnGroups(state, action.columns, groupBy);
   const totalHeaderHeight = state.headerHeight * headingDepth;
 
   return {
@@ -179,7 +179,7 @@ function groupRows(state, {column, direction, add, remove}){
   let groupBy;
   let groupColumns;
 
-  if (state.groupColumns === null){
+  if (!state.groupColumns){
     groupColumns = {[column.name]: direction || 'asc'};
     groupBy = GridModel.groupBy({groupColumns});
   } else if (add){
@@ -198,7 +198,6 @@ function groupRows(state, {column, direction, add, remove}){
   }
 
   const {columnGroups} = buildColumnGroups(state, GridModel.columns(state), groupBy);
-  console.log(`buildRows`, columnGroups)
   return {
       ...state,
       groupColumns,
@@ -211,7 +210,7 @@ function pivotRows(state, {column, direction, add, remove}){
 
   let pivotColumns;
 
-  if (state.pivotColumns === null){
+  if (!state.pivotColumns){
     pivotColumns = {[column.name]: direction || 'asc'};
   } else if (add){
     pivotColumns = addSortColumn(state.pivotColumns, column)
@@ -275,8 +274,8 @@ function resizeColumnHeading(state, column, width, headingResizeState){
 /** @type {GridModelReducer<'column-hide'>} */
 function hideColumn(state, {column}){
   const columns = GridModel.columns(state).filter(col => col.name !== column.name);
-  // TODO add groupBy if state.groupColumn 
-  const {columnNames, columnGroups} = buildColumnGroups(state, columns, null);
+  const groupBy = GridModel.groupBy(state);
+  const {columnNames, columnGroups} = buildColumnGroups(state, columns, groupBy);
   return {
     ...state,
     columnGroups,

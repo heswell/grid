@@ -9,7 +9,6 @@ import useEffectSkipFirst from './use-effect-skip-first';
 import Viewport from "./viewport";
 import {GridModel, measureColumns} from './grid-model-utils';
 
-
 /** @type {GridComponent} */
 const Grid = (props) => {
   const {dataSource} = props;
@@ -59,7 +58,10 @@ const Grid = (props) => {
   },[gridModel.sortColumns])
 
   useEffectSkipFirst(() => {
-    dataSource.group(GridModel.groupBy(gridModel), GridModel.pivotBy(gridModel));
+    // undefined means these are unset, null means a previous value has been removed
+    if (gridModel.groupColumns !== undefined || gridModel.pivotColumns !== undefined){
+      dataSource.group(GridModel.groupBy(gridModel), GridModel.pivotBy(gridModel));
+    }
   },[gridModel.groupColumns, gridModel.pivotColumns])
 
   useEffectSkipFirst(() => {
