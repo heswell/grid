@@ -53,7 +53,7 @@ const Viewport = forwardRef(function Viewport(
   },[gridModel.horizontalScrollbarHeight])
 
   // TODO we could get gridModel here as well. Or would it be better to split gridModel into it's own context ?
-  const { dispatchGridAction, dispatchGridModelAction } = useContext(GridContext);
+  const { dispatchGridModelAction } = useContext(GridContext);
 
   const gridModelRef = useRef(gridModel);
   if (gridModelRef.current !== gridModel){
@@ -165,7 +165,7 @@ const Viewport = forwardRef(function Viewport(
   const data = useDataSource(dataSource, subscriptionDetails, (type, options) => {
     switch(type){
       case 'subscribed':
-          dispatchGridAction({type: 'set-available-columns', columns: options})
+        dispatchGridModelAction({type: 'set-available-columns', columns: options})
          break;
       case 'pivot':
           dispatchGridModelAction({type: 'set-pivot-columns', columns: options})

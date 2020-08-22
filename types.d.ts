@@ -110,14 +110,10 @@ type GridModel = {
 type GridAction = 
   | {type: 'scroll-start-horizontal', scrollLeft: number}
   | {type: 'scroll-end-horizontal', scrollLeft: number}
-  | {type: 'set-available-columns', columns: Column[]}
-  | {type: 'column-hide', column: Colum};
 
 type GridActionHandler<T extends GridAction['type']> = 
   T extends 'scroll-start-horizontal' ? (scrollLeft: number) => void :
   T extends 'scroll-end-horizontal' ? (scrollLeft: number) => void :
-  T extends 'set-available-columns' ? (columns: Column[]) => void :
-  T extends 'column-hide' ? (column: Column) => void :
   never;
 
 type True = true;
@@ -135,7 +131,7 @@ type GridModelGroupAction = { type: 'group', column: Column, direction?: SortDir
 type GridModelGroupAction = { type: 'pivot', column: Column, direction?: SortDirection, add?: boolean, remove?: true};
 type GridModelSortAction = { type: 'sort', column: Column, direction?: SortDirection, add?: True, remove?: True};
 type GridModelToggleAction = { type: 'toggle', row: any[]};
-type GridModelSetColumnsAction = { type: 'set-columns', columns: Column[]};
+type GridModelSetColumnsAction = { type: 'set-available-columns', columns: Column[]};
 type GridModelHideColumnAction = { type: 'column-hide', column: Column};
 type GridModelShowColumnAction = { type: 'column-show', column: Column};
 type GridModelPivotColumnsAction = { type: 'set-pivot-columns', columns: string[]};

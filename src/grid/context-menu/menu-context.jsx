@@ -26,7 +26,7 @@ const MenuContext = React.createContext(null);
 
 const MenuContextProvider = ({children, showMenu}) => {
 
-  const { dispatchGridAction, dispatchGridModelAction } = useContext(GridContext);
+  const { dispatchGridModelAction } = useContext(GridContext);
 
   const showContextMenu = showMenu || showDefaultContextMenu;
   
@@ -71,7 +71,7 @@ const MenuContextProvider = ({children, showMenu}) => {
       }
       case Action.ColumnHide: {
         const {column} = options;
-        return dispatchGridAction({type: 'column-hide', column});
+        return dispatchGridModelAction({type: 'column-hide', column});
       }
     }    
   };

@@ -49,7 +49,7 @@ const reducerActionHandlers = {
   'group': groupRows,
   'pivot': pivotRows,
   'toggle': toggleRow,
-  'set-columns': setColumns,
+  'set-available-columns': setAvailableColumns,
   'set-pivot-columns': setPivotColumns,
   'column-hide': hideColumn,
   'column-show': showColumn
@@ -127,7 +127,7 @@ function setPivotColumns(state, action){
 }
 
 /** @type {GridModelReducer<'set-columns'>} */
-function setColumns(state, action){
+function setAvailableColumns(state, action){
   if (!this.columnGroups){
     const {columnNames, columnGroups, headingDepth} = buildColumnGroups(state, action.columns);
     const totalHeaderHeight = state.headerHeight * headingDepth;

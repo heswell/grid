@@ -3,7 +3,7 @@ import ColumnGroupHeader from "./column-group-header";
 import GridContext from "./grid-context";
 import {MenuProvider} from './context-menu/menu-context';
 import modelReducer, { initModel } from "./grid-model-reducer";
-import actionReducer from "./grid-action-reducer";
+import useGridAction from "./use-grid-action";
 import useStyles from './use-styles';
 import useEffectSkipFirst from './use-effect-skip-first';
 import Viewport from "./viewport";
@@ -17,11 +17,9 @@ const Grid = (props) => {
   const viewport = useRef(null);
   const scrollableHeader = useRef(null);
   const initialRender = useRef(true);
-  const availableColumns = useRef(props.columns);
   /** @type {[ColumnDragData, React.Dispatch<ColumnDragData>]} */
   const [columnDragData, setColumnDragData] = useState(null);
   const draggingColumn = useRef(false);
-
 
   const handleHorizontalScrollStart = _scrollLeft => {
     if (!draggingColumn.current){
@@ -37,6 +35,11 @@ const Grid = (props) => {
       scrollableHeader.current.endHorizontalScroll(scrollLeft);
     }
   };
+
+  const dispatchGridAction = useGridAction({
+    "scroll-end-horizontal": handleHorizontalScrollEnd,
+    "scroll-start-horizontal": handleHorizontalScrollStart
+  });
 
   const classes = useStyles();
 
@@ -67,16 +70,6 @@ const Grid = (props) => {
       dataSource.setSubscribedColumns(gridModel.columnNames);
 }, [dataSource, gridModel.columnNames]);
 
-  const setAvailableColumns = useCallback(columns => {
-    availableColumns.current = columns;
-    dispatchGridModel({type: 'set-columns', columns});
-  },[dispatchGridModel])
-
-  // be careful dataSource can change, but these methods get 'frozen' into gridReducer
-  const hideColumn = useCallback(column => {
-    dispatchGridModel({type: 'column-hide', column});
-  },[dispatchGridModel])
-
   const handleColumnDrag = useCallback(
       (phase, ...args) => {
     // if (!column.isHeading) {
@@ -104,20 +97,6 @@ const Grid = (props) => {
           }
     // }
       },[gridModel]
-  );
-
-  // TODO be careful of the dependency implications here
-  const [, dispatchGridAction] = useReducer(
-    useCallback(
-      actionReducer({
-        "scroll-end-horizontal": handleHorizontalScrollEnd,
-        "scroll-start-horizontal": handleHorizontalScrollStart,
-        "set-available-columns": setAvailableColumns,
-        "column-hide": hideColumn
-      }),
-      []
-    ),
-    null
   );
 
   useEffect(() => {
