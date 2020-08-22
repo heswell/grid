@@ -43,7 +43,7 @@ export function buildData(source, location, columnCount=25, rowCount=100){
     if (location === 'local'){
       
       const tableName = 'Instruments'
-      const dataConfig = {url: '/instruments.js', tableName};
+      const dataConfig = {columns: instrumentColumns, dataUrl: '/instruments.js', tableName};
       const columns = instrumentColumns;
       const dataSource = new LocalDataSource(dataConfig);
       return [columns, dataSource];
@@ -51,7 +51,7 @@ export function buildData(source, location, columnCount=25, rowCount=100){
     } else if (location === 'remote'){
       
       const tableName = 'Instruments'
-      const dataConfig = {url: '127.0.0.1:9090', tableName};
+      const dataConfig = {serverUrl: '127.0.0.1:9090', tableName};
       const columns = instrumentColumns;
       const dataSource = new RemoteDataSource(dataConfig);
       return [columns, dataSource]

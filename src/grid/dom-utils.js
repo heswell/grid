@@ -26,30 +26,3 @@ export function getScrollbarSize() {
 
     return size;
 }
-
-// THis needs to be customisable
-export function getColumnWidth(columns, {Grid, GroupHeaderCell, HeaderCell}) {
-  let outer = document.createElement('div');
-  outer.className = `${Grid}`;
-  outer.innerHTML = 
-    `<div class="${HeaderCell} ${GroupHeaderCell}" style="padding-left: 0px; width: auto;">
-       <div class="inner-container">
-       ${columns.map(column => 
-        `<div class="ColHeader">
-          <i class="material-icons toggle-icon">chevron_right</i>
-          <span class="ColHeaderLabel">${column.name}</span>
-          <i class="material-icons remove-icon">cancel</i>
-        </div>`
-       )}
-       </div>
-      <div class="resizeHandle-0-3-20">
-      </div>
-    </div>`
-  
-  document.body.appendChild(outer);
-  const w = outer.offsetWidth;
-  document.body.removeChild(outer);
-  outer = null;
-  // return w + 50 + (columns.length-1) * 50;
-  return w + (columns.length == 1 ? 4 : (columns.length * -3));
-}

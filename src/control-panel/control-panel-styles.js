@@ -30,6 +30,11 @@ export default createUseStyles({
   location : {
     marginLeft: 'auto'
   },
+  select: {
+    '&:not(:last-child)': {
+      marginRight: 12
+    }
+  },
   tabs: {
     borderRight: 'solid 1px #ccc',
     flex: '0 0 120px',

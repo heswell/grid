@@ -157,6 +157,7 @@ const Viewport = forwardRef(function Viewport(
 
   // this is required once-only, for subscription
   const subscriptionDetails = {
+    columnNames: gridModelRef.current.columnNames,
     range: { lo: 0, hi: gridModelRef.current.viewportRowCount }
   }
 

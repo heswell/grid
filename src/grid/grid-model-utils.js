@@ -1,5 +1,4 @@
 import {  indexOfCol, metadataKeys } from '@heswell/utils'
-import { getColumnWidth } from './dom-utils';
 
 export const getHorizontalScrollbarHeight = columnGroups =>
   columnGroups.some(({width, contentWidth}) => width < contentWidth) ? 15 : 0;
@@ -346,7 +345,7 @@ const flattenColumnGroup = (columns) => {
   return nonGroupColumns;
 }
 
-export function extractGroupColumn(columns, groupBy, cssRules){
+export function extractGroupColumn(columns, groupBy){
   if (groupBy && groupBy.length > 0){
       // Note: groupedColumns will be in column order, not groupBy order
       const [groupedColumns, rest] = columns.reduce((result, column, i) => {
@@ -381,8 +380,10 @@ export function extractGroupColumn(columns, groupBy, cssRules){
           heading: ['group-col'],
           isGroup: true,
           columns: groupCols,
-          width: getColumnWidth(groupCols, cssRules)
+          width: groupCols.map(c => c.width).reduce((a,b) => a+b)
       };
+
+
       return [groupCol, rest];
   }
   return [null, columns]
@@ -390,17 +391,18 @@ export function extractGroupColumn(columns, groupBy, cssRules){
 
 export const splitKeys = compositeKey => `${compositeKey}`.split(':').map(k => parseInt(k,10));
 
-
-export const assignKeysToColumns = columns => {
+// need to rename this
+export const assignKeysToColumns = (columns, defaultWidth) => {
   const start = metadataKeys.count;
   return columns.map((column, i) => 
     typeof column === 'string'
-      ? {name: column, key: start + i}
+      ? {name: column, key: start + i, width: defaultWidth}
       : typeof column.key === 'number'
         ? column 
         : {
           ...column,
-          key : start + i
+          key : start + i,
+          width: column.width || defaultWidth
         }
   )
 }

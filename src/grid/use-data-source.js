@@ -51,6 +51,11 @@ export default function useDataSource(dataSource, subscriptionDetails, callback)
     console.log(`%c useEffect - subscribe to new datasource`,'color:blue;font-weight:bold;')
      init();
     // dispatchData({type: 'clear'});
+
+    console.log(`useDataSOurce about to subscribe to new data SOurce
+      columnNames: ${subscriptionDetails.columnNames.join(',')}
+    `)
+
     dataSource.subscribe(subscriptionDetails,
       /* postMessageToClient */
       msg => {
@@ -86,7 +91,6 @@ export default function useDataSource(dataSource, subscriptionDetails, callback)
            //----------------- Test Only ----------------------
         }
         if (msg.rows) {
-          console.log(`useDataSOurce ${msg.rows.length} rows received`)
           dispatchData({
             type: "data",
             rows: msg.rows,

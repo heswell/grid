@@ -32,9 +32,6 @@ function sortMap(sortBy){
   }, {}) 
 }
 
-// Dont like this - it's a module ref to the jss classes ?
-let cssRules;
-
 /** @type {(s: GridModel, a: GridModelAction) => GridModel} */
 export default (state, action) => {
   // @ts-ignore
@@ -58,8 +55,8 @@ const reducerActionHandlers = {
   'column-show': showColumn
 };
 
-export const initModel = ([gridProps, classes]) => {
-  cssRules = classes || cssRules;
+export const initModel = (gridProps) => {
+
   const {
     columns=[],
     columnSizing = 'static',
@@ -132,7 +129,6 @@ function setPivotColumns(state, action){
 /** @type {GridModelReducer<'set-columns'>} */
 function setColumns(state, action){
   if (!this.columnGroups){
-
     const {columnNames, columnGroups, headingDepth} = buildColumnGroups(state, action.columns);
     const totalHeaderHeight = state.headerHeight * headingDepth;
 
@@ -202,7 +198,7 @@ function groupRows(state, {column, direction, add, remove}){
   }
 
   const {columnGroups} = buildColumnGroups(state, GridModel.columns(state), groupBy);
-
+  console.log(`buildRows`, columnGroups)
   return {
       ...state,
       groupColumns,
@@ -253,7 +249,7 @@ function resizeHeading(state, {phase, column, width}){
 
 /** @type {GridModelReducer<'initialize'>} */
 function initialize(state, {props}){
-  return initModel([props, null]);
+  return initModel(props);
 }
 
 let resizeColumnHeaderHeading = null;
@@ -400,10 +396,10 @@ function buildColumnGroups(state, columns, groupBy) {
 
   const headingDepth = getMaxHeadingDepth(columns);
   // TODO separate keys from columns
-  const keyedColumns = assignKeysToColumns(columns)
+  const keyedColumns = assignKeysToColumns(columns, defaultColumnWidth)
   const columnNames = keyedColumns.map(col => col.name);
 
-  const [groupColumn, nonGroupedColumns] = extractGroupColumn(keyedColumns, groupBy, cssRules);
+  const [groupColumn, nonGroupedColumns] = extractGroupColumn(keyedColumns, groupBy);
   if (groupColumn){
     const headings = headingDepth > 1 ? [] : undefined;
     columnGroups.push(columnGroup = { locked: false, columns: [groupColumn], headings, width:0, contentWidth:0 });

@@ -9,11 +9,10 @@ import useEffectSkipFirst from './use-effect-skip-first';
 import Viewport from "./viewport";
 import {GridModel, measureColumns} from './grid-model-utils';
 
-// TODO why do we need to be able to set the columns like this. Have forgotten the reason ?
-const getDataSource = props => props.dataSource.setColumns(props.columns);
 
 /** @type {GridComponent} */
 const Grid = (props) => {
+  const {dataSource} = props;
   const gridEl = useRef(null);
   const viewport = useRef(null);
   const scrollableHeader = useRef(null);
@@ -22,11 +21,7 @@ const Grid = (props) => {
   /** @type {[ColumnDragData, React.Dispatch<ColumnDragData>]} */
   const [columnDragData, setColumnDragData] = useState(null);
   const draggingColumn = useRef(false);
-  const [dataSource, setDataSource] = useState(getDataSource(props));
 
-  useEffect(() => {
-    setDataSource(getDataSource(props));
-  },[props.dataSource])
 
   const handleHorizontalScrollStart = _scrollLeft => {
     if (!draggingColumn.current){
@@ -47,14 +42,14 @@ const Grid = (props) => {
 
   const [gridModel, dispatchGridModel] = useReducer(
     modelReducer,
-    [props, classes],
+    props,
     initModel
   );
 
   //TODO do we need to useCallback here - can we ever send stale props ?
   useEffectSkipFirst(() => {
     dispatchGridModel({type: 'initialize', props});
-  },[props.columns, props.groupBy])
+  },[props.columns, props.columnSizing, props.groupBy])
 
   useEffectSkipFirst(() => {
     dataSource.sort(GridModel.sortBy(gridModel));

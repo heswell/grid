@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import React, {useEffect, useMemo, useRef, useState} from "react";
 import { Grid } from "./grid";
 import MenuContext from './grid/context-menu';
@@ -7,8 +9,6 @@ import themes from './themes';
 import {buildData} from './data/use-test-data';
 
 // import renderContextMenu from './components/material-ui/context-menu/show-context-menu';
-
-import useStyles from './use-app-styles.js';
 
 const toolbarHeight = 300;
 
@@ -21,11 +21,14 @@ export default function App() {
   const messageBoard = useRef(null);
 
   const [state, setState] = useState({
+    columnSizing: 'static',
+    dataGrid: "heswell",
     dataLocation: "local",
     dataSource: 'instruments',
-    gridHeight: document.getElementById('root').clientHeight - toolbarHeight,
-    gridWidth: document.getElementById('root').clientWidth,
+    height: document.getElementById('root').clientHeight - toolbarHeight,
+    width: document.getElementById('root').clientWidth,
     groupBy: null,
+    pivotBy: null,
     theme: 'light'
   });
 
@@ -75,21 +78,30 @@ export default function App() {
   }
 
   const handleChange = stateChanges => {
-    setState(prevState => ({...prevState, ...stateChanges}))
+    console.log(`changes ${JSON.stringify(stateChanges)}`)
+    if (stateChanges.dataSource){
+      setState(prevState => {
+        console.log(`prevState`, prevState)
+        return ({...prevState, ...stateChanges, groupBy: null, pivotBy: null})
+      })
+
+    } else {
+      setState(prevState => ({...prevState, ...stateChanges}))
+    }
   }
 
-  const classes = useStyles();
   return (
     <ThemeProvider theme={themes[state.theme]}>
       <MenuContext.Provider value={/*renderContextMenu*/ null}>
       <Grid
-        // columnSizing="fill"
+        columnSizing={state.columnSizing}
         columns={columns}
         dataSource={dataSource}
         groupBy={state.groupBy}
-        height={state.gridHeight}
+        height={state.height}
         headerHeight={32}
-        width={state.gridWidth}
+        pivotBy={state.pivotBy}
+        width={state.width}
       />
       </MenuContext.Provider>
       <ControlPanel

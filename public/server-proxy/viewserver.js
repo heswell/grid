@@ -1002,7 +1002,9 @@ class ServerProxy {
 
     handleMessageFromClient(message) {
         const viewport = this.viewportStatus[message.viewport];
-        viewport.range = message.range;
+        if (message.range){
+            viewport.range = message.range;
+        }
         this.sendIfReady(message, viewport.status === 'subscribed');
     }
 
@@ -1042,7 +1044,6 @@ class ServerProxy {
     }
 
     subscribe(message, callback) {
-        // Q is this ever null, shouldn't we query the connection.status ?
         logger.log(`subscribed with range ${JSON.stringify(message.range)}`);
         const isReady = this.connection !== null;
         const { viewport } = message;
@@ -1089,7 +1090,6 @@ class ServerProxy {
     }
 
     unsubscribe(viewport){
-        const viewportStatus = this.viewportStatus[viewport];
         this.sendMessageToServer({viewport, type: ServerApiMessageTypes.unsubscribe});
         this.viewportStatus[viewport].status = 'unsubscribed';
     }
@@ -1105,7 +1105,7 @@ class ServerProxy {
         if (viewport){
             const {postMessageToClient, range: {lo, hi}} = viewport;
             if (range){
-                logger.log(`message from server ${type} for range [${range.lo},${range.hi}] (current range [${lo},${hi}])`);
+                // logger.log(`message from server ${type} for range [${range.lo},${range.hi}] (current range [${lo},${hi}])`)
                 if (range.hi < lo || range.lo >= hi){
                     logger.log(`>>>>>>>>>>>>>   discard entire message`);
                     return;
