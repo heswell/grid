@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import ColumnGroupHeader from "./column-group-header";
 import GridContext from "./grid-context";
+import Header from "./grid-header";
 import {MenuProvider} from './context-menu/menu-context';
 import modelReducer, { initModel } from "./grid-model-reducer";
 import useGridAction from "./use-grid-action";
@@ -48,8 +49,15 @@ const Grid = (props) => {
     initModel
   );
 
+  useEffectSkipFirst(() => {
+    console.log(`%c Grid useEffect dataSOurce changed - `,'color:blue;font-weight:bold;')
+  }, [dataSource])  
+
+    console.log(`render with columnNames ${JSON.stringify(gridModel.columnNames)}`, gridModel.columnGroups)
+
   //TODO do we need to useCallback here - can we ever send stale props ?
   useEffectSkipFirst(() => {
+    console.log(`initialize the grid model with columns`, props.columns)
     dispatchGridModel({type: 'initialize', props});
   },[props.columns, props.columnSizing, props.groupBy])
 
@@ -115,21 +123,7 @@ const Grid = (props) => {
       <GridContext.Provider value={{ dispatchGridAction, dispatchGridModelAction: dispatchGridModel, gridModel }}>
         <MenuProvider>
         <div className={classes.Grid} ref={gridEl} style={{ width, height }}>
-          <div className={classes.headerContainer} style={{ height: gridModel.headerHeight * gridModel.headingDepth }}>
-            {gridModel.columnGroups.map((columnGroup, idx) => (
-              <ColumnGroupHeader
-                columnGroup={columnGroup}
-                columnGroupIdx={idx}
-                depth={gridModel.headingDepth}
-                height={gridModel.headerHeight}
-                key={idx}
-                onColumnDrag={handleColumnDrag}
-                ref={columnGroup.locked ? null : scrollableHeader}
-                sortColumns={gridModel.sortColumns}
-                width={columnGroup.width}
-              />
-            ))}
-          </div>
+          <Header gridModel={gridModel} onColumnDrag={handleColumnDrag} scrollableHeaderRef={scrollableHeader}/>
           <Viewport
             dataSource={dataSource}
             gridModel={gridModel}

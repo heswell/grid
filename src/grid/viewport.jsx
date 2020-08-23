@@ -156,7 +156,8 @@ const Viewport = forwardRef(function Viewport(
 
   const handleVerticalScroll = useScroll("scrollTop", scrollCallback);
 
-  // this is required once-only, for subscription
+    // we should not take columnNames from gridModel - thye will not yet have been recomputed if 
+    // dataSOurce has changed
   const subscriptionDetails = {
     columnNames: gridModelRef.current.columnNames,
     range: { lo: 0, hi: gridModelRef.current.viewportRowCount }

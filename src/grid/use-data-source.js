@@ -48,7 +48,7 @@ export default function useDataSource(dataSource, subscriptionDetails, callback)
   }
 
   useEffect(() => {
-    console.log(`%c useEffect - subscribe to new datasource`,'color:blue;font-weight:bold;')
+    console.log(`%c Viewport useEffect dataSOurce changed - subscribe to new datasource`,'color:blue;font-weight:bold;')
      init();
     // dispatchData({type: 'clear'});
 

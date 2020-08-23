@@ -6,31 +6,33 @@ let dataSource;
 const flasher = {name: 'number', renderer: {name: 'background', flashStyle: 'arrow'}};
 // const flasher = {name: 'number'};
 
-const agGridColumns = [
-  {name: 'product'},
-  {name: 'portfolio'},
-  {name: 'book'},
-  {name: 'trade'},
-  {name: 'dealType'},
-  {name: 'bidFlag'},
-  {name: 'current', type: flasher, aggregate: 'avg'},
-  {name: 'previous', type: flasher, aggregate: 'avg'},
-  {name: 'pl1', type: flasher},
-  {name: 'pl2', type: flasher},
-  {name: 'gainDx', type: flasher},
-  {name: 'sxPx', type: flasher},
-  {name: '_99out', type: flasher},
-  {name: 'submitterDealID'},
-  {name: 'submitterID'},
-  {name: 'batch'}
-]
+const schema = {
+  columns: [
+    {name: 'product'},
+    {name: 'portfolio'},
+    {name: 'book'},
+    {name: 'trade'},
+    {name: 'dealType'},
+    {name: 'bidFlag'},
+    {name: 'current', type: flasher, aggregate: 'avg'},
+    {name: 'previous', type: flasher, aggregate: 'avg'},
+    {name: 'pl1', type: flasher},
+    {name: 'pl2', type: flasher},
+    {name: 'gainDx', type: flasher},
+    {name: 'sxPx', type: flasher},
+    {name: '_99out', type: flasher},
+    {name: 'submitterDealID'},
+    {name: 'submitterID'},
+    {name: 'batch'}
+  ]
+}
 
 export default function getAgGridDataSource(){
 
   // startWorker();
-  const columns = agGridColumns;
+  const columns = schema.columns;
   dataSource = new WorkerDataSource({
-    columns, 
+    schema, 
     primaryKey: 'trade', 
     url: '/tables/ag-grid-demo/config.js'
   });

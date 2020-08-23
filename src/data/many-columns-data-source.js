@@ -1,11 +1,13 @@
+// @ts-nocheck
 import { LocalDataSource } from "@heswell/data-source";
 
 export default function getManyColumnsDataSource(columnCount, rowCount){
-    /** @type {Column[]} */
-    const columns = [
-      { name: "id", width: 100, locked: true },
-      { name: "ccy", width: 100, locked: true }
-    ];
+    const schema = {
+      columns: [
+        { name: "id", width: 100, locked: true },
+        { name: "ccy", width: 100, locked: true }
+      ]
+    };
 
     const data = [];
 
@@ -14,7 +16,7 @@ export default function getManyColumnsDataSource(columnCount, rowCount){
       if ((i-2)%3 === 0){
         heading = `Group ${((i-2)/3) + 1}`
       }
-      columns.push({ name: `${i - 1}M`, width: 100, heading: [`${i - 1}M`, heading] });
+      schema.columns.push({ name: `${i - 1}M`, width: 100, heading: [`${i - 1}M`, heading] });
     }
 
     for (let i = 0; i < rowCount; i++) {
@@ -27,7 +29,7 @@ export default function getManyColumnsDataSource(columnCount, rowCount){
 
     const end = performance.now();
     console.log(`creating data took ${end - start} ms`);
-    const dataSource = new LocalDataSource({ data, columns });
-    return [columns, dataSource]
+    const dataSource = new LocalDataSource({ data, schema });
+    return [schema.columns, dataSource]
 
 }

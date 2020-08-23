@@ -128,7 +128,7 @@ function setPivotColumns(state, action){
 
 /** @type {GridModelReducer<'set-columns'>} */
 function setAvailableColumns(state, action){
-  if (!this.columnGroups){
+  if (!state.columnGroups){
     const {columnNames, columnGroups, headingDepth} = buildColumnGroups(state, action.columns);
     const totalHeaderHeight = state.headerHeight * headingDepth;
 
