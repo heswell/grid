@@ -28,6 +28,7 @@ const availableSources = [
   {label: 'Order Blotter', id: 'order-blotter', locations: ['remote']},
   {label: 'AG Grid Demo', id: 'ag-grid-demo', locations: ['worker']},
   {label: 'PSP Streaming', id: 'psp-streaming', locations: ['worker']},
+  {label: 'PSP Superstore', id: 'psp-superstore', locations: ['worker']},
 ];
 
 const getDataSource = id => availableSources.find(source => source.id === id);

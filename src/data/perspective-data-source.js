@@ -1,23 +1,25 @@
 import { PerspectiveDataSource } from "@heswell/data-source";
 
-export default function getPerspectivesDataSource(){
+export default function getPerspectivesDataSource(dataSourceId){
 
-  let columns = [
-    {name: "name"},
-    {name: "client"},
-    {name: "date"},
-    {name: "lastUpdate"},
-    {name: "chg", type: "number"},
-    {name: "bid", type: "number"},
-    {name: "ask", type: "number"},
-    {name: "vol", type: "number"}
-  ]
+  let dataSource;
 
-  let dataSource = new PerspectiveDataSource({
-    columns, 
-    configUrl: '/tables/psp-securities-demo/config.js',
-  });
+  if (dataSourceId === 'psp-streaming'){
 
-  return [columns, dataSource];
+    dataSource = new PerspectiveDataSource({
+      configUrl: '/tables/psp-securities-demo/config.js',
+    });
+
+  } else if (dataSourceId === 'psp-superstore'){
+
+    dataSource = new PerspectiveDataSource({
+      dataUrl: '/tables/psp-superstore/superstore.arrow'
+    });
+
+  } else {
+    throw Error('getPerspectiveDataSource, unknown dataSourceId ${dataSourceId}');
+  }
+
+  return [[], dataSource];
 
 }

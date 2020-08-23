@@ -190,9 +190,6 @@ const Viewport = forwardRef(function Viewport(
   const classes = useStyles();
 
   const toggleStrategy = useMemo(() => getToggleStrategy(dataSource), [dataSource]);
-  console.log(`render viewport viewport Height: ${gridModel.viewportHeight},
-    horizontalScrollbarHeight.current ${horizontalScrollbarHeight.current}
-    current contentHeight ${contentHeight.current}`);
 
   return (
     <>

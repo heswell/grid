@@ -35,8 +35,9 @@ export function buildData(source, location, columnCount=100, rowCount=1000){
 
     return getAgGridDataSource();
 
-  } else if (source === 'psp-streaming'){
-    return getPerspectiveDataSource();
+  } else if (source.startsWith('psp')){
+    
+    return getPerspectiveDataSource(source);
 
   } else if (source === 'instruments') {  
     
@@ -64,6 +65,8 @@ export function buildData(source, location, columnCount=100, rowCount=1000){
     const dataSource = new RemoteDataSource(dataConfig);
     return [undefined, dataSource]
 
+  } else {
+    throw Error('useTestData does not recognize data source ${source}')
   }
 }
 
