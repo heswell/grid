@@ -52,10 +52,6 @@ export default function useDataSource(dataSource, subscriptionDetails, callback)
      init();
     // dispatchData({type: 'clear'});
 
-    console.log(`useDataSOurce about to subscribe to new data SOurce
-      columnNames: ${subscriptionDetails.columnNames.join(',')}
-    `)
-
     dataSource.subscribe(subscriptionDetails,
       /* postMessageToClient */
       msg => {

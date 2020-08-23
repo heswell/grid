@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useReducer, useRef, useState } from "react";
-import ColumnGroupHeader from "./column-group-header";
 import GridContext from "./grid-context";
 import Header from "./grid-header";
 import {MenuProvider} from './context-menu/menu-context';
@@ -12,7 +11,6 @@ import {GridModel, measureColumns} from './grid-model-utils';
 
 /** @type {GridComponent} */
 const Grid = (props) => {
-  const {dataSource} = props;
   const gridEl = useRef(null);
   const viewport = useRef(null);
   const scrollableHeader = useRef(null);
@@ -43,25 +41,24 @@ const Grid = (props) => {
 
   const classes = useStyles();
 
+  const [dataSource, setDataSource] = useState(props.dataSource);
+
   const [gridModel, dispatchGridModel] = useReducer(
     modelReducer,
     props,
     initModel
   );
 
-  useEffectSkipFirst(() => {
-    console.log(`%c Grid useEffect dataSOurce changed - `,'color:blue;font-weight:bold;')
-  }, [dataSource])  
-
-    console.log(`render with columnNames ${JSON.stringify(gridModel.columnNames)}`, gridModel.columnGroups)
-
   //TODO do we need to useCallback here - can we ever send stale props ?
   useEffectSkipFirst(() => {
-    console.log(`initialize the grid model with columns`, props.columns)
     dispatchGridModel({type: 'initialize', props});
-  },[props.columns, props.columnSizing, props.groupBy])
+    if (props.dataSource !== dataSource){
+      setDataSource(props.dataSource)
+    }
+  },[props.columns, props.columnSizing, props.dataSource, props.groupBy])
 
   useEffectSkipFirst(() => {
+    console.log('SORT changed')
     dataSource.sort(GridModel.sortBy(gridModel));
   },[gridModel.sortColumns])
 

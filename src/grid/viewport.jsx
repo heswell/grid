@@ -65,12 +65,12 @@ const Viewport = forwardRef(function Viewport(
   const showColumnBearer = useRef(columnDragData !== null);
   showColumnBearer.current = columnDragData !== null;  
 
-  const canvasCount = gridModel.columnGroups.length;
+  const canvasCount = gridModel.columnGroups ? gridModel.columnGroups.length : 0;
   if (canvasRefs.current.length !== canvasCount) {
     // add or remove refs
     canvasRefs.current = Array(canvasCount).fill(null).map((_, i) => canvasRefs.current[i] || createRef());
   }
-  const scrollableCanvasIdx = gridModel.columnGroups.findIndex(group => !group.locked);
+  const scrollableCanvasIdx = gridModel.columnGroups ? gridModel.columnGroups.findIndex(group => !group.locked) : -1;
 
   useImperativeHandle(ref, () => ({
     beginHorizontalScroll: () => {
@@ -205,7 +205,7 @@ const Viewport = forwardRef(function Viewport(
           ref={scrollingEl}
           style={{ height: Math.max(contentHeight.current + horizontalScrollbarHeight.current, gridModel.viewportHeight) }}
         >
-          {gridModel.columnGroups.map((columnGroup, idx) => (
+          {gridModel.columnGroups ? gridModel.columnGroups.map((columnGroup, idx) => (
             <Canvas
               columnGroupIdx={idx}
               contentHeight={contentHeight.current}
@@ -220,7 +220,7 @@ const Viewport = forwardRef(function Viewport(
               toggleStrategy={toggleStrategy} // brand new, not well thought out yet
               totalHeaderHeight={gridModel.headerHeight * gridModel.headingDepth}
             />
-          ))}
+          )) : null}
         </div>
       </div>
       {columnDragData && <>

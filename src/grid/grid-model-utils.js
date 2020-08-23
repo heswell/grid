@@ -1,7 +1,9 @@
 import {  indexOfCol, metadataKeys } from '@heswell/utils'
 
 export const getHorizontalScrollbarHeight = columnGroups =>
-  columnGroups.some(({width, contentWidth}) => width < contentWidth) ? 15 : 0;
+  columnGroups
+    ? columnGroups.some(({width, contentWidth}) => width < contentWidth) ? 15 : 0
+    : 0;
 
 
 

@@ -20,6 +20,6 @@ export default function getPerspectivesDataSource(dataSourceId){
     throw Error('getPerspectiveDataSource, unknown dataSourceId ${dataSourceId}');
   }
 
-  return [[], dataSource];
+  return [undefined, dataSource];
 
 }

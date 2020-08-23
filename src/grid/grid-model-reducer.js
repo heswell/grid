@@ -56,9 +56,8 @@ const reducerActionHandlers = {
 };
 
 export const initModel = (gridProps) => {
-
   const {
-    columns=[],
+    columns,
     columnSizing = 'static',
     defaultColumnWidth = DEFAULT_COLUMN_WIDTH,
     groupBy: groupByProp,
@@ -384,7 +383,12 @@ function resizeGrid(state, {height, width}){
   }
 }
 
+const NO_COLUMN_GROUPS = {headingDepth: 0}
+
 function buildColumnGroups(state, columns, groupBy) {
+  if (!columns){
+    return NO_COLUMN_GROUPS;
+  }
   const {columnSizing, defaultColumnWidth, minColumnWidth, width: gridWidth} = state;
   let column = null;
   let columnGroup = null;

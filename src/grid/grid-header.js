@@ -6,10 +6,11 @@ import useStyles from './use-styles';
 export default function GridHeader({gridModel, scrollableHeaderRef, onColumnDrag}){
 
   const classes = useStyles();
+  const {columnGroups, headerHeight, headingDepth} = gridModel;
   
   return (
-    <div className={classes.headerContainer} style={{ height: gridModel.headerHeight * gridModel.headingDepth }}>
-    {gridModel.columnGroups.map((columnGroup, idx) => (
+    <div className={classes.headerContainer} style={{ height: headerHeight * headingDepth }}>
+    {columnGroups ? columnGroups.map((columnGroup, idx) => (
       <ColumnGroupHeader
         columnGroup={columnGroup}
         columnGroupIdx={idx}
@@ -21,7 +22,7 @@ export default function GridHeader({gridModel, scrollableHeaderRef, onColumnDrag
         sortColumns={gridModel.sortColumns}
         width={columnGroup.width}
       />
-    ))}
+    )): null}
   </div>
 
   )
