@@ -12,27 +12,29 @@ export default createUseStyles(theme => ({
     '--grid-header-background': theme['--grid-header-background'] || theme['--grid-background'] || 'white',
 
     backgroundColor: 'var(--grid-background)',
+    boxSizing: 'border-box',
     position: 'absolute',
     fontFamily: 'Roboto',
     fontSize: 'var(--grid-font-size)',
+    overflow: 'hidden',
     '&.scrolling-x': {
-      '& $headerContainer': {
-        display: 'none'
-      },
+      paddingTop: '0px !important',
       '& $Viewport': {
         overflowY: 'hidden !important',
-        top: '0 !important'
+        height: '100% !important'
       },
       // '& $Canvas$scrollable': {
-      //   backgroundColor: 'green'
-      //   // marginBottom: 15
+      //   // position: 'absolute',
+      //   '& $ColumnGroupHeader': {
+      //     position: 'relative'
+      //   }
       // },
       '& $Canvas $ColumnGroupHeader': {
-        display: 'block'
+        position: 'static'
       },
-      '& $canvasContentWrapper': {
-        position: 'relative'
-      }
+      // '& $canvasContentWrapper': {
+      //   position: 'relative'
+      // }
     }
   },
 
@@ -54,10 +56,10 @@ export default createUseStyles(theme => ({
   },
 
   Viewport: {
-    position: 'absolute',
-    left: 0,
-    bottom: 0,
-    right: 0,
+    // position: 'absolute',
+    // left: 0,
+    // bottom: 0,
+    // right: 0,
     overflowX: 'hidden',
     overflowY: 'auto',
   },
@@ -65,15 +67,14 @@ export default createUseStyles(theme => ({
   scrollingCanvasContainer: {
     overflow: 'hidden',
     whiteSpace: 'nowrap',
-    transform: 'translate3d(0, 0, 0)'
   },
 
   Canvas: {
     display: 'inline-block',
-    position: 'absolute',
+    // position: 'absolute',
     top: 0,
+    verticalAlign: 'top',
     '& $ColumnGroupHeader': {
-      display: 'none',
       position: 'absolute',
       top: 0
     },
@@ -92,15 +93,14 @@ export default createUseStyles(theme => ({
   scrollable: {
     overflowX: 'auto',
     overscrollBehaviorX: 'contain',
-    overflowY: 'hidden',
-    '& $canvasContent': {
-      position: 'relative'
-    }
+    overflowY: 'hidden'
   },
 
   canvasContentWrapper: {},
 
-  canvasContent: {},
+  canvasContent: {
+    position: 'relative'
+  },
 
   GridRow: {
     boxSizing: 'border-box',

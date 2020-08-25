@@ -18,12 +18,18 @@ const ColumnGroupHeader = React.memo(forwardRef(function ColumnGroupHeader({
     width },
   ref
 ) {
+  const columnGroupHeader = useRef(null);
   const scrollingHeaderWrapper = useRef(null);
   const { dispatchGridModelAction } = useContext(GridContext);
 
   useImperativeHandle(ref, () => ({
-    endHorizontalScroll: scrollLeft => {
+    beginHorizontalScroll: (width) => {
+      columnGroupHeader.current.style.width = width + 'px';
+      scrollingHeaderWrapper.current.style.transform = `translate3d(0px, 0px, 0px)`;
+    },
+    endHorizontalScroll: (scrollLeft, width) => {
       scrollingHeaderWrapper.current.style.transform = `translate3d(-${scrollLeft}px, 0px, 0px)`;
+      columnGroupHeader.current.style.width = width + 'px';
     }
   }));
 
@@ -59,7 +65,7 @@ const ColumnGroupHeader = React.memo(forwardRef(function ColumnGroupHeader({
 
   const { contentWidth, headings = [] } = columnGroup;
   return (
-    <div className={classes.ColumnGroupHeader} style={{ height: height * depth, width }}>
+    <div className={classes.ColumnGroupHeader} ref={columnGroupHeader} style={{ height: height * depth, width }}>
       <div ref={scrollingHeaderWrapper}
         style={{ height: height * depth, width: contentWidth }} >
       

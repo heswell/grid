@@ -272,7 +272,6 @@ interface CanvasProps {
   rowHeight: number;
   rows: Row[];
   toggleStrategy: ToggleStrategy;
-  totalHeaderHeight: number;
 }
 
 type CanvasType = React.ForwardRefExoticComponent<CanvasProps>;

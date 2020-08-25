@@ -13,7 +13,7 @@ import {GridModel, measureColumns} from './grid-model-utils';
 const Grid = (props) => {
   const gridEl = useRef(null);
   const viewport = useRef(null);
-  const scrollableHeader = useRef(null);
+  // const scrollableHeader = useRef(null);
   const initialRender = useRef(true);
   /** @type {[ColumnDragData, React.Dispatch<ColumnDragData>]} */
   const [columnDragData, setColumnDragData] = useState(null);
@@ -30,7 +30,7 @@ const Grid = (props) => {
     if (!draggingColumn.current){
       const scrollLeft = viewport.current.endHorizontalScroll();
       gridEl.current.classList.remove("scrolling-x");
-      scrollableHeader.current.endHorizontalScroll(scrollLeft);
+      // scrollableHeader.current.endHorizontalScroll(scrollLeft);
     }
   };
 
@@ -114,13 +114,13 @@ const Grid = (props) => {
     }
   },[props.height, props.width]);
 
-  const { height, width } = gridModel;
+  const { height, width, headerHeight, headingDepth } = gridModel;
 
   return (// Question, how much overhead are we introducing be adding gridModel to GridContext ? Perhaps it belongs in it's own context
       <GridContext.Provider value={{ dispatchGridAction, dispatchGridModelAction: dispatchGridModel, gridModel }}>
         <MenuProvider>
-        <div className={classes.Grid} ref={gridEl} style={{ width, height }}>
-          <Header gridModel={gridModel} onColumnDrag={handleColumnDrag} scrollableHeaderRef={scrollableHeader}/>
+        <div className={classes.Grid} ref={gridEl} style={{ width, height, paddingTop: headerHeight * headingDepth }}>
+          {/* <Header gridModel={gridModel} onColumnDrag={handleColumnDrag} scrollableHeaderRef={scrollableHeader}/> */}
           <Viewport
             dataSource={dataSource}
             gridModel={gridModel}

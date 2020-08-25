@@ -197,7 +197,7 @@ const Viewport = forwardRef(function Viewport(
       <div
         className={classes.Viewport}
         ref={viewportEl}
-        style={{ top: gridModel.headerHeight * gridModel.headingDepth }}
+        style={{ height: gridModel.viewportHeight }}
         onScroll={handleVerticalScroll}
       >
         <div
@@ -218,7 +218,6 @@ const Viewport = forwardRef(function Viewport(
               rowHeight={gridModel.rowHeight}
               rows={data.rows}
               toggleStrategy={toggleStrategy} // brand new, not well thought out yet
-              totalHeaderHeight={gridModel.headerHeight * gridModel.headingDepth}
             />
           )) : null}
         </div>

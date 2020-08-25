@@ -8,7 +8,7 @@ import getManyColumnsDataSource from './many-columns-data-source';
 
 
 
-export function buildData(source, location, columnCount=100, rowCount=1000){
+export function buildData(source, location, columnCount=20, rowCount=100){
 
   if (source === 'many-columns'){
     
