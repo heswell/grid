@@ -28,6 +28,7 @@ const Canvas = forwardRef(function Canvas(
     gridModel,
     height,
     horizontalScrollbarHeight,
+    onColumnDrag,
     rowHeight,
     rows,
     toggleStrategy
@@ -206,7 +207,6 @@ const Canvas = forwardRef(function Canvas(
         newScrollLeft = Math.min(maxScroll, scrollLeft + scrollDistance);
       }
     }
-    console.log(`SCROLLBY`)
     canvasEl.current.scrollLeft = newScrollLeft;
     // return the distance actually scrolled
     return newScrollLeft - scrollLeft;
@@ -264,10 +264,11 @@ const Canvas = forwardRef(function Canvas(
       <ColumnGroupHeader
         columnGroup={columnGroup}
         columnGroupIdx={columnGroupIdx}
-        columns={columns}
         depth={gridModel.headingDepth}
         height={gridModel.headerHeight}
+        onColumnDrag={onColumnDrag}
         ref={columnGroupHeader}
+        sortColumns={gridModel.sortColumns}
         width={columnGroup.width}/>
 
       <div className={classes.canvasContentWrapper} style={{ /* top: totalHeaderHeight, */ width: contentWidth }}>

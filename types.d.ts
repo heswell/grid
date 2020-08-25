@@ -173,8 +173,12 @@ type GridModelReducerTable = {[key in GridModelAction['type']]: GridModelReducer
 
 type Row = any;
 
+type DragPhase = 'drag-start' | 'drag' | 'drag-pause' | 'drag-end'
+type ResizePhase = 'begin' | 'resize' | 'end';
+
 type onHeaderCellDragHandler = (phase: 'drag-start', column: Column, columnPosition: number, mousePosition: number) => void;
-type onColumnDragHandler = (phase: DragPhase, column: Column, insertIdx?: number, insertPos?: number, columnLeft?: number) => void;
+
+type onColumnDragHandler = (phase: 'drag' | 'drag-end', column: Column, insertIdx?: number, insertPos?: number, columnLeft?: number) => void;
 type onColumnGroupHeaderDragHandler = (phase: 'drag-start', columnGroupIdx: number, column: Column, columnPosition: number, mousePosition: number) => void;
 
 interface ColumnGroupHeaderProps {
@@ -191,8 +195,6 @@ interface ColumnGroupHeaderProps {
 type ColumnGroupHeaderType = React.FC<ColumnGroupHeaderProps>;
 
 
-type DragPhase = 'drag-start' | 'drag' | 'drag-pause' | 'drag-end'
-type ResizePhase = 'begin' | 'resize' | 'end';
 interface HeaderCellProps {
   className?: string;
   column: Column;
@@ -228,6 +230,7 @@ interface ViewportProps {
   columnDragData?: ColumnDragData;
   gridModel: GridModel;
   onColumnDrag?: onColumnDragHandler;
+  onColumnDragStart?: onColumnGroupHeaderDragHandler;
   ref?: React.Ref<any>;
 }
 
@@ -268,6 +271,7 @@ interface CanvasProps {
   gridModel: GridModel;
   height: number;
   horizontalScrollbarHeight: number;
+  onColumnDrag?: onColumnGroupHeaderDragHandler;
   ref?: CanvasRef;
   rowHeight: number;
   rows: Row[];

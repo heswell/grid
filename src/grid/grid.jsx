@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import GridContext from "./grid-context";
-import Header from "./grid-header";
 import {MenuProvider} from './context-menu/menu-context';
 import modelReducer, { initModel } from "./grid-model-reducer";
 import useGridAction from "./use-grid-action";
@@ -125,7 +124,9 @@ const Grid = (props) => {
             dataSource={dataSource}
             gridModel={gridModel}
             columnDragData={columnDragData}
+            // TODO merge these props
             onColumnDrag={handleColumnDrag}
+            onColumnDragStart={handleColumnDrag}
             ref={viewport}
           />
         </div>

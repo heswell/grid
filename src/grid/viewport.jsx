@@ -34,7 +34,7 @@ const getToggleStrategy = dataSource => {
 
 /** @type {ViewportComponent} */
 const Viewport = forwardRef(function Viewport(
-  { dataSource, columnDragData, gridModel, onColumnDrag },
+  { dataSource, columnDragData, gridModel, onColumnDrag, onColumnDragStart },
   ref
 ) {
   const viewportEl = useRef(null);
@@ -214,6 +214,7 @@ const Viewport = forwardRef(function Viewport(
               height={gridModel.viewportHeight}
               horizontalScrollbarHeight={horizontalScrollbarHeight.current}
               key={idx}
+              onColumnDrag={onColumnDragStart}
               ref={canvasRefs.current[idx]}
               rowHeight={gridModel.rowHeight}
               rows={data.rows}
