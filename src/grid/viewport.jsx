@@ -34,7 +34,7 @@ const getToggleStrategy = dataSource => {
 
 /** @type {ViewportComponent} */
 const Viewport = forwardRef(function Viewport(
-  { dataSource, columnDragData, gridModel, onColumnDrag, onColumnDragStart },
+  { dataSource, columnDragData, gridModel, onColumnDragStart, onColumnDrop },
   ref
 ) {
   const viewportEl = useRef(null);
@@ -119,9 +119,9 @@ const Viewport = forwardRef(function Viewport(
       }
       const groupInsertIdx = getColumnGroupColumnIdx(gridModel, insertIdx);
       await canvas.endDrag(columnDragData, groupInsertIdx, columnLeft);
-      onColumnDrag(dragPhase, draggedColumn, insertIdx);
+      onColumnDrop(dragPhase, draggedColumn, insertIdx);
     }
-  },[gridModel, onColumnDrag, columnDragData]);
+  },[gridModel, onColumnDrop, columnDragData]);
 
   useUpdate(() => {
     setRange(firstVisibleRow.current, firstVisibleRow.current + gridModel.viewportRowCount);
@@ -214,7 +214,7 @@ const Viewport = forwardRef(function Viewport(
               height={gridModel.viewportHeight}
               horizontalScrollbarHeight={horizontalScrollbarHeight.current}
               key={idx}
-              onColumnDrag={onColumnDragStart}
+              onColumnDragStart={onColumnDragStart}
               ref={canvasRefs.current[idx]}
               rowHeight={gridModel.rowHeight}
               rows={data.rows}

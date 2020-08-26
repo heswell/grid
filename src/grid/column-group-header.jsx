@@ -13,7 +13,7 @@ const ColumnGroupHeader = React.memo(forwardRef(function ColumnGroupHeader({
     columns=columnGroup.columns,
     depth,
     height,
-    onColumnDrag,
+    onColumnDragStart,
     sortColumns,
     width },
   ref
@@ -44,7 +44,7 @@ const ColumnGroupHeader = React.memo(forwardRef(function ColumnGroupHeader({
   const classes = useStyles();
 
   const handleDrag = useCallback((phase, column, columnPosition, mousePosition) => 
-    onColumnDrag(phase, columnGroupIdx, column, columnPosition, mousePosition)
+  onColumnDragStart(phase, columnGroupIdx, column, columnPosition, mousePosition)
   ,[columnGroup, columnGroupIdx])
 
   const handleRemoveGroup = useCallback(column => {

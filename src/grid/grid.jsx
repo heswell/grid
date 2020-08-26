@@ -76,32 +76,31 @@ const Grid = (props) => {
       dataSource.setSubscribedColumns(gridModel.columnNames);
 }, [dataSource, gridModel.columnNames]);
 
-  const handleColumnDrag = useCallback(
+  const handleColumnDragStart = useCallback(
       (phase, ...args) => {
-    // if (!column.isHeading) {
-        if (phase === 'drag-start') {
-            const [columnGroupIdx, column, columnPosition, mousePosition] = args;
-            const {left} = gridEl.current.getBoundingClientRect();
-            const columnGroup = gridModel.columnGroups[columnGroupIdx];
-            handleHorizontalScrollStart();
-            setColumnDragData({
-              column,
-              columnGroupIdx,
-              columnIdx: columnGroup.columns.findIndex(col => col.key === column.key),
-              initialColumnPosition: columnPosition - left,
-              columnPositions: measureColumns(gridModel, left),
-              mousePosition
-            });
-            draggingColumn.current = true;
-          } else if (phase === 'drag-end') {
-            const [column, insertIdx] = args;
-            setColumnDragData(null);
-            draggingColumn.current = false;
-            // TODO we need the final scrollLeft here
-            handleHorizontalScrollEnd();
-            dispatchGridModel({ type: 'add-col', column, insertIdx });
-          }
-    // }
+          const [columnGroupIdx, column, columnPosition, mousePosition] = args;
+          const {left} = gridEl.current.getBoundingClientRect();
+          const columnGroup = gridModel.columnGroups[columnGroupIdx];
+          handleHorizontalScrollStart();
+          setColumnDragData({
+            column,
+            columnGroupIdx,
+            columnIdx: columnGroup.columns.findIndex(col => col.key === column.key),
+            initialColumnPosition: columnPosition - left,
+            columnPositions: measureColumns(gridModel, left),
+            mousePosition
+          });
+          draggingColumn.current = true;
+      },[gridModel]
+  );
+  const handleColumnDrop = useCallback(
+      (phase, ...args) => {
+          const [column, insertIdx] = args;
+          setColumnDragData(null);
+          draggingColumn.current = false;
+          // TODO we need the final scrollLeft here
+          handleHorizontalScrollEnd();
+          dispatchGridModel({ type: 'add-col', column, insertIdx });
       },[gridModel]
   );
 
@@ -124,9 +123,8 @@ const Grid = (props) => {
             dataSource={dataSource}
             gridModel={gridModel}
             columnDragData={columnDragData}
-            // TODO merge these props
-            onColumnDrag={handleColumnDrag}
-            onColumnDragStart={handleColumnDrag}
+            onColumnDragStart={handleColumnDragStart}
+            onColumnDrop={handleColumnDrop}
             ref={viewport}
           />
         </div>

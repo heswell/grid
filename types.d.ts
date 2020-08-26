@@ -179,7 +179,7 @@ type ResizePhase = 'begin' | 'resize' | 'end';
 type onHeaderCellDragHandler = (phase: 'drag-start', column: Column, columnPosition: number, mousePosition: number) => void;
 
 type onColumnDragHandler = (phase: 'drag' | 'drag-end', column: Column, insertIdx?: number, insertPos?: number, columnLeft?: number) => void;
-type onColumnGroupHeaderDragHandler = (phase: 'drag-start', columnGroupIdx: number, column: Column, columnPosition: number, mousePosition: number) => void;
+type onColumnDragStart = (phase: 'drag-start', columnGroupIdx: number, column: Column, columnPosition: number, mousePosition: number) => void;
 
 interface ColumnGroupHeaderProps {
   columnGroup: ColumnGroup;
@@ -187,7 +187,7 @@ interface ColumnGroupHeaderProps {
   columns?: Column[];
   depth: number;
   height: number;
-  onColumnDrag?: onColumnGroupHeaderDragHandler;
+  onColumnDragStart?: onColumnDragStart;
   ref?: React.RefObject<any>;
   sortColumns?: SortColumns;
   width: number;
@@ -229,7 +229,7 @@ interface ViewportProps {
   dataSource: DataSource;
   columnDragData?: ColumnDragData;
   gridModel: GridModel;
-  onColumnDrag?: onColumnDragHandler;
+  onColumnDrop?: onColumnDragHandler;
   onColumnDragStart?: onColumnGroupHeaderDragHandler;
   ref?: React.Ref<any>;
 }
@@ -271,7 +271,7 @@ interface CanvasProps {
   gridModel: GridModel;
   height: number;
   horizontalScrollbarHeight: number;
-  onColumnDrag?: onColumnGroupHeaderDragHandler;
+  onColumnDragStart?: onColumnDragStart;
   ref?: CanvasRef;
   rowHeight: number;
   rows: Row[];

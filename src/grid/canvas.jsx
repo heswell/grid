@@ -28,7 +28,7 @@ const Canvas = forwardRef(function Canvas(
     gridModel,
     height,
     horizontalScrollbarHeight,
-    onColumnDrag,
+    onColumnDragStart,
     rowHeight,
     rows,
     toggleStrategy
@@ -266,7 +266,7 @@ const Canvas = forwardRef(function Canvas(
         columnGroupIdx={columnGroupIdx}
         depth={gridModel.headingDepth}
         height={gridModel.headerHeight}
-        onColumnDrag={onColumnDrag}
+        onColumnDragStart={onColumnDragStart}
         ref={columnGroupHeader}
         sortColumns={gridModel.sortColumns}
         width={columnGroup.width}/>
