@@ -1,8 +1,10 @@
 declare module '@heswell/data-source';
 
+type SelectionModel = 'checkbox' | 'single-row' | 'multi-row';
 type SortDirection = 'asc' | 'dsc';
 
 type GroupBy = Array<string | [string, SortDirection]>
+
 
 interface ColumnDescriptor {
   locked?: boolean;
@@ -54,6 +56,7 @@ type DataSource = any;
 type ColumnSizing = 'fill' | 'auto' | 'static'; 
 
 interface GridProps {
+  className?: string;
   columns: ColumnDescriptor[];
   columnSizing? : ColumnSizing;
   dataSource: DataSource;
@@ -61,14 +64,18 @@ interface GridProps {
   groupBy?: GroupBy;
   headerHeight?: number;
   height: number;
+  minColumnWidth?: number;
   pivotBy?: GroupBy;
   rowHeight?: number;
+  selectionModel?: SelectionModel;
   width: number;
 }
 
 type GridComponent = React.FC<GridProps>;
 
 type GridContext = React.Context<{
+  custom: any;
+  dataSource: DataSource;
   dispatchGridAction: (action: GridAction) => void;
   dispatchGridModelAction: (action: GridModelAction) => void;
   gridModel: GridModel;
@@ -91,6 +98,9 @@ type GridModel = {
   columnNames: string[];
   columnSizing: ColumnSizing;
   columnGroups: ColumnGroup[];
+  customFooterHeight: number;
+  customHeaderHeight: number;
+  customInlineHeaderHeight: number;
   defaultColumnWidth?: number;
   groupColumns: SortColumns;// rename - too confusing with columnGroups
   groupState: GroupState;
@@ -99,6 +109,7 @@ type GridModel = {
   height: number;
   horizontalScrollbarHeight: number;
   minColumnWidth?: number;
+  noColumnHeaders?: boolean;
   pivotColumns: SortColumns;
   rowHeight: number;
   sortColumns: SortColumns;
@@ -110,10 +121,12 @@ type GridModel = {
 type GridAction = 
   | {type: 'scroll-start-horizontal', scrollLeft: number}
   | {type: 'scroll-end-horizontal', scrollLeft: number}
+  | {type: 'selection', idx: number, row: any[], rangeSelect: boolean, keepExistingSelection: boolean}
 
 type GridActionHandler<T extends GridAction['type']> = 
   T extends 'scroll-start-horizontal' ? (scrollLeft: number) => void :
   T extends 'scroll-end-horizontal' ? (scrollLeft: number) => void :
+  T extends 'selection' ? (action: {idx: number, row: any[], rangeSelect: boolean, keepExistingSelection: boolean}) => void :
   never;
 
 type True = true;
@@ -185,12 +198,8 @@ interface ColumnGroupHeaderProps {
   columnGroup: ColumnGroup;
   columnGroupIdx: number;
   columns?: Column[];
-  depth: number;
-  height: number;
   onColumnDragStart?: onColumnDragStart;
   ref?: React.RefObject<any>;
-  sortColumns?: SortColumns;
-  width: number;
 }
 type ColumnGroupHeaderType = React.FC<ColumnGroupHeaderProps>;
 
@@ -226,7 +235,6 @@ type DataAction = any;
 type DataReducer = (state: GridData, action: DataAction) => GridData;
 
 interface ViewportProps {
-  dataSource: DataSource;
   columnDragData?: ColumnDragData;
   gridModel: GridModel;
   onColumnDrop?: onColumnDragHandler;
@@ -287,6 +295,7 @@ interface RowProps {
   height: number;
   idx: number;
   keys: any;
+  onClick: (idx: number, row: any[], rangeSelect: boolean, keepExistingSelection: boolean) => void;
   row: Row;
   toggleStrategy: ToggleStrategy;
 }

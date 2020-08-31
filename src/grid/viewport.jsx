@@ -31,10 +31,9 @@ const getToggleStrategy = dataSource => {
   }
 }
 
-
 /** @type {ViewportComponent} */
 const Viewport = forwardRef(function Viewport(
-  { dataSource, columnDragData, gridModel, onColumnDragStart, onColumnDrop },
+  { columnDragData, gridModel, onColumnDragStart, onColumnDrop },
   ref
 ) {
   const viewportEl = useRef(null);
@@ -53,7 +52,7 @@ const Viewport = forwardRef(function Viewport(
   },[gridModel.horizontalScrollbarHeight])
 
   // TODO we could get gridModel here as well. Or would it be better to split gridModel into it's own context ?
-  const { dispatchGridModelAction } = useContext(GridContext);
+  const { dataSource, dispatchGridModelAction } = useContext(GridContext);
 
   const gridModelRef = useRef(gridModel);
   if (gridModelRef.current !== gridModel){
@@ -75,7 +74,7 @@ const Viewport = forwardRef(function Viewport(
   useImperativeHandle(ref, () => ({
     beginHorizontalScroll: () => {
       if (!showColumnBearer.current){
-        const header = gridModel.headerHeight * gridModel.headingDepth; 
+        const header = gridModel.headerHeight * gridModel.headingDepth + gridModel.customInlineHeaderHeight; 
         scrollingEl.current.style.height = `${header + Math.max(contentHeight.current +
         horizontalScrollbarHeight.current, gridModel.viewportHeight)}px`;
         canvasRefs.current.forEach(({current}) => current.beginHorizontalScroll());  
@@ -186,7 +185,6 @@ const Viewport = forwardRef(function Viewport(
       default:
    }
   });
-  
 
   const classes = useStyles();
 

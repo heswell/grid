@@ -44,7 +44,6 @@ export default function useDataSource(dataSource, subscriptionDetails, callback)
       // TODO pair this with a timeout that turns update mode back off if we go a while without updates
       frame.current = requestAnimationFrame(applyUpdate)
     }
-
   }
 
   useEffect(() => {
@@ -86,6 +85,11 @@ export default function useDataSource(dataSource, subscriptionDetails, callback)
           `);
            //----------------- Test Only ----------------------
         }
+        
+        if (msg.filter !== undefined){
+          dataSource.emit('filter', msg.filter);
+        }
+
         if (msg.rows) {
           dispatchData({
             type: "data",

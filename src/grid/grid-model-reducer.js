@@ -14,6 +14,18 @@ import {
 const DEFAULT_COLUMN_TYPE = {name: 'string'}
 const DEFAULT_COLUMN_WIDTH = 100;
 const MIN_COLUMN_WIDTH = 80;
+const CHECKBOX_COLUMN = {
+  name: '',
+  key: metadataKeys.SELECTED,
+  width: 25,
+  sortable: false,
+  type: {
+    name: 'checkbox',
+    renderer: {
+      name: 'selection-checkbox'
+    }
+  }
+};
 
 const RESIZING = {resizing: true};
 const NOT_RESIZING = {resizing: false};
@@ -55,7 +67,7 @@ const reducerActionHandlers = {
   'column-show': showColumn
 };
 
-export const initModel = (gridProps) => {
+export const initModel = ([gridProps, custom]) => {
   const {
     columns,
     columnSizing = 'static',
@@ -64,28 +76,41 @@ export const initModel = (gridProps) => {
     headerHeight = 32,
     height,
     minColumnWidth = MIN_COLUMN_WIDTH,
+    noColumnHeaders=false,
     pivotBy: pivotByProp,
     rowHeight = 24,
+    selectionModel, // default should be none
     width } = gridProps;
 
   const groupColumns = sortMap(groupByProp) || undefined;
   // We won't be able to build the column headers for pivot columns until we start to get data
   const pivotColumns = sortMap(pivotByProp) || undefined;
 
+  // The custom support is all new ... still under review
+   const {
+      footer: {height: customFooterHeight},
+      header: {height: customHeaderHeight},
+      inlineHeader: {height: customInlineHeaderHeight}
+    } = custom; 
+
   const state = {
     columnNames: null,
     columnGroups: undefined,
     columnSizing,
+    customFooterHeight,
+    customHeaderHeight,
+    customInlineHeaderHeight,
     defaultColumnWidth,
     groupColumns, 
     groupState: null,
-    headerHeight,
+    headerHeight: noColumnHeaders ? 0 : headerHeight,
     headingDepth: undefined,
     height,
     horizontalScrollbarHeight: undefined,
     minColumnWidth,
     pivotColumns,
     rowHeight,
+    selectionModel,
     sortColumns: null,
     viewportHeight: undefined,
     viewportRowCount: undefined,
@@ -94,17 +119,29 @@ export const initModel = (gridProps) => {
 
   const groupBy = GridModel.groupBy({groupColumns});
   const {columnNames, columnGroups, headingDepth} = buildColumnGroups(state, columns, groupBy);
-  const totalHeaderHeight = headerHeight * headingDepth;
+  const totalHeaderHeight = noColumnHeaders 
+    ? customHeaderHeight
+    : headerHeight * headingDepth + customHeaderHeight;
 
   state.columnNames = columnNames;
   state.columnGroups = columnGroups;
   state.headingDepth = headingDepth;
   state.horizontalScrollbarHeight = getHorizontalScrollbarHeight(columnGroups);
-  state.viewportHeight = height - totalHeaderHeight;
+  state.viewportHeight = height - totalHeaderHeight - customFooterHeight - customInlineHeaderHeight;
   state.viewportRowCount =  Math.ceil((height - totalHeaderHeight) / rowHeight) + 1;
 
   return state;
 };
+
+/** @type {GridModelReducer<'initialize'>} */
+function initialize(state, {props}){
+  const custom = {
+    inlineHeader: {height: state.customInlineHeaderHeight},
+    header: {height: state.customHeaderHeight},
+    footer: {height: state.customFooterHeight}
+  }
+  return initModel([props, custom]);
+}
 
 /** @type {GridModelReducer<'set-pivot-columns'>} */
 function setPivotColumns(state, action){
@@ -243,11 +280,6 @@ function resizeHeading(state, {phase, column, width}){
     resizeColumnHeaderHeading = null;
     return {...state, columnGroups};
   }
-}
-
-/** @type {GridModelReducer<'initialize'>} */
-function initialize(state, {props}){
-  return initModel(props);
 }
 
 let resizeColumnHeaderHeading = null;
@@ -389,13 +421,18 @@ function buildColumnGroups(state, columns, groupBy) {
   if (!columns){
     return NO_COLUMN_GROUPS;
   }
-  const {columnSizing, defaultColumnWidth, minColumnWidth, width: gridWidth} = state;
+  const {columnSizing, defaultColumnWidth, minColumnWidth, selectionModel, width: gridWidth} = state;
   let column = null;
   let columnGroup = null;
   let columnGroups = [];
 
   let gridContentWidth = gridWidth - 15;// how do we know about vertical scrollbar
   let availableWidth = gridContentWidth; 
+
+  const preCols = selectionModel === 'checkbox' ? [CHECKBOX_COLUMN]: [];
+
+  //const _columns = preCols.concat(keyedColumns.map(addLabel));
+
 
   const headingDepth = getMaxHeadingDepth(columns);
   // TODO separate keys from columns
@@ -416,18 +453,16 @@ function buildColumnGroups(state, columns, groupBy) {
   let flexCount = 0;
   const initialFlex = {$count:0, $total: 0};
 
-  for (let i = 0; i < nonGroupedColumns.length; i++) {
-    const {
-      flex=undefined,
-      initialFlex: initFlex=0, 
-      key,
-      name,
-      heading=[name],
-      locked = false,
-      minWidth=minColumnWidth,
-      type, // normalize this here
-      width=defaultColumnWidth 
-    } = nonGroupedColumns[i];
+  for (let {
+    flex=undefined,
+    key,
+    name,
+    heading=[name],
+    locked = false,
+    minWidth=minColumnWidth,
+    type, // normalize this here
+    width=defaultColumnWidth 
+  } of preCols.concat(nonGroupedColumns)) {
 
     if (columnGroup === null || columnGroup.locked !== locked) {
       const headings = headingDepth > 1 ? [] : undefined;
@@ -463,10 +498,10 @@ function buildColumnGroups(state, columns, groupBy) {
     minTotalColumnWidth += minWidth;
     totalColumnWidth += width;
 
-    if (initFlex){
+    if (flex){
       initialFlex.$count += 1;
-      initialFlex.$total += initFlex;
-      initialFlex[name] = initFlex;
+      initialFlex.$total += flex;
+      initialFlex[name] = flex;
     }
 
     if (flex){

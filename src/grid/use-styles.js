@@ -18,23 +18,13 @@ export default createUseStyles(theme => ({
     fontSize: 'var(--grid-font-size)',
     overflow: 'hidden',
     '&.scrolling-x': {
-      paddingTop: '0px !important',
       '& $Viewport': {
         overflowY: 'hidden !important',
         height: '100% !important'
       },
-      // '& $Canvas$scrollable': {
-      //   // position: 'absolute',
-      //   '& $ColumnGroupHeader': {
-      //     position: 'relative'
-      //   }
-      // },
       '& $Canvas $ColumnGroupHeader': {
-        position: 'static'
+        position: 'relative'
       },
-      // '& $canvasContentWrapper': {
-      //   position: 'relative'
-      // }
     }
   },
 

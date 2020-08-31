@@ -1,16 +1,15 @@
-import React, { memo } from "react";
+import React, { memo, useCallback } from "react";
 import cx from 'classnames';
 import { metadataKeys } from '@heswell/utils';
 import Cell from "./grid-cell";
 import GroupCell from "./grid-group-cell";
 import useStyles from './use-styles';
 
-const {DEPTH} = metadataKeys;
+const {DEPTH, KEY} = metadataKeys;
 
 /** @type {RowType} */
-const Row =  memo(function Row({ columns, height, idx, row, toggleStrategy }) {
-
-  const isEmptyRow = row[0] === undefined;
+const Row =  memo(function Row({ columns, height, idx, row, onClick, toggleStrategy }) {
+  const isEmptyRow = row[KEY] === undefined;
   const groupLevel = row[DEPTH];
   const isGroup = !isEmptyRow && groupLevel !== 0;
 
@@ -24,9 +23,16 @@ const Row =  memo(function Row({ columns, height, idx, row, toggleStrategy }) {
 
   // better - make a single call to useGridCellComponent here, with columns
 
+  const handleClick = useCallback(e => {
+    const rangeSelect = e.shiftKey;
+    const keepExistingSelection = e.ctrlKey || e.metaKey /* mac only */;
+    onClick(idx, row, rangeSelect, keepExistingSelection);
+  },[idx, row])
+
   return (
     <div
       className={className}
+      onClick={handleClick} 
       style={{
         transform: `translate3d(0px, ${idx * height}px, 0px)`,
         height

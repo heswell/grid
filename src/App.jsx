@@ -1,12 +1,13 @@
 // @ts-nocheck
 
 import React, {useEffect, useMemo, useRef, useState} from "react";
-import { Grid } from "./grid";
+import { Grid } from "@heswell/grid";
 import MenuContext from './grid/context-menu';
 import ControlPanel from './control-panel/control-panel'
 import {ThemeProvider} from 'react-jss';
 import themes from './themes';
 import {buildData} from './data/use-test-data';
+import InlineFilter from './customisations/inline-filter/inline-filter';
 
 // import renderContextMenu from './components/material-ui/context-menu/show-context-menu';
 
@@ -100,8 +101,17 @@ export default function App() {
         height={state.height}
         headerHeight={32}
         pivotBy={state.pivotBy}
-        width={state.width}
-      />
+        width={state.width}>
+          <Grid.InlineHeader height={25}>
+            <InlineFilter />
+          </Grid.InlineHeader>
+          {/* <Grid.Header height={25}>
+            <div style={{height: 25, backgroundColor: 'red'}} />
+          </Grid.Header>
+          <Grid.Footer height={40}>
+            <div style={{height: "100%", backgroundColor: 'green'}} />
+          </Grid.Footer> */}
+      </Grid>
       </MenuContext.Provider>
       <ControlPanel
         height={toolbarHeight}

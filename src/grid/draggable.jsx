@@ -1,5 +1,5 @@
 //TODO use useDrag
-import React, {useRef, useCallback} from 'react';
+import React, {useRef, useCallback, useEffect} from 'react';
 
 const NOOP = () => {}
 
@@ -13,6 +13,13 @@ const Draggable = (allProps) => {
         onDragStart=NOOP,
         ...props
     } = allProps;
+
+    useEffect(() => {
+        console.log('Draggable MOUNT');
+        return () => {
+            console.log('Draggable UNMOUNT');
+        }
+    },[])
 
     const position = useRef({x:0,y:0});
     const dragState = useRef(null);

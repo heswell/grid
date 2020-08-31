@@ -60,7 +60,7 @@ const Canvas = forwardRef(function Canvas(
       const canvasHeight = columnGroup.locked
         ? gridModel.height - horizontalScrollbarHeight
         : gridModel.height;
-      canvasEl.current.style.height = `${canvasHeight}px`;
+      canvasEl.current.style.height = `${canvasHeight - gridModel.customHeaderHeight - gridModel.customFooterHeight}px`;
     },
     endHorizontalScroll: () => {
       const canvasHeight = columnGroup.locked
@@ -233,6 +233,11 @@ const Canvas = forwardRef(function Canvas(
     [dispatchCanvasAction, dispatchGridAction]
   );
 
+  const handleRowClick = useCallback((idx, row, rangeSelect, keepExistingSelection) => {
+    dispatchGridAction({type: 'selection', idx, row, rangeSelect, keepExistingSelection});
+  },[])
+
+
   const onHorizontalScroll = useScroll("scrollLeft", horizontalScrollHandler, 5);
 
   // we don't need this, absIdx is already in the row (with offset)
@@ -261,15 +266,12 @@ const Canvas = forwardRef(function Canvas(
       style={{ height: canvasHeight, left, width }}
       onScroll={onHorizontalScroll}>
 
+      {/* Dont need to render header if noColumnHeaders specified */}  
       <ColumnGroupHeader
         columnGroup={columnGroup}
         columnGroupIdx={columnGroupIdx}
-        depth={gridModel.headingDepth}
-        height={gridModel.headerHeight}
         onColumnDragStart={onColumnDragStart}
-        ref={columnGroupHeader}
-        sortColumns={gridModel.sortColumns}
-        width={columnGroup.width}/>
+        ref={columnGroupHeader}/>
 
       <div className={classes.canvasContentWrapper} style={{ /* top: totalHeaderHeight, */ width: contentWidth }}>
         <div
@@ -285,6 +287,7 @@ const Canvas = forwardRef(function Canvas(
                 height={rowHeight}
                 idx={absIdx}
                 keys={cellKeys}
+                onClick={handleRowClick}
                 row={row}
                 toggleStrategy={toggleStrategy}
               />

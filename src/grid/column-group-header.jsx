@@ -1,6 +1,8 @@
 import React, { forwardRef, useCallback, useContext, useImperativeHandle, useRef } from "react";
 import cx from 'classnames';
 import GridContext from "./grid-context";
+import ColumnGroupContext from "./column-group-context";
+
 import HeaderCell from "./header-cell";
 import GroupHeaderCell from "./group-header-cell";
 import HeadingCell from "./heading-cell";
@@ -11,16 +13,12 @@ const ColumnGroupHeader = React.memo(forwardRef(function ColumnGroupHeader({
     columnGroup,
     columnGroupIdx,
     columns=columnGroup.columns,
-    depth,
-    height,
-    onColumnDragStart,
-    sortColumns,
-    width },
+    onColumnDragStart},
   ref
 ) {
   const columnGroupHeader = useRef(null);
   const scrollingHeaderWrapper = useRef(null);
-  const { dispatchGridModelAction } = useContext(GridContext);
+  const { custom, dispatchGridModelAction, gridModel } = useContext(GridContext);
 
   useImperativeHandle(ref, () => ({
     beginHorizontalScroll: (width) => {
@@ -51,6 +49,8 @@ const ColumnGroupHeader = React.memo(forwardRef(function ColumnGroupHeader({
     dispatchGridModelAction({ type: 'group', column, remove: true });
   },[]);
 
+  const {customHeaderHeight: top, customInlineHeaderHeight, headerHeight, headingDepth, sortColumns} = gridModel;
+  const height = headerHeight * headingDepth;
 
   const renderColHeadings = heading =>
   heading.map((item, idx) =>
@@ -63,21 +63,21 @@ const ColumnGroupHeader = React.memo(forwardRef(function ColumnGroupHeader({
       />
   )
 
-  const { contentWidth, headings = [] } = columnGroup;
+  const { contentWidth, headings = [], width } = columnGroup;
   return (
-    <div className={classes.ColumnGroupHeader} ref={columnGroupHeader} style={{ height: height * depth, width }}>
+    <div className={classes.ColumnGroupHeader} ref={columnGroupHeader} style={{ height: height + customInlineHeaderHeight, top, width }}>
       <div ref={scrollingHeaderWrapper}
-        style={{ height: height * depth, width: contentWidth }} >
+        style={{ height, width: contentWidth }} >
       
       {headings.map((heading, idx) =>
-        <div key={idx} style={{ height, width }}>
+        <div key={idx} style={{ height: headerHeight, width }}>
             {renderColHeadings(heading)}
         </div>).reverse()
       }
 
       <div
         role="row"
-        style={{ height, width: contentWidth }}>
+        style={{ height: headerHeight, width: contentWidth }}>
         {columns.map((column,idx) => 
           column.isGroup ? (
             <GroupHeaderCell
@@ -99,6 +99,9 @@ const ColumnGroupHeader = React.memo(forwardRef(function ColumnGroupHeader({
         ))}
       </div>
       </div>
+      <ColumnGroupContext.Provider value={columnGroup}>
+        {custom.inlineHeader.component}
+      </ColumnGroupContext.Provider>
     </div>
   );
 }));
