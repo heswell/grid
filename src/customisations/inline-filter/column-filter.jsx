@@ -2,7 +2,7 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import cx from 'classnames';
 import {DataTypes, getFilterType, includesColumn, STARTS_WITH} from '@heswell/utils'
-import useGridStyles from '../../grid/use-styles';
+import {Draggable, useGridStyles} from '@heswell/grid';
 import useFilterStyles from './use-styles';
 
 import dataSourceFactory from './data-source-factory';
@@ -13,7 +13,6 @@ import {
     FilterPanel
 } from '../filters';
 
-import Draggable from '../../grid/draggable';
 import { PopupService } from '../popup-service/popup-service';
 // import { PopupService } from '@heswell/popup';
 

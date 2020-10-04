@@ -1,8 +1,7 @@
 // @ts-nocheck
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import {DataTypes, NOT_IN} from '@heswell/utils';
-import GridContext from "../../grid/grid-context";
-import ColumnGroupContext from "../../grid/column-group-context";
+import {GridContext, ColumnGroupContext} from "@heswell/grid";
 import ColumnFilter from './column-filter';
 
 export default function InlineFilter(){

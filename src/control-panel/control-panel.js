@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
-import Header from './data-source-panel';
+import DataSourcePanel from './data-source-panel';
 import GridPanel from './grid-panel';
 import useStyles from './control-panel-styles.js';
 
@@ -29,11 +29,11 @@ export default function ControlPanel({height, messageRef, onAction, onChange, st
   }
   return (
     <div className={classes.root} style={{height}}>
-      <Header
+      <DataSourcePanel
         classes={classes}
-        dataGrid={stateProp.dataGrid} 
-        dataLocation={stateProp.dataLocation}
-        dataSource={stateProp.dataSource}
+        dataGridId={stateProp.dataGrid} 
+        dataLocationId={stateProp.dataLocation}
+        dataSourceId={stateProp.dataSource}
         onChange={onChange}/>
         
       <div className={classes.body}>

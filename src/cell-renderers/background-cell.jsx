@@ -2,7 +2,7 @@
 import React, { useEffect,useRef } from 'react';
 import cx from 'classnames';
 import { metadataKeys } from '@heswell/utils';
-import useFormatter from '../grid/use-cell-formatter';
+import {useCellFormatter} from '@heswell/grid';
 import useStyles from './background-style';
 
 // import './background-cell.css';
@@ -66,7 +66,7 @@ const BackgroundCell = props => {
 
   const classes = useStyles();
 
-  const [format] = useFormatter(column);
+  const [format] = useCellFormatter(column);
   const className = cx(classNameProp, classes.background, {
     [classes.up1]: direction === UP1,
     [classes.up2]: direction === UP2,

@@ -9,6 +9,8 @@ import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import InputBase from '@material-ui/core/InputBase';
 
+import config, { dataSources } from './config';
+
 const StyledBase = withStyles({
   root: {
     marginLeft: 6,
@@ -18,49 +20,43 @@ const StyledBase = withStyles({
   }
 })(InputBase)
 
-const availableGrids = [
-    {label : 'Heswell', id: 'heswell'}
-]
+const availableGrids = Object.entries(config).map(([id, {label}]) => ({
+  id, label
+}))
 
-const availableSources = [
-  {label: 'Instruments', id: 'instruments', locations: ['local', 'remote']},
-  {label: 'Many Columns', id: 'many-columns', locations: ['local']},
-  {label: 'Order Blotter', id: 'order-blotter', locations: ['remote']},
-  {label: 'AG Grid Demo', id: 'ag-grid-demo', locations: ['worker']},
-  {label: 'PSP Streaming', id: 'psp-streaming', locations: ['worker']},
-  {label: 'PSP Superstore', id: 'psp-superstore', locations: ['worker']},
-];
-
-const getDataSource = id => availableSources.find(source => source.id === id);
-const getDataLocation = dataSource => {
-  const {locations: [location]} = getDataSource(dataSource);
+const getDataLocation = (dataGridId, dataSourceId) => {
+  const [location] = config[dataGridId].dataSources[dataSourceId];
   return location;
-}
+};
 
-const getGridSourceLocation = gridId => {
-  return {};
-}
+const getGridSourceLocation = dataGridId =>
+  config[dataGridId].defaultDataSource;
 
 export default function ControlPanelHeader({
   classes, 
-  dataGrid,
-  dataLocation,
-  dataSource,
+  dataGridId,
+  dataLocationId,
+  dataSourceId,
   onChange
 }){
 
-  const {locations: availableLocations} = getDataSource(dataSource);
-
   const handleDataGrid = e => onChange({dataGrid: e.target.value, ...getGridSourceLocation(e.target.value)});
-  const handleDataSource = e => onChange({dataSource: e.target.value, dataLocation: getDataLocation(e.target.value)});
+  const handleDataSource = e => onChange({dataSource: e.target.value, dataLocation: getDataLocation(dataGridId, e.target.value)});
   const handleDataLocation = e => onChange({dataLocation: e.target.value});
+
+  const availableDataSources = Object.entries(config[dataGridId].dataSources).map(([id, locations]) => ({
+    ...dataSources[id],
+    locations
+  }));
+  const availableLocations = config[dataGridId].dataSources[dataSourceId]
+
   return (
       <header className={cx(classes.header, classes.field)}>
       <InputLabel id="control-panel-data-grid">Data Grid</InputLabel>
       <Select
         input={<StyledBase />}
         labelId="control-panel-data-grid"
-        value={dataGrid}
+        value={dataGridId}
         onChange={handleDataGrid}
       >
         {availableGrids.map(({id, label}) =>
@@ -72,10 +68,10 @@ export default function ControlPanelHeader({
       <Select
         input={<StyledBase />}
         labelId="control-panel-data-source"
-        value={dataSource}
+        value={dataSourceId}
         onChange={handleDataSource}
       >
-        {availableSources.map(({id, label}) =>
+        {availableDataSources.map(({id, label}) =>
           <MenuItem key={id} value={id}>{label}</MenuItem>
         )}
       </Select>
@@ -84,7 +80,7 @@ export default function ControlPanelHeader({
         row aria-label="position" 
         name="position"
         onChange={handleDataLocation}
-        value={dataLocation} 
+        value={dataLocationId} 
         className={classes.location}>
 
         <FormControlLabel

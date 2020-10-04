@@ -1,7 +1,7 @@
 import React from 'react';
 import cx from 'classnames';
 
-import useGridStyles from '../../../grid/use-styles';
+import {useGridStyles} from '@heswell/grid';
 import useFilterStyles from '../../inline-filter/use-styles';
 
 export const FilterPanelHeader = ({column, onMouseDown}) => {
