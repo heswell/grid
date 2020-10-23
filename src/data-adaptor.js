@@ -17,6 +17,8 @@ export default class DataAdaptor {
     this._dataProvider = value;
   }
 
+
+
   startLoadTest(){
     this._dataProvider.startLoadTest();
   }
@@ -31,6 +33,23 @@ export default class DataAdaptor {
 
   toString(){
     console.log(`DataAdaptor ${this.source} ${this.location} provider: ${this.dataProvider}`)
+  }
+
+  group(options){
+
+    if (typeof this._dataProvider.group === 'function'){
+      this._dataProvider.group(options.columns);
+    } else {
+      console.log(`DataAdaptor ${this.source} ${this.location}:  provider: ${this._dataProvider} does not support grouping`)
+    }
+  }
+
+  sort(options){
+    if (typeof this._dataProvider.sort === 'function'){
+      this._dataProvider.sort(options.columns);
+    } else {
+      console.log(`DataAdaptor ${this.source} ${this.location}:  provider: ${this._dataProvider} does not support sorting`)
+    }
   }
 
 } 

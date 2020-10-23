@@ -20,10 +20,6 @@ const StyledBase = withStyles({
   }
 })(InputBase)
 
-const availableGrids = Object.entries(config).map(([id, {label}]) => ({
-  id, label
-}))
-
 const getDataLocation = (dataGridId, dataSourceId) => {
   const [location] = config[dataGridId].dataSources[dataSourceId];
   return location;
@@ -32,7 +28,9 @@ const getDataLocation = (dataGridId, dataSourceId) => {
 const getGridSourceLocation = dataGridId =>
   config[dataGridId].defaultDataSource;
 
-export default function ControlPanelHeader({
+export default function DataSourcePanel({
+  availableGrids,
+  availableLocations,
   classes, 
   dataGridId,
   dataLocationId,
@@ -48,7 +46,6 @@ export default function ControlPanelHeader({
     ...dataSources[id],
     locations
   }));
-  const availableLocations = config[dataGridId].dataSources[dataSourceId]
 
   return (
       <header className={cx(classes.header, classes.field)}>

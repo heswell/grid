@@ -1,11 +1,9 @@
 import React, {useEffect, useMemo, useRef} from 'react';
 import "regular-table";
 import "regular-table/dist/css/material.css";
-import perspective from '@finos/perspective';
 
-import PerspectiveDataModel from './PerspectiveDataModel';
 import Measure, {useMeasure} from '../../components/measure';
-import DataProvider from '../perspective/perspective-data-provider';
+import DataProvider from './regular-table-data-provider';
 
 const RegularTable = ({dataAdaptor, height, width}) => {
 
@@ -21,22 +19,12 @@ const RegularTable = ({dataAdaptor, height, width}) => {
   const regular = useRef(null);
 
   useEffect(() => {
-    async function setData(){
-      const dataRequest = dataProvider.fetchData();
-      const worker = perspective.worker();
-      const buffer = await dataRequest;
-      const table = await worker.table(buffer);
-      const view = table.view();
-
-      const dataModel = new PerspectiveDataModel();
-      await dataModel.set_view(table, view);
-
+    dataProvider.on('ready', () => {
+      const {dataModel} = dataProvider;
       regular.current.addStyleListener(dataModel.applyStyle.bind(dataModel));
       regular.current.setDataListener(dataModel.getData.bind(dataModel));
-
-      await regular.current.draw();
-    }
-    setData();
+      regular.current.draw();
+    })
   },[dataProvider])
 
   return (

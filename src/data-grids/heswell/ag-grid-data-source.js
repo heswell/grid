@@ -3,7 +3,7 @@ import { WorkerDataSource } from "@heswell/data-source";
 let testStartTime;
 let dataSource;
 
-const flasher = {name: 'number', renderer: {name: 'background-cell', flashStyle: 'arrow'}};
+const flasher = {name: 'number', renderer: {name: 'background-cell', flashStyle: 'background'}};
 // const flasher = {name: 'number'};
 
 const schema = {

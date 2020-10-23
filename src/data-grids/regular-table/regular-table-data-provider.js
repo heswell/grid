@@ -1,13 +1,27 @@
+import {EventEmitter} from '@heswell/utils';
+import {buildData} from './build-data';
 
-export default class PerspectiveDataProvider {
+// TODO do we need this or should it just be PerspectiveDataProvider ?
+export default class RegularDataProvider extends EventEmitter {
 
   constructor(source, location){
+    super();
     console.log(`Regular Table dataSource ${source} ${location}`)
     this.source = source;
     this.location = location;
-    // const [columns, dataSource] = buildData(source, location);
-    // this.columns = columns;
-    // this.dataSource = dataSource;
+    buildData(source, location).then((dataModel) => {
+      this.dataModel = dataModel;
+      this.emit('ready')
+    });
+  }
+
+
+  group(columns){
+    console.log(`Regular Table Data Provider group`)
+  }
+
+  sort(columns){
+    console.log(`Regular Table Data Provider sort`)
   }
 
   startLoadTest(){
@@ -23,6 +37,6 @@ export default class PerspectiveDataProvider {
   }
 
   toString(){
-    console.log(`Regular Table DataProvider ${this.source} ${this.location}`)
+    return `Regular Table DataProvider ${this.source} ${this.location}`;
   }
 } 

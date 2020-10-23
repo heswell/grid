@@ -19,6 +19,14 @@ export default class PerspectiveDataProvider {
 
   }
 
+  group(columns){
+    console.log(`Perspective Data Provider group`)
+  }
+
+  sort(columns){
+    console.log(`Perspectivee Data Provider sort`)
+  }
+
   startLoadTest(){
     console.log(`start load test`)
   }
@@ -32,6 +40,6 @@ export default class PerspectiveDataProvider {
   }
 
   toString(){
-    console.log(`Perspective DataProvider ${this.source} ${this.location}`)
+    return `Perspective DataProvider ${this.source} ${this.location}`;
   }
 } 

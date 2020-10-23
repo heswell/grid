@@ -11,6 +11,14 @@ export default class HeswellDataProvider {
     this.dataSource = dataSource;
   }
 
+  group(columns){
+    this.dataSource.group(columns);
+  }
+
+  sort(columns){
+    this.dataSource.sort(columns);
+  }
+
   startLoadTest(){
     this.dataSource.startLoadTest();
   }
@@ -24,7 +32,7 @@ export default class HeswellDataProvider {
   }
 
   toString(){
-    console.log(`Heswell DataProvider ${this.source} ${this.location}`)
+    return `Heswell DataProvider ${this.source} ${this.location}`;
   }
 
 } 

@@ -4,7 +4,7 @@ import {ThemeProvider} from 'react-jss';
 import themes from '../../themes';
 import DataProvider from './heswell-data-provider';
 
-import InlineFilter from '../../customisations/inline-filter/inline-filter';
+// import InlineFilter from '../../customisations/inline-filter/inline-filter';
 
 import BackgroundCell from '../../cell-renderers/background-cell';
 

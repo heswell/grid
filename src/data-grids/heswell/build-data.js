@@ -15,7 +15,7 @@ export function buildData(source, location, columnCount=20, rowCount=100){
     
     return getManyColumnsDataSource(columnCount, rowCount);
 
-  } else if (source === 'ag-grid-demo'){
+  } else if (source === 'prices'){
 
     return getAgGridDataSource();
 

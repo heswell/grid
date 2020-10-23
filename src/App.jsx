@@ -41,10 +41,9 @@ export default function App() {
   }
 
   const startStressTest = () => dataAdaptor.startStressTest();
-  
   const startLoadTest = () => dataAdaptor.startLoadTest();
-  
   const stopTests = () => dataAdaptor.stopTest();
+
   
   const handleAction = action => {
     switch(action.type){
@@ -53,6 +52,11 @@ export default function App() {
       case 'stop-test': return stopTests();
       case 'scroll-by': return scrollBy(action.scrollBy);
       default:
+        if (typeof dataAdaptor[action.type] === 'function'){
+          const {type, ...rest} = action;
+          return dataAdaptor[type](rest);
+        }
+        console.log(`App: don't know how to handle action ${action.type}`)
     }
   }
 
