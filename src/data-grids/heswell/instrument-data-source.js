@@ -1,4 +1,4 @@
-import { LocalDataSource } from "@heswell/data-source";
+import { LocalDataSource, WorkerDataSource } from "@heswell/data-source";
 import { RemoteDataSource } from "@heswell/data-remote";
 
 const schema = { 
@@ -41,6 +41,15 @@ export default function getInstrumentSource(location){
       tableName
     });
 
+  } else if (location === 'worker'){
+    dataSource = new WorkerDataSource({
+      schema, 
+      configUrl: '/tables/instruments/config.js',
+      tableName
+    });
+
+  } else {
+    throw Error(`Unknown data location ${location}`)
   }
   return [schema.columns, dataSource];
 

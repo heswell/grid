@@ -2,14 +2,14 @@
 import { useRef } from 'react';
 import { RemoteDataSource } from "@heswell/data-remote";
 import getAgGridDataSource from './ag-grid-data-source';
-import getPerspectiveDataSource from './perspective-data-source';
+// import getPerspectiveDataSource from './perspective-data-source';
 import getInstrumentDataSource from './instrument-data-source';
 import getSuperstoreDataSource from './superstore-data-source';
 import getManyColumnsDataSource from './many-columns-data-source';
 
 
 
-export function buildData(source, location, columnCount=20, rowCount=100){
+export function buildData(source, location, columnCount=100, rowCount=1000){
 
   if (source === 'many-columns'){
     
@@ -21,7 +21,7 @@ export function buildData(source, location, columnCount=20, rowCount=100){
 
   } else if (source === 'psp-superstore'){
     
-    return getPerspectiveDataSource(source);
+    //return getPerspectiveDataSource(source);
 
   } else if (source === 'superstore-arrow'){
     

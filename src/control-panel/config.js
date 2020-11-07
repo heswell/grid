@@ -41,6 +41,14 @@ export const dataSources = {
     actions: [
       {label: "GroupBy Product, Portfolio, Book", action: {type: "group", columns: [["product", "asc"], ["portfolio", "asc"], ["book", "asc"]]}}
     ]
+  },
+  "many-columns": {
+    "id": "many-columns",
+    "label": "Many Columns",
+    "type": "json",
+    url: '/tables/many-columns/config.js',
+    actions: [
+    ]
   }
 }
 
@@ -52,7 +60,8 @@ export default {
       "psp-superstore": ['worker', 'remote'],
       "superstore-arrow": ['local', 'worker', 'remote'],
       instruments: ['local', 'worker', 'remote'],
-      prices: ['worker']
+      prices: ['worker'],
+      "many-columns": ['local', 'worker', 'remote'],
     }
   },
   regular: {

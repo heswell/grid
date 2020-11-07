@@ -34,7 +34,7 @@ export default function getAgGridDataSource(){
   dataSource = new WorkerDataSource({
     schema, 
     primaryKey: 'trade', 
-    url: '/tables/ag-grid-demo/config.js'
+    configUrl: '/tables/ag-grid-demo/config.js'
   });
   dataSource.on('start', (type, msg) => {
     testStartTime = new Date().getTime();

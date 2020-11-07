@@ -18,17 +18,35 @@ const PerspectiveViewer = ({dataAdaptor, height, width}) => {
     return provider;
   }, [dataAdaptor, location, source])
 
+  useEffect(() => {
+    dataProvider.on('*', (evtName, options) => {
+      switch (evtName) {
+        case 'sort':
+          viewer.current.setAttribute('sort', JSON.stringify(options.columns))
+        break;
+
+        case 'group': 
+
+        break;
+        default:
+      }
+    })
+  },[dataProvider])
 
   const viewer = useRef(null);
   useEffect(() => {
     async function setData(){
-      viewer.current.load(await dataProvider.fetchData());
+      viewer.current.load(await dataProvider.table());
     }
     setData();
   },[dataProvider])
 
   return (
-    <perspective-viewer className="perspective-viewer-material" plugin="datagrid" ref={viewer} style={{height,width}}></perspective-viewer>
+    <perspective-viewer
+      className="perspective-viewer-material"
+      plugin="datagrid"
+      ref={viewer}
+      style={{height,width}}></perspective-viewer>
   )
 }
 

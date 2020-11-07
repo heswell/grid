@@ -1,94 +1,48 @@
-const MAX_LISTENERS = 10;
-
 class EventEmitter {
 
     constructor() {
         this._events = {};
-        this._maxListeners = MAX_LISTENERS;
     }
 
     addListener(type, listener) {
-        let m;
-
-        if (!isFunction(listener)) {
-            throw TypeError('listener must be a function');
-        }
-
         if (!this._events) {
             this._events = {};
         }
 
-        // To avoid recursion in the case that type === "newListener"! Before
-        // adding it to the listeners, first emit "newListener".
-        if (this._events.newListener) {
-            this.emit('newListener', type, listener);
-        }
-
         if (!this._events[type]) {
-            // Optimize the case of one listener. Don't need the extra array object.
             this._events[type] = listener;
         } else if (Array.isArray(this._events[type])) {
-            // If we've already got an array, just append.
             this._events[type].push(listener);
         } else {
-            // Adding the second element, need to change to array.
             this._events[type] = [this._events[type], listener];
         }
-
-        // Check for listener leak
-        if (Array.isArray(this._events[type]) && !this._events[type].warned) {
-            if (!isUndefined(this._maxListeners)) {
-                m = this._maxListeners;
-            } else {
-                m = MAX_LISTENERS;
-            }
-
-            if (m && m > 0 && this._events[type].length > m) {
-                this._events[type].warned = true;
-                console.error('(node) warning: possible EventEmitter memory ' +
-                    'leak detected. %d listeners added. ' +
-                    'Use emitter.setMaxListeners() to increase limit.',
-                this._events[type].length);
-            }
-        }
-
-        return this;
 
     }
 
     removeListener(type, listener) {
         let list, position, length, i;
 
-        if (!isFunction(listener)) {
-            throw TypeError('listener must be a function');
-        }
-
         if (!this._events || !this._events[type]) {
-            return this;
+            return;
         }
 
         list = this._events[type];
         length = list.length;
         position = -1;
 
-        if (list === listener ||
-            (isFunction(list.listener) && list.listener === listener)) {
+        if (list === listener) {
             delete this._events[type];
-            if (this._events.removeListener) {
-                this.emit('removeListener', type, listener);
-            }
 
         } else if (Array.isArray(list)) {
             for (i = length; i-- > 0;) {
-                if (list[i] === listener ||
-                    (list[i].listener && list[i].listener === listener)) {
+                if (list[i] === listener) {
                     position = i;
                     break;
                 }
             }
 
             if (position < 0) {
-                return this;
+                return;
             }
 
             if (list.length === 1) {
@@ -97,86 +51,31 @@ class EventEmitter {
             } else {
                 list.splice(position, 1);
             }
-
-            if (this._events.removeListener) {
-                this.emit('removeListener', type, listener);
-            }
         }
-
-        return this;
 
     }
 
     removeAllListeners(type) {
-
         if (!this._events) {
-            return this;
+            return;
+        } else if (type === undefined){
+            delete this._events;
+        } else {
+            delete this._events[type];
         }
-
-        const listeners = this._events[type];
-
-        if (isFunction(listeners)) {
-            this.removeListener(type, listeners);
-        } else if (listeners) {
-            // LIFO order
-            while (listeners.length) {
-                this.removeListener(type, listeners[listeners.length - 1]);
-            }
-        }
-        delete this._events[type];
-
-        return this;
-
     }
 
     emit(type, ...args) {
-
-        if (!this._events) {
-            this._events = {};
-        }
-
-        // If there is no 'error' event listener then throw.
-        if (type === 'error') {
-            if (!this._events.error ||
-                (isObject(this._events.error) && !this._events.error.length)) {
-                const err = arguments[1];
-                if (err instanceof Error) {
-                    throw err; // Unhandled 'error' event
-                } else {
-                    // At least give some kind of context to the user
-                    throw new Error('Uncaught, unspecified "error" event. (' + err + ')');
-                }
+        if (this._events) {
+            const handler = this._events[type];
+            if (handler){
+                invokeHandler(handler, type, args);
+            }
+            const wildcardHandler = this._events['*'];
+            if (wildcardHandler){
+                invokeHandler(wildcardHandler, type, args);
             }
         }
-
-        const handler = this._events[type];
-
-        if (isUndefined(handler)) {
-            return false;
-        }
-
-        if (isFunction(handler)) {
-            switch (args.length) {
-                // fast cases
-                case 0:
-                    handler.call(this);
-                    break;
-                case 1:
-                    handler.call(this, type, args[0]);
-                    break;
-                case 2:
-                    handler.call(this, type, args[0], args[1]);
-                    break;
-                // slower
-                default:
-                    handler.call(this, type, ...args);
-            }
-        } else if (Array.isArray(handler)) {
-            handler.slice().forEach(listener => listener.call(this, type, ...args));
-        }
-
-        return true;
-
     }
 
     once(type, listener) {
@@ -196,16 +95,25 @@ class EventEmitter {
 
 }
 
-function isFunction(arg) {
-    return typeof arg === 'function';
-}
-
-function isObject(arg) {
-    return typeof arg === 'object' && arg !== null;
-}
-
-function isUndefined(arg) {
-    return arg === void 0;
+function invokeHandler(handler, type, args){
+    if (Array.isArray(handler)){
+        handler.slice().forEach(listener => invokeHandler(listener, args));
+    } else {
+        switch (args.length) {
+            case 0:
+                handler(type);
+                break;
+            case 1:
+                handler(type, args[0]);
+                break;
+            case 2:
+                handler(type, args[0], args[1]);
+                break;
+            // slower
+            default:
+                handler.call(null, type, ...args);
+        }
+    }
 }
 
 var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
@@ -1168,9 +1076,9 @@ const OR = 'OR';
 const STARTS_WITH = 'SW';
 
 const SET_FILTER_DATA_COLUMNS = [
-    {name: 'name', key:0}, 
-    {name: 'count', key:1, width: 40, type: 'number'}, 
-    {name: 'totalCount', key:2, width: 40, type: 'number'}
+    {name: 'name', flex: 1}, 
+    {name: 'count', width: 40, type: 'number'}, 
+    {name: 'totalCount', width: 40, type: 'number'}
 ];
 
 const BIN_FILTER_DATA_COLUMNS = [
@@ -1636,29 +1544,6 @@ function mapSortCriteria(sortCriteria, columnMap, metadataOffset=0) {
   });
 }
 
-const toColumn = column =>
-  typeof column === 'string'
-      ? { name: column }
-      : column;
-
-function buildColumnMap(columns){
-  const start = metadataKeys.count;  
-  if (columns){
-      return columns.reduce((map, column, i) => {
-          if (typeof column === 'string'){
-              map[column] = start + i;
-          } else if (typeof column.key === 'number') {
-              map[column.name] = column.key;
-          } else {
-              map[column.name] = start + i;
-          }
-          return map;
-      },{})
-  } else {
-      return null;
-  }
-}
-
 function projectUpdates(updates){
     const results = [];
     const metadataOffset = metadataKeys.count - 2;
@@ -1670,8 +1555,8 @@ function projectUpdates(updates){
     return results;
 }
 
-function projectColumns(map, columns){
-  const length = columns.length;
+function projectColumns(tableRowColumnMap, columns){
+  const columnCount = columns.length;
   const {IDX, RENDER_IDX, DEPTH, COUNT, KEY, SELECTED, count} = metadataKeys;
   return (startIdx, offset, selectedRows=[]) => (row,i) => {
       // selectedRows are indices of rows within underlying dataset (not sorted or filtered)
@@ -1679,8 +1564,8 @@ function projectColumns(map, columns){
       // be overwritten with a different value below if rows are sorted/filtered 
       const baseRowIdx = row[IDX];
       const out = [];
-      for (let i=0; i < length;i++){
-          const colIdx = map[columns[i].name];
+      for (let i=0; i < columnCount;i++){
+          const colIdx = tableRowColumnMap[columns[i].name];
           out[count+i] = row[colIdx];
       }
 
@@ -1688,19 +1573,27 @@ function projectColumns(map, columns){
       out[RENDER_IDX] = 0;
       out[DEPTH] = 0;
       out[COUNT] = 0;
-      // assume row[0] is key for now
-      out[KEY] = row[map.KEY]; /// How do we identify, can it be done in table ?
+      out[KEY] = row[tableRowColumnMap.KEY];
       out[SELECTED] = selectedRows.includes(baseRowIdx) ? 1 : 0;
       return out;
   }
 }
 
 function getFilterType(column){
-  return column.filter || getDataType(column);
+  return column.filter || filterTypeFromColumnType(column);
 }
 
 // {name: 'Price', 'type': {name: 'price'}, 'aggregate': 'avg'},
 // {name: 'MarketCap', 'type': {name: 'number','format': 'currency'}, 'aggregate': 'sum'},
+
+const filterTypeFromColumnType = column => {
+    // TODO add remaining filter types
+    switch (getDataType(column)){
+        case 'number': return 'number'
+        default: return 'set';
+    }
+
+};
 
 function getDataType({type=null}){
   if (type === null){
@@ -1768,7 +1661,7 @@ const defaultUpdateConfig = {
     interval: 500
 };
 
-function buildColumnMap$1(columns){
+function buildColumnMap(columns){
     if (columns){
         const map = {IDX: 0, KEY: 1};
         for (let i=0;i<columns.length;i++){
@@ -1797,7 +1690,7 @@ class Table extends EventEmitter {
             ...updates
         };
         this.inputColumnMap = undefined;
-        this.columnMap = buildColumnMap$1(columns);
+        this.columnMap = buildColumnMap(columns);
         this.columnCount = 0;
         this.status = null;
 
@@ -1934,7 +1827,7 @@ class Table extends EventEmitter {
 
         if (this.columns === null){
             this.columns = columnsFromColumnMap(this.inputColumnMap);
-            this.columnMap = buildColumnMap$1(this.columns);
+            this.columnMap = buildColumnMap(this.columns);
         }
         this.status = 'ready';
         this.emit('ready');
@@ -2160,40 +2053,58 @@ function ascending(a, b) {
   return a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN;
 }
 
-function bisector(compare) {
-  if (compare.length === 1) compare = ascendingComparator(compare);
-  return {
-    left: function(a, x, lo, hi) {
-      if (lo == null) lo = 0;
-      if (hi == null) hi = a.length;
-      while (lo < hi) {
-        var mid = lo + hi >>> 1;
-        if (compare(a[mid], x) < 0) lo = mid + 1;
-        else hi = mid;
-      }
-      return lo;
-    },
-    right: function(a, x, lo, hi) {
-      if (lo == null) lo = 0;
-      if (hi == null) hi = a.length;
-      while (lo < hi) {
-        var mid = lo + hi >>> 1;
-        if (compare(a[mid], x) > 0) hi = mid;
-        else lo = mid + 1;
-      }
-      return lo;
+function bisector(f) {
+  let delta = f;
+  let compare = f;
+
+  if (f.length === 1) {
+    delta = (d, x) => f(d) - x;
+    compare = ascendingComparator(f);
+  }
+
+  function left(a, x, lo, hi) {
+    if (lo == null) lo = 0;
+    if (hi == null) hi = a.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      if (compare(a[mid], x) < 0) lo = mid + 1;
+      else hi = mid;
     }
-  };
+    return lo;
+  }
+
+  function right(a, x, lo, hi) {
+    if (lo == null) lo = 0;
+    if (hi == null) hi = a.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      if (compare(a[mid], x) > 0) hi = mid;
+      else lo = mid + 1;
+    }
+    return lo;
+  }
+
+  function center(a, x, lo, hi) {
+    if (lo == null) lo = 0;
+    if (hi == null) hi = a.length;
+    const i = left(a, x, lo, hi - 1);
+    return i > lo && delta(a[i - 1], x) > -delta(a[i], x) ? i - 1 : i;
+  }
+
+  return {left, center, right};
 }
 
 function ascendingComparator(f) {
-  return function(d, x) {
-    return ascending(f(d), x);
-  };
+  return (d, x) => ascending(f(d), x);
 }
 
-var ascendingBisect = bisector(ascending);
-var bisectRight = ascendingBisect.right;
+function number(x) {
+  return x === null ? NaN : +x;
+}
+
+const ascendingBisect = bisector(ascending);
+const bisectRight = ascendingBisect.right;
+const bisectCenter = bisector(number).center;
 
 function count(values, valueof) {
   let count = 0;
@@ -2258,32 +2169,47 @@ function constant(x) {
   };
 }
 
-function range(start, stop, step) {
-  start = +start, stop = +stop, step = (n = arguments.length) < 2 ? (stop = start, start = 0, 1) : n < 3 ? 1 : +step;
-
-  var i = -1,
-      n = Math.max(0, Math.ceil((stop - start) / step)) | 0,
-      range = new Array(n);
-
-  while (++i < n) {
-    range[i] = start + i * step;
-  }
-
-  return range;
-}
-
 var e10 = Math.sqrt(50),
     e5 = Math.sqrt(10),
     e2 = Math.sqrt(2);
 
-function tickStep(start, stop, count) {
-  var step0 = Math.abs(stop - start) / Math.max(0, count),
-      step1 = Math.pow(10, Math.floor(Math.log(step0) / Math.LN10)),
-      error = step0 / step1;
-  if (error >= e10) step1 *= 10;
-  else if (error >= e5) step1 *= 5;
-  else if (error >= e2) step1 *= 2;
-  return stop < start ? -step1 : step1;
+function ticks(start, stop, count) {
+  var reverse,
+      i = -1,
+      n,
+      ticks,
+      step;
+
+  stop = +stop, start = +start, count = +count;
+  if (start === stop && count > 0) return [start];
+  if (reverse = stop < start) n = start, start = stop, stop = n;
+  if ((step = tickIncrement(start, stop, count)) === 0 || !isFinite(step)) return [];
+
+  if (step > 0) {
+    start = Math.ceil(start / step);
+    stop = Math.floor(stop / step);
+    ticks = new Array(n = Math.ceil(stop - start + 1));
+    while (++i < n) ticks[i] = (start + i) * step;
+  } else {
+    step = -step;
+    start = Math.ceil(start * step);
+    stop = Math.floor(stop * step);
+    ticks = new Array(n = Math.ceil(stop - start + 1));
+    while (++i < n) ticks[i] = (start + i) / step;
+  }
+
+  if (reverse) ticks.reverse();
+
+  return ticks;
+}
+
+function tickIncrement(start, stop, count) {
+  var step = (stop - start) / Math.max(0, count),
+      power = Math.floor(Math.log(step) / Math.LN10),
+      error = step / Math.pow(10, power);
+  return power >= 0
+      ? (error >= e10 ? 10 : error >= e5 ? 5 : error >= e2 ? 2 : 1) * Math.pow(10, power)
+      : -Math.pow(10, -power) / (error >= e10 ? 10 : error >= e5 ? 5 : error >= e2 ? 2 : 1);
 }
 
 function sturges(values) {
@@ -2314,8 +2240,8 @@ function bin() {
 
     // Convert number of thresholds into uniform thresholds.
     if (!Array.isArray(tz)) {
-      tz = tickStep(x0, x1, tz);
-      tz = range(Math.ceil(x0 / tz) * tz, x1, tz); // exclusive
+      tz = ticks(x0, x1, tz);
+      if (tz[tz.length - 1] === x1) tz.pop(); // exclusive
     }
 
     // Remove any thresholds outside the domain.
@@ -2952,7 +2878,7 @@ function groupRows(rows, sortSet, columns, columnMap, groupby, options = DEFAULT
                     // as soon as we know we're regrouping, aggregate the open groups, in reverse order
                     for (let ii = levels - 1; ii >= level; ii--) {
                         const group = currentGroups[ii];
-                        aggregate(group, groups, sortSet, rows, columns, aggregations, leafCount, filter);
+                        aggregate(group, groups, sortSet, rows, aggregations, leafCount, filter);
                         if (filterSet && Math.abs(group[DEPTH]) === 1 && group[FILTER_COUNT] > 0){
                             group[NEXT_FILTER_IDX] = filterIdx;
                             filterIdx += group[FILTER_COUNT];
@@ -2983,7 +2909,7 @@ function groupRows(rows, sortSet, columns, columnMap, groupby, options = DEFAULT
     for (let i = levels - 1; i >= 0; i--) {
         if (currentGroups[i] !== null){
             const group = currentGroups[i];
-            aggregate(group, groups, sortSet, rows, columns, aggregations, leafCount, filter);
+            aggregate(group, groups, sortSet, rows, aggregations, leafCount, filter);
             if (filterSet && Math.abs(group[DEPTH]) === 1 && group[FILTER_COUNT] > 0){
                 group[NEXT_FILTER_IDX] = filterIdx;
             }
@@ -3320,12 +3246,12 @@ function aggregateGroup(groups, grpIdx, sortSet, rows, columns, aggregations) {
             const dataIdx =colIdx +  metadataKeys.count - 2; // <<<<<<<<<<<
             groups[i][dataIdx] = 0;
         }
-        aggregate(groups[i], groups, sortSet, rows, columns, aggregations, groups[i][COUNT]);
+        aggregate(groups[i], groups, sortSet, rows, aggregations, groups[i][COUNT]);
     }
 
 }
 
-function aggregate(groupRow, groupRows, sortSet, rows, columns, aggregations, leafCount, filter=null) {
+function aggregate(groupRow, groupRows, sortSet, rows, aggregations, leafCount, filter=null) {
     const {DEPTH, COUNT, FILTER_COUNT, IDX_POINTER, count: metadataOffset} = metadataKeys;
     let absDepth = Math.abs(groupRow[DEPTH]);
     let count = 0;
@@ -3407,12 +3333,11 @@ const NO_OPTIONS = {
 
 class BaseRowSet {
 
-    constructor(table, columns, offset = 0) {
+    constructor(table, offset = 0) {
         this.table = table;
         this.offset = offset;
         this.baseOffset = offset;
         this.range = NULL_RANGE;
-        this.columns = columns;
         this.currentFilter = null;
         this.filterSet = null;
         this.sortSet = undefined;
@@ -3688,7 +3613,7 @@ class RowSet extends BaseRowSet {
     }
     //TODO consolidate API of rowSet, groupRowset
     constructor(table, columns, offset = 0, { filter = null } = NO_OPTIONS) {
-        super(table, columns, offset);
+        super(table, offset);
         this.type = "rowData";
         this.project = projectColumns(table.columnMap, columns);
         this.sortCols = null;
@@ -3700,7 +3625,6 @@ class RowSet extends BaseRowSet {
             this.currentFilter = filter;
             this.filter(filter);
         }
-
     }
 
     buildSortSet() {
@@ -3758,6 +3682,10 @@ class RowSet extends BaseRowSet {
     }
     get rawData() {
         return this.data;
+    }
+
+    setSubscribedColumns(columns) {
+        console.log(`Rowset setSubscribedColumns ${columns.join(',')}`);
     }
 
     setStatus(status) {
@@ -4473,7 +4401,8 @@ const EMPTY_ARRAY = [];
 class GroupRowSet extends BaseRowSet {
 
     constructor(rowSet, columns, groupby, groupState, sortCriteria = null, filter=rowSet.currentFilter) {
-        super(rowSet.table, columns, rowSet.baseOffset);
+        super(rowSet.table, rowSet.baseOffset);
+        this.columns = columns;
         this.groupby = groupby;
         this.groupState = groupState;
         this.aggregations = [];
@@ -4531,6 +4460,10 @@ class GroupRowSet extends BaseRowSet {
     clearRange(){
         this.iter.clear();
         this.range = NULL_RANGE;
+    }
+
+    setSubscribedColumns(columns) {
+        console.log(`GroupRowset setSubscribedColumns ${columns.join(',')}`);
     }
 
     setRange(range, useDelta=true){
@@ -5419,9 +5352,6 @@ class DataStore {
         this._groupState = null;
         this._sortCriteria = sortCriteria;
 
-        this._columns = null;
-        this._columnMap = null;
-        // column defs come from client, this is where we assign column keys
         this.columns = columns;
 
         this._groupby = groupBy;
@@ -5441,11 +5371,6 @@ class DataStore {
 
     }
 
-    // Set the columns from client
-    set columns(columns) {
-        this._columns = columns.map(toColumn);
-        this._columnMap = buildColumnMap(this._columns);
-    }
 
     destroy() {
         this._table.removeListener('rowUpdated', this.rowUpdated);
@@ -5465,15 +5390,15 @@ class DataStore {
 
         let range = rowSet ? rowSet.range : null;
 
-        // TODO we should pass columns into the rowset as it will be needed for computed columns
-        this.rowSet = new RowSet(table, this._columns, this._index_offset);
+        // TODO we should pass yarn build into the rowset as it will be needed for computed columns
+        this.rowSet = new RowSet(table, this.columns, this._index_offset);
         // Is one filterRowset enough, or should we manage one for each column ?
         this.filterRowSet = null;
 
         // What if data is BOTH grouped and sorted ...
         if (groupBy !== null) {
             // more efficient to compute this directly from the table projection
-            this.rowSet = new GroupRowSet(this.rowSet, this._columns, this._groupby, this._groupState);
+            this.rowSet = new GroupRowSet(this.rowSet, this.columns, this._groupby, this._groupState);
         } else if (this._sortCriteria !== null) {
             this.rowSet.sort(this._sortCriteria);
         }
@@ -5549,6 +5474,10 @@ class DataStore {
             : dataType === DataTypes.FILTER_DATA
                 ? this.filterRowSet
                 : null;
+    }
+
+    setSubscribedColumns(columns) {
+        this.rowSet.setSubscribedColumns(columns);
     }
 
     //TODO we seem to get a setRange when we reverse sort order, is that correct ?
@@ -5721,14 +5650,14 @@ class DataStore {
     }
 
     groupBy(groupby) {
-        const { rowSet, _columns, _groupState, _sortCriteria, _groupby } = this;
+        const { rowSet, columns, _groupState, _sortCriteria, _groupby } = this;
         const { range: _range } = rowSet;
         this._groupby = groupby;
         if (groupby === null) {
             this.rowSet = RowSet.fromGroupRowSet(this.rowSet);
         } else {
             if (_groupby === null) {
-                this.rowSet = new GroupRowSet(rowSet, _columns, groupby, _groupState, _sortCriteria);
+                this.rowSet = new GroupRowSet(rowSet, columns, groupby, _groupState, _sortCriteria);
             } else {
                 rowSet.groupBy(groupby);
             }
@@ -5758,11 +5687,11 @@ class DataStore {
     }
 
     getFilterData(column, range) {
-        const { rowSet, filterRowSet, _filter: filter, _columnMap } = this;
+        const { rowSet, filterRowSet, _filter: filter } = this;
         // If our own dataset has been filtered by the column we want values for, we cannot use it, we have
         // to go back to the source, using a filter which excludes the one in place on the target column. 
         const columnName = column.name;
-        const colDef = this._columns.find(col => col.name === columnName);
+        const colDef = this.columns.find(col => col.name === columnName);
         // No this should be decided beforehand (on client) 
         const type = getFilterType(colDef);
 
@@ -5868,6 +5797,7 @@ function createRange(from, to, pauseDuration=5, pauseFrequency=30){
 
 const url = new URL(self.location);
 const tableUrl = url.hash ? url.hash.slice(2) : '';  
+console.log(`table config url ${tableUrl}`);
 const loadTableConfiguration = async () => await import(/* webpackIgnore: true */ tableUrl);
 
 let table;

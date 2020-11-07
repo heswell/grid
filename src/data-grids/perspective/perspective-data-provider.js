@@ -1,30 +1,43 @@
+import perspective from '@finos/perspective';
+import {EventEmitter} from "@heswell/utils";
 
 
-
-export default class PerspectiveDataProvider {
+export default class PerspectiveDataProvider extends EventEmitter {
 
   constructor(source, location){
+    super();
     console.log(`Perspective dataSource ${source} ${location}`)
     this.source = source;
     this.location = location;
-    // const [columns, dataSource] = buildData(source, location);
-    // this.columns = columns;
-    // this.dataSource = dataSource;
+    const dataUrl = source === 'psp-superstore'
+      ? '/tables/psp-superstore/superstore.arrow'
+      : '';
+    this.data = fetch(dataUrl);
   }
 
   async fetchData(){
     const data = await fetch('/tables/psp-superstore/superstore.arrow');
     const buffer = await data.arrayBuffer();
     return buffer;
+  }
+
+  async table(){
+    const data = await this.data;
+    const dataRequest = await data.arrayBuffer();
+    const worker = perspective.worker();
+    const buffer = await dataRequest;
+    const table = await worker.table(buffer);
+    console.log(await table.columns())
+    return table;
 
   }
 
   group(columns){
-    console.log(`Perspective Data Provider group`)
+    this.emit('group', columns)
   }
 
   sort(columns){
-    console.log(`Perspectivee Data Provider sort`)
+    this.emit('sort', columns)
   }
 
   startLoadTest(){
