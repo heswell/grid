@@ -1,9 +1,9 @@
 import React, {useState, useMemo} from 'react';
 import { ComponentContext, Grid, MenuContext } from "@heswell/grid";
-import {ThemeProvider} from 'react-jss';
 import themes from '../../themes';
 import DataProvider from './heswell-data-provider';
 
+import './heswell.css';
 // import InlineFilter from '../../customisations/inline-filter/inline-filter';
 
 import BackgroundCell from '../../cell-renderers/background-cell';
@@ -11,7 +11,7 @@ import BackgroundCell from '../../cell-renderers/background-cell';
 // import renderContextMenu from './components/material-ui/context-menu/show-context-menu';
 
 const components = {
-  'background-cell': BackgroundCell,
+  // 'background-cell': BackgroundCell,
 }
 
 const toolbarHeight = 300;
@@ -44,10 +44,10 @@ const HeswellGrid = ({dataAdaptor}) => {
   // })
 
   return (
-    <ThemeProvider theme={themes[state.theme]}>
       <MenuContext.Provider value={/*renderContextMenu*/ null}>
         <ComponentContext.Provider value={components}>
         <Grid
+          className="heswell"
           columnSizing={state.columnSizing}
           columns={dataProvider.columns}
           dataSource={dataProvider.dataSource}
@@ -68,7 +68,6 @@ const HeswellGrid = ({dataAdaptor}) => {
         </Grid>
       </ComponentContext.Provider>
       </MenuContext.Provider>
-    </ThemeProvider>
 
   )
 }

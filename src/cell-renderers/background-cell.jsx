@@ -2,7 +2,7 @@
 import React, { useEffect,useRef } from 'react';
 import cx from 'classnames';
 import { metadataKeys } from '@heswell/utils';
-import {useCellFormatter} from '@heswell/grid';
+import {useCellFormatter, StyledCell} from '@heswell/grid';
 import useStyles from './background-style';
 
 // import './background-cell.css';
@@ -77,12 +77,12 @@ const BackgroundCell = props => {
   })
 
   return (
-    <div
+    <StyledCell
       className={className}
       style={{ width }}>
       <div className={classes.flasher}>{arrow}</div>
       {format(row[column.key])}
-    </div>
+    </StyledCell>
   );
 }
 

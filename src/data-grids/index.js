@@ -6,7 +6,7 @@ export default {
     // Grid: lazyLoad('./ag-grid','Grid'),
     // DataProvider: lazyLoad('./ag-grid','DataProvider')
   },
-  perspective: lazy(() => import('./perspective/perspective-grid')),
+//  perspective: lazy(() => import('./perspective/perspective-grid')),
   regular: lazy(() => import('./regular-table/regular-table-grid')),
   material: {
     // Grid: lazyLoad('./material-ui','Grid'),
