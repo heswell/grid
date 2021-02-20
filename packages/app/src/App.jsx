@@ -1,78 +1,34 @@
 import React, { useMemo } from 'react';
-import { Grid } from "@vuu-ui/datagrid";
 // import { LocalDataSource } from "@vuu-ui/data-source";
 import { RemoteDataSource, Servers } from "@vuu-ui/data-remote";
+import {Flexbox} from "@uitk/layout";
+
+import {ordersSchema, OrdersGrid} from "./orders-grid";
+import {pricesSchema, PricesGrid} from "./prices-grid";
 
 import './App.css';
 
-const pricesSchema = {
-  columns: [
-    { name: 'ric', width: 100 },
-    {
-      name: 'bid',
-      type: {
-        name: 'number',
-        renderer: { name: 'background', flashStyle: 'arrow-bg' },
-        formatting: { decimals: 2, zeroPad: true }
-      },
-      aggregate: 'avg'
-    },
-    {
-      name: 'ask',
-      type: {
-        name: 'number',
-        renderer: { name: 'background', flashStyle: 'arrow-bg' },
-        formatting: { decimals: 2, zeroPad: true }
-      },
-      aggregate: 'avg'
-    },
-    { name: 'last', type: { name: 'number' } },
-    { name: 'open', type: { name: 'number' } },
-    { name: 'close', type: { name: 'number' } },
-    { name: 'scenario' }
-  ]
-};
-
-const schema = {
-  columns: [
-    { name: "Symbol", width: 120 },
-    { name: "Name", width: 200 },
-    {
-      name: "Price",
-      type: {
-        name: "number",
-        renderer: { name: "background", flashStyle: "arrow-bg" },
-        formatting: { decimals: 2, zeroPad: true },
-      },
-      aggregate: "avg",
-    },
-    { name: "MarketCap", type: "number", aggregate: "sum" },
-    { name: "IPO" },
-    { name: "Sector" },
-    { name: "Industry" },
-  ],
-};
-const dataConfig = { bufferSize: 10, dataUrl: "/data/instruments.js", schema };
-
-const serverUrl = '127.0.0.1:8090/websocket';
-
-const dataConfigPrices = {
-  bufferSize: 100,
-  columns: pricesSchema.columns.map(col => col.name),
+const createDataSource = (tableName, schema, bufferSize=100) => (new RemoteDataSource({
+  bufferSize,
+  columns: schema.columns.map(col => col.name),
   serverName: Servers.Vuu,
-  tableName: 'prices',
-  serverUrl
-};
+  tableName,
+  serverUrl: '127.0.0.1:8090/websocket'
+}));
 
 
 function App() {
-  const dataSourcePrices = useMemo(() => new RemoteDataSource(dataConfigPrices), []);
-  // const dataSource = useMemo(() => new LocalDataSource(dataConfig), []);
+  const dataSourceOrders = useMemo(() => createDataSource('orders', ordersSchema), []);
+  const dataSourcePrices = useMemo(() => createDataSource('prices', pricesSchema), []);
 
   return (
-    <div className="App">
-      <Grid dataSource={dataSourcePrices} columns={pricesSchema.columns} height={600} />
-    </div>
+    <Flexbox className="App" style={{flexDirection: 'column', height: '100vh'}}>
+      <div style={{height: 60, borderBottom: 'solid 1px #ccc'}}/>
+      <Flexbox style={{flexDirection: 'row', flex: 1}}>
+        <PricesGrid resizeable style={{flex: 1}} dataSource={dataSourcePrices} />
+        <OrdersGrid resizeable style={{flex: 1}} dataSource={dataSourceOrders} />
+      </Flexbox>
+    </Flexbox>
   );
 }
 
