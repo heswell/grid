@@ -1,0 +1,19 @@
+.GridRow {
+  box-sizing: border-box;
+  height: var(--hw-grid-row-height);
+  left: 0;
+  outline: 0;
+  position: absolute;
+  top: 0;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.GridRow .group .GridCell:first-child {
+  padding: 0 6px 0 3px;
+}
+
+.GridRow.selected {
+	background-color: var(--hw-grid-row-selected-bg);
+	color: white;
+}

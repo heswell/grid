@@ -1,0 +1,9 @@
+{
+  "name": "@vuu-ui/data-remote",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "license": "UNLICENSED",
+  "peerDependencies": {
+    "@heswell/utils": "^2.0.0"
+  }
+}

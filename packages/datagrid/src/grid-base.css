@@ -1,0 +1,17 @@
+.Grid {
+  background-color: var(--background);
+  box-sizing: border-box;
+  position: relative;
+  font-family: Roboto;
+  font-size: var(--font-size);
+  overflow: hidden;
+}
+
+.Grid.scrolling-x .Viewport {
+  overflow-y: hidden !important;
+  height: 100% !important;
+}
+
+.Grid.scrolling-x .Canvas .ColumnGroupHeader {
+  position: relative;
+}

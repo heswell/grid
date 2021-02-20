@@ -1,0 +1,16 @@
+.Grid {
+  --hw-grid-background: var(--grid-background, white);
+  --hw-grid-row-height: var(--grid-row-height, 24px);
+  --hw-grid-row-selected-bg: #2b8bf8;
+
+  --cell-bg: var(--grid-cell-bg, var(--background));
+  --cell-border-color: var(--grid-cell-border-color, #d4d4d4);
+  --cell-highlight-bg: var(--grid-cell-highlight-bg);
+  --drag-column-bg: var(--grid-drag-column-bg, "ivory");
+  --font-size: var(--grid-font-size, 12px);
+  --header-background: var(--grid-header-background, var(--background, white));
+  --header-cell-height: 32px;
+  --header-cell-highlight-bg: var(--grid-header-cell-highlight-bg);
+  --heading-border-color: var(--grid-heading-border-color, #d4d4d4);
+  --text-color: var(--grid-text-color, black);
+}

@@ -1,0 +1,33 @@
+.GridCell {
+  align-items: center;
+  background-color: var(--cell-bg);
+  box-sizing: border-box;
+  border-color: var(--cell-border-color);
+  border-style: solid;
+  border-width: 0 1px 1px 0;
+  color: var(--text-color);
+  cursor: default;
+  display: inline-flex;
+  height: 100%;
+  overflow: hidden;
+  padding: 0 12px;
+  position: relative;
+  text-overflow: ellipsis;
+  vertical-align: top;
+  white-space: nowrap;
+  z-index: 0;
+}
+
+.GridCell.noBottomBorder {
+  border-bottom: solid 1px transparent;
+}
+.GridCell.resizing {
+  background-color: var(--header-cell-highlight-bg);
+}
+.GridCell.number {
+  text-align: right;
+}
+.GridCell .num {
+  display: inline-block;
+  width: 100%;
+}

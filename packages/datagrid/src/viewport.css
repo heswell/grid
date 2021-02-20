@@ -1,0 +1,9 @@
+.Viewport {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.scrollingCanvasContainer {
+  overflow: hidden;
+  white-space: nowrap;
+}

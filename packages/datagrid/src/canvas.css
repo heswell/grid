@@ -1,0 +1,41 @@
+.Canvas {
+  display: inline-block;
+  top: 0;
+  vertical-align: top;
+}
+
+.Canvas-fixed {
+  overflow: hidden;
+}
+
+.Canvas-fixed .GridCell {
+  background-color: #efeded;
+}
+
+.Canvas-scrollable {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  overflow-y: hidden;
+}
+
+.canvasContent {
+  position: relative;
+}
+
+.Canvas .ColumnGroupHeader {
+  position: absolute;
+  top: 0;
+}
+
+.DraggedColumn {
+  background-color: var(--drag-column-bg);
+  opacity: 0.4;
+}
+
+.Vanishing {
+  border-style: none;
+  color: transparent;
+  padding: 0;
+  transition: width ease 0.3s;
+  width: 0 !important;
+}

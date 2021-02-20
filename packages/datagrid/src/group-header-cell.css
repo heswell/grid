@@ -1,0 +1,77 @@
+.GroupHeaderCell {
+  overflow: hidden;
+}
+
+.GroupHeaderCell .inner-container {
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+  display: inline-flex;
+  align-items: stretch;
+}
+
+.GroupHeaderCell .ColHeader {
+  display: inline-block;
+  background-color: inherit;
+  position: relative;
+  padding-right: 8px;
+  flex: 0 1 auto;
+}
+
+.GroupHeaderCell .ColHeader.first {
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 50%,
+    calc(100% - 8px) 100%,
+    0 100%
+  );
+  z-index: 1;
+}
+
+.GroupHeaderCell .ColHeader:not(.first) {
+  margin-left: -6px;
+  padding-left: 6px;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 50%,
+    calc(100% - 8px) 100%,
+    0 100%,
+    8px 50%
+  );
+}
+
+.GroupHeaderCell .ColHeader:nth-child(odd) {
+  background-color: rgba(136, 136, 136, 0.5);
+}
+.GroupHeaderCell .ColHeader:nth-child(even) {
+  background-color: rgba(160, 160, 160, 0.3);
+}
+.GroupHeaderCell .ColHeader:hover {
+  background-color: rgb(66, 139, 202);
+  color: white;
+}
+.GroupHeaderCell .ColHeaderLabel {
+  align-items: center;
+  display: inline-flex;
+  height: 100%;
+  vertical-align: top;
+}
+.GroupHeaderCell .toggle-icon,
+.remove-icon {
+  font-size: 16px;
+  height: 100%;
+  line-height: 32px;
+  cursor: pointer;
+  vertical-align: top;
+}
+.GroupHeaderCell .remove-icon {
+  visibility: hidden;
+  font-size: 16px;
+  line-height: var(--header-cell-height);
+  padding-left: 3px;
+}
+.GroupHeaderCell .ColHeader:hover .remove-icon {
+  visibility: visible;
+}

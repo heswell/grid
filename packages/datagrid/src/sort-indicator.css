@@ -1,0 +1,14 @@
+.SortIndicator {
+  position: absolute;
+  top: 2px;
+  left: -5px;
+  bottom: 0;
+  width: 18px;
+}
+
+.SortPosition {
+  font-size: 10px;
+  position: absolute;
+  left: 9px;
+  top: 15px;
+}

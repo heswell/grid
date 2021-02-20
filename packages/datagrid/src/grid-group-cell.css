@@ -1,0 +1,29 @@
+.GridGroupCell {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.GridGroupCell .icon {
+  font-size: 16px;
+  width: 12px;
+  margin-right: 6px;
+  line-height: 21px;
+}
+
+.GridGroupCell .group-value {
+  cursor: default;
+  display: inline-block;
+  max-width: calc(100% - 30px);
+  overflow: hidden;
+  padding-right: 3px;
+  text-overflow: ellipsis;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+/* does this make sense ? */
+.noToggle .GridGroupCell:first-child {
+  margin-left: 12px;
+}
