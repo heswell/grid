@@ -2,7 +2,7 @@
   background-color: var(--background);
   box-sizing: border-box;
   position: relative;
-  font-family: Roboto;
+  font-family: var(--app-font-family, Roboto);
   font-size: var(--font-size);
   overflow: hidden;
 }

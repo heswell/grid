@@ -12,7 +12,7 @@ const {ROW_DATA} = DataTypes;
 const logger = createLogger('RemoteDataView', logColor.blue);
 
 export const AvailableProxies = {
-  Viewserver: 'viewserver', 
+  Viewserver: 'viewserver',
   Vuu: 'vuu'
 }
 
@@ -33,7 +33,7 @@ export default class RemoteDataSource  extends EventEmitter {
     this.url = serverUrl;
     this.serverName = serverName;
     this.tableName = tableName;
-    this.server = NullServer;  
+    this.server = NullServer;
     this.columns = columns;
     this.subscription = null;
     this.viewport = null;
@@ -47,7 +47,7 @@ export default class RemoteDataSource  extends EventEmitter {
     }
 
     this.readyToSubscribe = ConnectionManager.connect(this.url, this.serverName).then(
-      server => this.server = server 
+      server => this.server = server
     );
   }
 
@@ -76,7 +76,7 @@ export default class RemoteDataSource  extends EventEmitter {
       }, message => {
           if (message.dataType === DataTypes.FILTER_DATA) {
             this.filterDataCallback(message);
-          } else if (message.type === "subscribed"){ 
+          } else if (message.type === "subscribed"){
             this.remoteId = message.viewPortId;
             this.emit("subscribed", message);
             const {viewportId, ...rest} = message
@@ -151,6 +151,14 @@ export default class RemoteDataSource  extends EventEmitter {
       filter,
       incremental,
       dataType,
+    })
+  }
+
+  filterQuery(filter) {
+    this.server.handleMessageFromClient({
+      viewport: this.viewport,
+      type: Msg.filterQuery,
+      filter,
     })
   }
 

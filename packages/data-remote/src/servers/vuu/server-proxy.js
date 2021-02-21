@@ -6,10 +6,10 @@ function partition(array, test, pass = [], fail = []) {
     for (let i = 0, len = array.length; i < len; i++) {
         (test(array[i], i) ? pass : fail).push(array[i]);
     }
-  
+
     return [pass, fail];
   }
-  
+
 const SORT = { asc: 'D', dsc : 'A' };
 
 const byRowIndex = (row1, row2) => row1[0] - row2[0];
@@ -37,6 +37,9 @@ export class ServerProxy {
     handleMessageFromClient(message) {
 
         const viewport = this.viewportStatus[message.viewport];
+        if (!viewport){
+          return;
+        }
         const isReady = viewport.status === 'subscribed';
 
         switch (message.type){
@@ -65,7 +68,7 @@ export class ServerProxy {
                 _requestId++,
                 isReady)
                 break;
-                
+
             case 'sort':
                 this.sendIfReady({
                     type : Message.CHANGE_VP,
@@ -81,6 +84,19 @@ export class ServerProxy {
                 isReady)
                 break;
 
+            case 'filterQuery':
+                this.sendIfReady({
+                    type : Message.CHANGE_VP,
+                    viewPortId : viewport.serverId,
+                    columns : viewport.columns,
+                    sort : null, // need to preserve
+                    groupBy : [ ],
+                    filterSpec : {filter: message.filter}
+                },
+                _requestId++,
+                isReady)
+                break;
+
             case 'select':
                 this.sendIfReady({
                     type : Message.SET_SELECTION,
@@ -89,7 +105,7 @@ export class ServerProxy {
                 },
                 _requestId++,
                 isReady)
-                
+
                 break;
 
             case "createLink": {
@@ -211,7 +227,7 @@ export class ServerProxy {
                 filter : ""
             }
         }, viewport, isReady)
-     
+
     }
 
     subscribed(/* server message */ clientViewport, message) {
@@ -224,8 +240,9 @@ export class ServerProxy {
 
             viewport.status = 'subscribed';
             viewport.serverId = viewPortId;
+            viewport.columns = columns;
 
-            const {table, range, columns, sort, groupBy, filterSpec} = message;
+            const {table, range, sort, groupBy, filterSpec} = message;
             viewport.spec = {
                 table, range, columns, sort, groupBy, filterSpec
             };
@@ -283,7 +300,7 @@ export class ServerProxy {
                     record.rows.push([rowIndex, 0, 0, 0, data[0],isSelected,,,,,].concat(data));
                 }
             } else if (updateType === Message.SIZE){
-                console.log(`size record ${JSON.stringify(rows[i],null,2)}`)
+                // console.log(`size record ${JSON.stringify(rows[i],null,2)}`)
             }
         }
         return Object.values(viewports);
@@ -298,13 +315,13 @@ export class ServerProxy {
             return;
         }
 
-        const {requestId, sessionId, token, body} = message; 
+        const {requestId, sessionId, token, body} = message;
 
         switch (body.type) {
             case Message.AUTH_SUCCESS:
                 return this.authenticated(token);
             case Message.LOGIN_SUCCESS:
-                return this.loggedIn(sessionId);   
+                return this.loggedIn(sessionId);
             case Message.CREATE_VP_SUCCESS:
                 return this.subscribed(requestId, body);
             case Message.CHANGE_VP_RANGE_SUCCESS:
@@ -327,12 +344,12 @@ export class ServerProxy {
                         rows
                     }
                     postMessageToClient(output);
-                })                
+                })
             }
 
                 break;
             case "ERROR":
-            console.error(body.msg)        
+            console.error(body.msg)
             break;
             // case Message.FILTER_DATA:
             // case Message.SEARCH_DATA:

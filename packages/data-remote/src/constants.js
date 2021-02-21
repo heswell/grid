@@ -26,6 +26,7 @@ export const msgType = {
   data : 'data',
   expandGroup : 'ExpandGroup',
   filter : 'filter',
+  filterQuery : 'filterQuery',
   filterData : 'filterData',
   getSearchData : 'GetSearchData',
   groupBy : 'groupBy',

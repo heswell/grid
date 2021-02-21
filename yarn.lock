@@ -2995,10 +2995,8 @@
     "@typescript-eslint/types" "4.15.1"
     eslint-visitor-keys "^2.0.0"
 
-"@uitk/layout@^1.1.3":
+"@uitk/layout@file:dependencies/layout":
   version "1.1.3"
-  resolved "http://localhost:4873/@uitk%2flayout/-/layout-1.1.3.tgz#440d0de86af4ef5d788358141547ea0096d621b5"
-  integrity sha512-gVmBtjhC+0Jo6M5yT8YCq3zjUNh7zwLKJGcX5sl+xGBum90RPipsyMWNEo9eZ2cQPVhLAEeyxfMJBd/JAA/K1A==
   dependencies:
     "@uitk/toolkit" "1.2.0"
     classnames "2.2.6"
@@ -3006,25 +3004,37 @@
     d3-transition "2.0.0"
     nanoid "^3.1.20"
 
-"@uitk/theme-dark@^1.0.1":
+"@uitk/theme-dark@file:dependencies/theme-dark":
   version "1.0.2"
-  resolved "http://localhost:4873/@uitk%2ftheme-dark/-/theme-dark-1.0.2.tgz#fe3e3a8577c09319ba319506f8596f1d95efbc4c"
-  integrity sha512-qi8Ssqhl41fZDMDtytsBnmKQCJRGOdopXn5HOZK6AEvFFSDw8VVoVtL4jgNHm37SA2UeVKmvNX3GFmRqwQjZ8A==
   dependencies:
     "@uitk/theme-light" "1.0.2"
     "@uitk/toolkit" "1.2.0"
 
-"@uitk/theme-light@1.0.2", "@uitk/theme-light@^1.0.1":
+"@uitk/theme-light@1.0.2", "@uitk/theme-light@file:dependencies/theme-light":
   version "1.0.2"
-  resolved "http://localhost:4873/@uitk%2ftheme-light/-/theme-light-1.0.2.tgz#76a5acfb13b86e3f5350bacc2d12b9c23a5ca0ce"
-  integrity sha512-NKZzK/teGjOR5QYaB9nQLax2e1I8IjirQLYBuvZvLD3zwVusPUUZHMSivf+GIP5sB1wyDSblt8M6hJt7b9MwzQ==
   dependencies:
     "@uitk/toolkit" "1.2.0"
 
-"@uitk/toolkit@1.2.0", "@uitk/toolkit@^1.2.0":
+"@uitk/toolkit@1.2.0":
   version "1.2.0"
   resolved "http://localhost:4873/@uitk%2ftoolkit/-/toolkit-1.2.0.tgz#86fa35fd8686c747e7e2337c8b0e32e7e84aafa8"
   integrity sha512-DKWqX7ybau7EjgaCO0y/naLW4A6oc3m9wYByJ5Ica8fkaHKRg0icajMgCpkKnAlpGt/VDWe4QZ+nmpOPDSDrHg==
+  dependencies:
+    "@popperjs/core" "^2.6.0"
+    aria-hidden "^1.1.1"
+    classnames "^2.2.6"
+    clipboard-copy "^4.0.1"
+    compute-scroll-into-view "^1.0.16"
+    deepmerge "^4.2.2"
+    no-scroll "^2.1.1"
+    prop-types "^15.7.2"
+    react-popper "^2.2.4"
+    react-window "^1.8.6"
+    regular-table "^0.1.5"
+    warning "^4.0.3"
+
+"@uitk/toolkit@file:dependencies/toolkit":
+  version "1.2.0"
   dependencies:
     "@popperjs/core" "^2.6.0"
     aria-hidden "^1.1.1"
