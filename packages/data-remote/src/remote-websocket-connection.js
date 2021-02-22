@@ -1,4 +1,4 @@
-import { createLogger, logColor } from '@heswell/utils';
+import { createLogger, logColor} from '@heswell/utils/src/logging';
 import { ConnectionStatus } from './messages';
 
 const logger = createLogger('WebsocketConnection', logColor.brown);
@@ -42,7 +42,7 @@ async function makeConnection(url, callback, connection){
     const ws = await createWebsocket(url);
 
     console.log(`%c⚡ %c${url}`, 'font-size: 24px;color: green;font-weight: bold;','color:green; font-size: 14px;');
-    
+
     if (reconnecting){
       connection[setWebsocket](ws);
     } else {
@@ -56,7 +56,7 @@ async function makeConnection(url, callback, connection){
     connection.status = status;
 
     return connection;
-  
+
   } catch(evt){
     const retry = --connectionStatus.attemptsRemaining > 0;
     callback({type: 'connection-status', status: 'not-connected', reason: 'failed to connect', retry});
@@ -70,13 +70,13 @@ const makeConnectionIn = (url, callback, connection, delay) => new Promise(resol
   setTimeout(() => {
     resolve(makeConnection(url, callback, connection))
   }, delay)
-}); 
+});
 
 const createWebsocket = connectionString => new Promise((resolve, reject) => {
   //TODO add timeout
     const ws = new WebSocket('ws://' + connectionString);
     ws.onopen = () => resolve(ws);
-    ws.onerror = evt => reject(evt);  
+    ws.onerror = evt => reject(evt);
 });
 
 

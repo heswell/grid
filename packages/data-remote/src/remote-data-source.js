@@ -5,7 +5,7 @@ import {
 } from './constants';
 
 // TODO make this dynamic
-import ConnectionManager from './connection-manager';
+import ConnectionManager from './connection-manager-worker';
 
 const {ROW_DATA} = DataTypes;
 
@@ -46,9 +46,8 @@ export default class RemoteDataSource  extends EventEmitter {
       throw Error('RemoteDataSource expects serverUrl')
     }
 
-    this.readyToSubscribe = ConnectionManager.connect(this.url, this.serverName).then(
-      server => this.server = server
-    );
+    this.server = null;
+    this.pendingServer = ConnectionManager.connect(this.url, this.serverName);
   }
 
   async subscribe({
@@ -65,7 +64,7 @@ export default class RemoteDataSource  extends EventEmitter {
     this.columns = columns;
     logger.log(`subscribe to ${tableName} range = ${JSON.stringify(range)}`)
 
-    await this.readyToSubscribe;
+    this.server = await this.pendingServer;
 
     const {bufferSize} = this;
     this.server.subscribe({
@@ -77,7 +76,8 @@ export default class RemoteDataSource  extends EventEmitter {
           if (message.dataType === DataTypes.FILTER_DATA) {
             this.filterDataCallback(message);
           } else if (message.type === "subscribed"){
-            this.remoteId = message.viewPortId;
+            console.log(`%cRemoteDataSource subscribed`,'color:rebeccapurple;font-weight: bold;')
+            this.remoteId = message.serverViewportId;
             this.emit("subscribed", message);
             const {viewportId, ...rest} = message
             callback(rest);

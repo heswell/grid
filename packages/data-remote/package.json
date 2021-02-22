@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "src/index.js",
   "license": "UNLICENSED",
+  "files": [
+    "src"
+  ],
   "peerDependencies": {
     "@heswell/utils": "^2.0.0"
   }

@@ -157,7 +157,7 @@ const Viewport = forwardRef(function Viewport(
     (type, options) => {
       switch (type) {
         case "subscribed":
-          console.log(`subscribed viewportId= ${options.serverId}`)
+          console.log(`subscribed viewportId= ${options.serverViewportId}`)
           dispatchGridModelAction({
             type: "set-available-columns",
             columns: options.columns,
