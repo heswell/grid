@@ -43,7 +43,7 @@ function sortMap(sortBy){
       map[group[0]] = group[1] || 'asc';
     }
     return map;
-  }, {}) 
+  }, {})
 }
 
 /** @type {GridModelReducer} */
@@ -67,6 +67,7 @@ const reducerActionHandlers = {
   'set-pivot-columns': setPivotColumns,
   'column-hide': hideColumn,
   'column-show': showColumn,
+  'visual-links': addVisualLinks,
   [Action.ROW_HEIGHT]: setRowHeight
 };
 
@@ -95,7 +96,7 @@ export const initModel = ([gridProps, custom]) => {
       footer: {height: customFooterHeight},
       header: {height: customHeaderHeight},
       inlineHeader: {height: customInlineHeaderHeight}
-    } = custom; 
+    } = custom;
 
   const state = {
     columnNames: null,
@@ -105,7 +106,7 @@ export const initModel = ([gridProps, custom]) => {
     customHeaderHeight,
     customInlineHeaderHeight,
     defaultColumnWidth,
-    groupColumns, 
+    groupColumns,
     groupState: null,
     headerHeight: noColumnHeaders ? 0 : headerHeight,
     headingDepth: undefined,
@@ -119,12 +120,13 @@ export const initModel = ([gridProps, custom]) => {
     sortColumns: null,
     viewportHeight: undefined,
     viewportRowCount: undefined,
+    visualLinks: null,
     width
   };
 
   const groupBy = GridModel.groupBy({groupColumns});
   const {columnNames, columnGroups, headingDepth} = buildColumnGroups(state, columns, groupBy);
-  const totalHeaderHeight = noColumnHeaders 
+  const totalHeaderHeight = noColumnHeaders
     ? customHeaderHeight
     : headerHeight * headingDepth + customHeaderHeight;
 
@@ -164,7 +166,7 @@ function setPivotColumns(state, action){
       viewportHeight: state.height - totalHeaderHeight,
       viewportRowCount:  Math.ceil((state.height - totalHeaderHeight) / state.rowHeight) + 1
     };
-    
+
 }
 
 /** @type {GridModelReducer<GridModelSetColumnsAction>} */
@@ -182,9 +184,17 @@ function setAvailableColumns(state, action){
       viewportHeight: state.height - totalHeaderHeight,
       viewportRowCount:  Math.ceil((state.height - totalHeaderHeight) / state.rowHeight) + 1
     };
-    
+
   } else {
     return state;
+  }
+}
+
+
+function addVisualLinks(state, {links}){
+  return {
+    ...state,
+    visualLinks: links
   }
 }
 
@@ -271,13 +281,13 @@ function resizeColumnHeading(state, column, width, headingResizeState){
   const [lastSizedCol,diffs] = getColumnAdjustments(pos,groupColIdx.length,diff);
 
   headingResizeState.lastSizedCol = lastSizedCol;
-    
+
   let newState = state;
   for (let i=0;i<diffs.length;i++){
       if (typeof diffs[i] === 'number' && diffs[i] !== 0){
           const targetCol = state.columnGroups[groupIdx].columns[groupColIdx[i]];
           newState = resizeColumn(
-            {...newState, headingResizeState}, 
+            {...newState, headingResizeState},
             {type: 'resize-col', phase: 'resize', column: targetCol, width: targetCol.width + diffs[i]});
       }
   }
@@ -424,7 +434,7 @@ function buildColumnGroups(state, columns, groupBy) {
   let columnGroups = [];
 
   let gridContentWidth = gridWidth - 15;// how do we know about vertical scrollbar
-  let availableWidth = gridContentWidth; 
+  let availableWidth = gridContentWidth;
 
   const preCols = selectionModel === 'checkbox' ? [CHECKBOX_COLUMN]: [];
 
@@ -458,7 +468,7 @@ function buildColumnGroups(state, columns, groupBy) {
     locked = false,
     minWidth=minColumnWidth,
     type, // normalize this here
-    width=defaultColumnWidth 
+    width=defaultColumnWidth
   } of preCols.concat(nonGroupedColumns)) {
 
     if (columnGroup === null || columnGroup.locked !== locked) {
@@ -559,28 +569,28 @@ const getMaxHeadingDepth = columns => {
   for (let i=0;i<columns.length;i++){
     const {heading} = columns[i];
     if (Array.isArray(heading) && heading.length > max){
-       max = heading.length; 
+       max = heading.length;
     }
   }
   return max;
 }
-  
+
 function addColumnToHeadings(maxHeadingDepth, column, headings, collapsedColumns=null){
       const sortable = false;
       const collapsible = true;
       const isHeading = true;
-  
+
       const {key, heading: colHeader, width} = column;
       for (let depth = 1; depth < maxHeadingDepth; depth++) {
-  
+
           const heading = headings[depth-1] || (headings[depth-1] = []);
           const colHeaderLabel = colHeader[depth];
           const lastHeading = heading.length > 0
               ? heading[heading.length-1]
               : null;
-  
+
           if (colHeaderLabel !== undefined){
-  
+
               if (lastHeading && lastHeading.label === colHeader[depth]){
                   lastHeading.width += width;
                   lastHeading.key += `:${key}`;
@@ -590,13 +600,13 @@ function addColumnToHeadings(maxHeadingDepth, column, headings, collapsedColumns
                   if (collapsed){
                       // lower depth headings are subheadings, nested subheadings below a collapsed heading
                       // will be hidden. Q: would it be better to iterate higher to lower ? When we encounter
-                      // a collapsed heading for a given column, the first subheading at any lower level 
+                      // a collapsed heading for a given column, the first subheading at any lower level
                       // will already have been created, so we need to hide them.
                       for (let d=0;d<depth-1;d++){
                           const head = headings[d];
                           head[head.length-1].hidden = true;
-                      } 
-  
+                      }
+
                   } else if (depth < maxHeadingDepth-1){
                       // ...likewise if we encounter a subheading, which is not the first for a given
                       // higher -level heading, and that higher-level heading is collapsed, we need to hide it.
@@ -609,18 +619,18 @@ function addColumnToHeadings(maxHeadingDepth, column, headings, collapsedColumns
                                   hide = true;
                               }
                           }
-                      } 
-  
+                      }
+
                   }
                   heading.push({key,label: colHeaderLabel,width,sortable,collapsible,collapsed,hidden: hide,isHeading});
               }
           } else {
-  
+
               const lowerDepth = headings[depth-2];
               const lastLowerDepth = lowerDepth
                   ? lowerDepth[lowerDepth.length-1]
                   : null;
-  
+
               if (lastLowerDepth && lastLowerDepth.key === key){
               // Need to check whether a heading at level below is collapsed
                   heading.push({key,label: '',width,collapsed: lastLowerDepth.collapsed,sortable,isHeading});
@@ -632,7 +642,7 @@ function addColumnToHeadings(maxHeadingDepth, column, headings, collapsedColumns
               }
           }
       }
-  
+
 }
 
 function updateGroupHeadings(groups, column, headingUpdates, subHeadingUpdates, columnUpdates){
@@ -647,7 +657,7 @@ function updateGroupHeadings(groups, column, headingUpdates, subHeadingUpdates, 
   const updatedHeading = [...heading];
   updatedGroup.headings[groupHeadingIdx] = updatedHeading;
   updatedHeading[headingColIdx] = {...column, ...headingUpdates};
-  
+
   // 2) Optionally, apply updates to nested sub-headings ...
   if (subHeadingUpdates){
       for (let i=0;i<groupHeadingIdx;i++){
@@ -728,8 +738,8 @@ function endsWith(string, subString){
   const str = typeof string === 'string'
       ? string
       : string.toString();
-  
+
   return subString.length >= str.length
       ? false
-      : str.slice(-subString.length) === subString;    
+      : str.slice(-subString.length) === subString;
 }

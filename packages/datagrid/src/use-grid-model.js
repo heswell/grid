@@ -64,6 +64,8 @@ export const useGridModel = (props) => {
         return dispatchGridModel({ type: "group", columns: args[0] });
       case "sort":
         return dispatchGridModel({ type: "sort", columns: args[0] });
+      case "visual-links":
+        return dispatchGridModel({ type: "visual-links", links: args[0] });
       default:
     }
   }, []);

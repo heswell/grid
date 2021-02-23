@@ -15,6 +15,7 @@ import useUpdate from "./use-update";
 import useDataSource from "./use-data-source";
 import GridContext from "./grid-context";
 import { getColumnGroupColumnIdx } from "./grid-model-utils.js";
+import useContextMenu from "./context-menu/use-context-menu";
 
 import Canvas from "./canvas";
 import ColumnBearer from "./column-bearer";
@@ -256,12 +257,15 @@ const Viewport = forwardRef(function Viewport(
     dataSource,
   ]);
 
+  const handleContextMenu = useContextMenu("grid");
+
   return (
     <>
       <div
         className="Viewport"
         ref={viewportEl}
         style={{ height: gridModel.viewportHeight }}
+        onContextMenu={handleContextMenu}
         onScroll={handleVerticalScroll}
       >
         <div

@@ -9,3 +9,4 @@ export const GroupAdd = 'group-add';
 export const ColumnHide = 'column-hide';
 export const Pivot = 'pivot';
 export const PivotAdd = 'pivot-add';
+export const LinkTable = 'link-table';

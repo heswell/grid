@@ -9,6 +9,12 @@ export function buildMenuDescriptors(gridModel, location, options){
     menuItems.push({label: 'Hide Column', action: Action.ColumnHide, options})
   }
 
+  if (gridModel.visualLinks){
+    gridModel.visualLinks.forEach(linkDescriptor => {
+      menuItems.push({label: `Link to ${linkDescriptor.link.toTable}`, action: Action.LinkTable, options: linkDescriptor})
+    })
+  }
+
   return menuItems;
 
 }
@@ -61,7 +67,7 @@ function buildSortMenuItems(sortColumns, options){
                   {label: 'Descending', action: Action.SortDescending, options}
               ]}
           );
-      } 
+      }
       return menuItems;
 
 }

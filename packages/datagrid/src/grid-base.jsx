@@ -79,6 +79,8 @@ const GridBase = forwardRef(function GridBase(props, ref){
         return dataSource.group(operation.columns);
       case "sort":
         return dataSource.sort(operation.columns);
+      case "link-table":
+        return dataSource.createLink(operation.link);
       default:
         console.log(
           `[GridBase] dataSourceOperation: unknown operation ${operation.type}`
@@ -90,6 +92,7 @@ const GridBase = forwardRef(function GridBase(props, ref){
     ({
       group: invokeDataSourceOperation,
       sort: invokeDataSourceOperation,
+      'link-table': invokeDataSourceOperation,
       selection: handleSelectionChange,
       "scroll-end-horizontal": handleHorizontalScrollEnd,
       "scroll-start-horizontal": handleHorizontalScrollStart,

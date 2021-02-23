@@ -90,6 +90,11 @@ const MenuContextProvider = ({children, showMenu}) => {
         const {column} = options;
         return dispatchGridModelAction({type: 'column-hide', column});
       }
+      case Action.LinkTable:
+        dispatchGridAction({type: 'link-table', link: options})
+      break;
+
+      default:
     }
   };
 

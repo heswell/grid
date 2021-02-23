@@ -3,18 +3,20 @@ import React, { useMemo } from 'react';
 import { RemoteDataSource, Servers } from "@vuu-ui/data-remote";
 import {ThemeProvider} from "@uitk/toolkit";
 import {Flexbox} from "@uitk/layout";
-
+import useTables from "./useTables";
 import {ordersSchema, OrdersGrid} from "./orders-grid";
 import {pricesSchema, PricesGrid} from "./prices-grid";
 
 import './App.css';
+
+const serverUrl = '127.0.0.1:8090/websocket';
 
 const createDataSource = (tableName, schema, bufferSize=100) => (new RemoteDataSource({
   bufferSize,
   columns: schema.columns.map(col => col.name),
   serverName: Servers.Vuu,
   tableName,
-  serverUrl: '127.0.0.1:8090/websocket'
+  serverUrl
 }));
 
 
@@ -27,6 +29,10 @@ function App() {
     // dataSourceOrders.filter({type: 'EQ', columnName: 'ric', value: 'AAPL.N'})
     dataSourceOrders.filterQuery(filter);
   }
+
+  const tables = useTables(serverUrl);
+  console.log(JSON.stringify(tables,null,2))
+
 
   return (
     <ThemeProvider theme="uitk-light" density="medium">

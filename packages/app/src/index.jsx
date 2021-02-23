@@ -7,6 +7,7 @@ import "@uitk/theme-light/assets/ToolkitIcons.css";
 
 import App from './App';
 import './index.css';
+import './fonts.css';
 
 ReactDOM.render(
     <App />,

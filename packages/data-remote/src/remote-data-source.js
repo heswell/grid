@@ -77,10 +77,12 @@ export default class RemoteDataSource  extends EventEmitter {
             this.filterDataCallback(message);
           } else if (message.type === "subscribed"){
             console.log(`%cRemoteDataSource subscribed`,'color:rebeccapurple;font-weight: bold;')
-            this.remoteId = message.serverViewportId;
+            this.serverViewportId = message.serverViewportId;
             this.emit("subscribed", message);
             const {viewportId, ...rest} = message
             callback(rest);
+          } else if (message.type ==='VP_VISUAL_LINKS_RESP' ){
+            this.emit("visual-links", message.links)
           } else {
             callback(message)
           }
@@ -198,15 +200,14 @@ export default class RemoteDataSource  extends EventEmitter {
     });
   }
 
-  createLink(parentVpId, childVpId, parentColumnName, childColumnName=parentColumnName){
-    logger.log(`create server link from ${parentVpId} to ${childVpId} using columns ${parentColumnName} => ${childColumnName}`);
+  createLink({parentVpId, link: {fromColumn, toColumn, toTable}}){
     this.server.handleMessageFromClient({
       viewport: this.viewport,
       type: Msg.createLink,
-      parentVpId,
-      childVpId,
-      parentColumnName,
-      childColumnName
+      parentVpId: parentVpId,
+      childVpId: this.serverViewportId,
+      parentColumnName: toColumn,
+      childColumnName: fromColumn
     });
 
   }

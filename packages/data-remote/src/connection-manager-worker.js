@@ -1,4 +1,4 @@
-import { createLogger, logColor, EventEmitter } from '@heswell/utils';
+import { createLogger, logColor, EventEmitter, uuid } from '@heswell/utils';
 
 const logger = createLogger('ConnectionManager', logColor.green);
 
@@ -6,6 +6,7 @@ let worker;
 let pendingWorker;
 
 const viewportStatus = {};
+const pendingRequests = {};
 
 const getWorker = async (url, server) => {
 
@@ -26,23 +27,40 @@ const getWorker = async (url, server) => {
 }
 
 function handleMessageFromWorker({ data: message }) {
-  const { type, clientViewportId } = message
+  const { type, clientViewportId, requestId } = message
   const viewport = viewportStatus[clientViewportId];
   if (viewport) {
     const { postMessageToClient } = viewport;
     if (type === "subscribed") {
       postMessageToClient(message);
-    } else if (type === 'table-row') {
+    } else if (type === 'table-row' || message.type === 'VP_VISUAL_LINKS_RESP') {
       postMessageToClient(message);
     } else {
       logger.log(`message from the worker ${type}`)
     }
+  } else if (requestId && pendingRequests[requestId]){
+    const {resolve} = pendingRequests[requestId];
+    delete pendingRequests[requestId];
+    const {type:_1, requestId:_2,  ...rest} = message;
+    resolve(rest);
   } else {
-    logger.log(`Unexpected message from the worker ${message.type}`)
+    logger.log(`Unexpected message from the worker ${message.type} requestId ${requestId}`, pendingRequests)
   }
 
 }
 
+
+const asyncRequest = (msg) => {
+  const requestId = uuid();
+  worker.postMessage({
+    requestId,
+    ...msg
+  });
+  return new Promise((resolve, reject) => {
+    pendingRequests[requestId] = {resolve, reject};
+  });
+
+}
 
 
 const methods = {
@@ -67,8 +85,11 @@ const methods = {
   destroy : () => {
     console.log('destroy')
     // TODO kill all subscriptions
-  }
+  },
 
+  getTableList: async() => asyncRequest({type: "GET_TABLE_LIST"}),
+
+  getTableMeta: async(table) => asyncRequest({type: "GET_TABLE_META", table}),
 
 }
 
