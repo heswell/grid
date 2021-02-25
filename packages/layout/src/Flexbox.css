@@ -1,0 +1,8 @@
+.Flexbox {
+  background-color: var(--uitk-container1-background);
+  display: flex;
+  box-sizing: border-box;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}

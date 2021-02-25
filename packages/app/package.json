@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@uitk/layout": "file:../../dependencies/layout",
     "@uitk/theme-dark": "file:../../dependencies/theme-dark",
     "@uitk/theme-light": "file:../../dependencies/theme-light",
     "@uitk/toolkit": "file:../../dependencies/toolkit"

@@ -1,0 +1,48 @@
+.View {
+  --grid-background: transparent;
+  display: flex;
+  flex-direction: column;
+  outline: none;
+  overflow: hidden;
+  position: relative;
+}
+
+.View.focus-visible:after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: dotted cornflowerblue 2px;
+}
+
+.View-resizing {
+  background-color: red;;
+}
+
+.View.dragging {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+}
+
+.view-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.View-collapsed .view-main {
+  display: none;
+}
+
+.View-collapsed + .Splitter {
+  display: none;
+}
+
+.View-collapsed .Toolbar-vertical {
+  border-right: solid 1px var(--uitk-grey40);
+}
+
+.View-collapsed .Toolbar-vertical .toolbar-title {
+  display: none;
+}

@@ -30,10 +30,10 @@ export const pricesSchema = {
   ]
 };
 
-const PricesGrid = ({resizeable, style, ...props}) => {
+const PricesGrid = ({resizeable, resizing, style, ...props}) => {
   return (
-    <View resizeable style={style}>
-      <Grid {...props} columns={pricesSchema.columns} renderBufferSize={20}/>
+    <View resizeable resizing={resizing} style={style}>
+      <Grid {...props} columns={pricesSchema.columns} columnSizing="fill" renderBufferSize={20}/>
     </View>
   );
 

@@ -1,0 +1,59 @@
+.DropMenu {
+  margin-left: -50%;
+  margin-bottom: -50%;
+  background-color: white;
+  border: solid 1px var(--uitk-grey40);
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 3px;
+  border-radius: 3px;
+}
+
+.DropMenu.left,
+.DropMenu.right {
+  flex-direction: column;
+}
+
+.drop-menu-item {
+  width: 32px;
+  height: 32px;
+  background-color: var(--uitk-grey20);
+  border-bottom: solid 1px var(--uitk-grey40);
+  cursor: pointer;
+  margin: 0 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drop-menu-item .Icon {
+  transform: scale(1.25);
+  transform-origin: center center;
+}
+
+.DropMenu.left .drop-menu-item .Icon {
+  transform: scale(1.25) rotate(180deg);
+  transform-origin: center center;
+}
+
+.DropMenu.top .drop-menu-item .Icon {
+  transform: scale(1.25) rotate(270deg);
+  transform-origin: center center;
+}
+
+.DropMenu.bottom .drop-menu-item .Icon {
+  transform: scale(1.25) rotate(90deg);
+  transform-origin: center center;
+}
+
+.drop-menu-item .icon-path {
+  fill: var(--uitk-grey70);
+}
+.drop-menu-item:hover .icon-path-2 {
+  fill: var(--uitk-blue500);
+}
+
+.drop-menu-item:last-child {
+  border-bottom: none;
+}
