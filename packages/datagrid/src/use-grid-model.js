@@ -10,6 +10,24 @@ import {useEffectSkipFirst} from "@heswell/utils"
 import useAdornments from "./use-adornments";
 import modelReducer, { initModel } from "./grid-model-reducer";
 import { ROW_HEIGHT } from "./grid-model-actions";
+import { useMeasure } from "./measure";
+import useResizeObserver, {WidthHeight } from "./use-resize-observer"/*from "@heswell/layout";*/
+
+
+const useSize = (props) => {
+  const [size, _setSize] = useMeasure(props);
+
+  const setSize = useCallback(({height, width}) => {
+    console.log(`setSize ${height} x ${width}`)
+    _setSize(state => ({
+      ...state,
+      measuredHeight: height,
+      measuredWidth: width
+    }));
+  },[_setSize])
+
+  return [size, setSize];
+}
 
 export const useGridModel = (props) => {
   const rootRef = useRef(null);
@@ -18,22 +36,32 @@ export const useGridModel = (props) => {
 
   const custom = useAdornments(props);
 
+  const [size, setSize] = useSize(props);
+
+  const onResize = useCallback(({width, height}) => {
+    console.log(`%conReresize width=${width} height=${height}`,'color:green;font-weight:bold;')
+    setSize({width, height});
+  },[setSize])
+
+  useResizeObserver(rootRef, WidthHeight, onResize, /* reportInitialSize = */ true);
+
   /** @type {[GridModel, GridModelDispatcher]} */
   const [gridModel, dispatchGridModel] = useReducer(
     modelReducer,
-    [props, custom],
+    [props, size, custom],
     initModel
   );
 
   useEffectSkipFirst(() => {
       dispatchGridModel({
         type: "resize",
-        height: props.height,
-        width: props.width,
+        // The totalHeaderHeight will be set as top padding, which will not be included
+        // in contentHeight measured by Observer
+        height: size.measuredHeight + gridModel.totalHeaderHeight,
+        width: size.measuredWidthWidth,
       });
-  }, [props.height, props.width]);
-
-
+  // }, [props.height, props.width]);
+  }, [size.measuredHeight, size.measuredWidthWidth, gridModel.totalHeaderHeight]);
 
   useEffect(() => {
     if (firstRender.current){

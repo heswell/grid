@@ -13,7 +13,7 @@ const DataGrid = ({schema, ...props}) => {
   const dataSource = useMemo(() => createDataSource(schema.table, schema), [schema]);
   return (
     <View header resizeable title={schema.table} {...props}>
-      <Grid dataSource={dataSource} columns={schema.columns} columnSizing="fill" renderBufferSize={20}/>
+      <Grid dataSource={dataSource} columns={schema.columns} columnSizing="fill" renderBufferSize={20} />
     </View>
   )
 }

@@ -26,6 +26,7 @@ const GridBase = forwardRef(function GridBase(props, ref){
   const [columnDragData, setColumnDragData] = useState(null);
   const draggingColumn = useRef(false);
 
+
   const [rootRef, gridModel, dataSource, dispatchGridModel, custom] = useGridModel(props);
 
 
@@ -135,11 +136,7 @@ const GridBase = forwardRef(function GridBase(props, ref){
   );
 
 
-  const { assignedWidth, assignedHeight, headerHeight, headingDepth } = gridModel;
-  const totalHeaderHeight =
-    custom.header.height +
-    headerHeight * headingDepth +
-    custom.inlineHeader.height;
+  const { assignedWidth, assignedHeight, width, height, totalHeaderHeight } = gridModel;
   return (
     // Question, how much overhead are we introducing be adding gridModel to GridContext ? Perhaps it belongs in it's own context
     <GridContext.Provider
@@ -156,21 +153,27 @@ const GridBase = forwardRef(function GridBase(props, ref){
           <div
             className={cx("Grid", props.className)}
             ref={useForkRef(ref, rootRef)}
-            style={{ width: assignedWidth, height: assignedHeight, paddingTop: totalHeaderHeight }}
+            style={{ width: assignedWidth, height: assignedHeight, paddingTop: totalHeaderHeight}}
           >
             <RowHeightCanary/>
-            {custom.header.component}
-            <Viewport
-              custom={custom}
-              dataSource={dataSource}
-              gridModel={gridModel}
-              columnDragData={columnDragData}
-              onColumnDragStart={handleColumnDragStart}
-              onColumnDrop={handleColumnDrop}
-              onRowClick={props.onRowClick}
-              ref={viewportRef}
-            />
-            {custom.footer.component}
+            {
+                height == null || width === null ? null : (
+                  <>
+                  {custom.header.component}
+                  <Viewport
+                    custom={custom}
+                    dataSource={dataSource}
+                    gridModel={gridModel}
+                    columnDragData={columnDragData}
+                    onColumnDragStart={handleColumnDragStart}
+                    onColumnDrop={handleColumnDrop}
+                    onRowClick={props.onRowClick}
+                    ref={viewportRef}
+                  />
+                  {custom.footer.component}
+                  </>
+                )
+            }
           </div>
         </ComponentProvider>
       </MenuProvider>

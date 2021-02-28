@@ -264,7 +264,7 @@ const Viewport = forwardRef(function Viewport(
       <div
         className="Viewport"
         ref={viewportEl}
-        style={{ height: gridModel.viewportHeight }}
+        style={{ height: gridModel.viewportHeight}}
         onContextMenu={handleContextMenu}
         onScroll={handleVerticalScroll}
       >

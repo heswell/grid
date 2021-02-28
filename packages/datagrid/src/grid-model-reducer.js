@@ -48,6 +48,7 @@ function sortMap(sortBy){
 
 /** @type {GridModelReducer} */
 export default (state, action) => {
+  console.log(`%cGridModelReducer ${action.type}`,'color:red;font-weight:bold;')
   // @ts-ignore
   return reducerActionHandlers[action.type](state, action);
 };
@@ -71,7 +72,7 @@ const reducerActionHandlers = {
   [Action.ROW_HEIGHT]: setRowHeight
 };
 
-export const initModel = ([gridProps, custom]) => {
+export const initModel = ([gridProps, size, custom]) => {
   const {
     columns,
     columnSizing = 'static',
@@ -84,13 +85,14 @@ export const initModel = ([gridProps, custom]) => {
     renderBufferSize=0,
     rowHeight = 24,
     selectionModel, // default should be none
-    size: {
-      height: assignedHeight, measuredHeight:height=assignedHeight,
-      width: assignedWidth, measuredWidth: width=assignedWidth
-    }
   } = gridProps;
 
-  console.log({assignedHeight, height, assignedWidth, width})
+  const {
+    height: assignedHeight,
+    measuredHeight:height=assignedHeight,
+    width: assignedWidth,
+    measuredWidth: width=assignedWidth
+  } = size;
 
   const groupColumns = sortMap(groupByProp) || undefined;
   // We won't be able to build the column headers for pivot columns until we start to get data
@@ -141,6 +143,7 @@ export const initModel = ([gridProps, custom]) => {
   state.columnGroups = columnGroups;
   state.headingDepth = headingDepth;
   state.horizontalScrollbarHeight = getHorizontalScrollbarHeight(columnGroups);
+  state.totalHeaderHeight = totalHeaderHeight;
   state.viewportHeight = height - totalHeaderHeight - customFooterHeight - customInlineHeaderHeight;
   state.viewportRowCount =  Math.ceil((height - totalHeaderHeight) / rowHeight) + 1;
 
@@ -420,6 +423,11 @@ function resizeGrid(state, {height, width}){
       }
     });
   }
+
+  console.log(`gridModel resizeGrid new Height = ${height} width ${width}
+    current viewPortHeight ${viewportHeight}
+    heightDiff = ${heightDiff}
+  `)
 
   return {
     ...state,

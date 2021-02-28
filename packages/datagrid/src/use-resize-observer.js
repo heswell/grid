@@ -36,7 +36,7 @@ const resizeObserver = new ResizeObserver((entries) => {
 
 // TODO use an optional lag (default to false) to ask to fire onResize
 // with initial size
-export default function useResizeObserver(ref, dimensions, onResize) {
+export default function useResizeObserver(ref, dimensions, onResize, reportInitialSize) {
   const dimensionsRef = useRef(dimensions);
 
   const measure = useCallback((target) => {
@@ -70,6 +70,10 @@ export default function useResizeObserver(ref, dimensions, onResize) {
       const measurements = measure(target);
       observedMap.get(target).measurements = measurements;
       resizeObserver.observe(target);
+
+      if (reportInitialSize){
+        onResize(measurements);
+      }
     }
 
     if (target) {

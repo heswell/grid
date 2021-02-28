@@ -342,7 +342,6 @@ export class ServerProxy {
         return this.subscribed(requestId, body);
       case Message.CHANGE_VP_RANGE_SUCCESS:
       case Message.CHANGE_VP_SUCCESS:
-        logger.log(body.type)
         break;
       case Message.CREATE_VISUAL_LINK_SUCCESS:
       case Message.SET_SELECTION_SUCCESS:

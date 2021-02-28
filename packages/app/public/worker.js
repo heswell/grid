@@ -520,7 +520,6 @@ class ServerProxy {
         return this.subscribed(requestId, body);
       case CHANGE_VP_RANGE_SUCCESS:
       case CHANGE_VP_SUCCESS:
-        logger$1.log(body.type);
         break;
       case CREATE_VISUAL_LINK_SUCCESS:
       case SET_SELECTION_SUCCESS:
