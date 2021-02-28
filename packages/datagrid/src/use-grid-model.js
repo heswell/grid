@@ -18,7 +18,6 @@ const useSize = (props) => {
   const [size, _setSize] = useMeasure(props);
 
   const setSize = useCallback(({height, width}) => {
-    console.log(`setSize ${height} x ${width}`)
     _setSize(state => ({
       ...state,
       measuredHeight: height,
@@ -58,10 +57,9 @@ export const useGridModel = (props) => {
         // The totalHeaderHeight will be set as top padding, which will not be included
         // in contentHeight measured by Observer
         height: size.measuredHeight + gridModel.totalHeaderHeight,
-        width: size.measuredWidthWidth,
+        width: size.measuredWidth,
       });
-  // }, [props.height, props.width]);
-  }, [size.measuredHeight, size.measuredWidthWidth, gridModel.totalHeaderHeight]);
+  }, [size.measuredHeight, size.measuredWidth, gridModel.totalHeaderHeight]);
 
   useEffect(() => {
     if (firstRender.current){

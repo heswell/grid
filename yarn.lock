@@ -1514,12 +1514,12 @@
     d3-transition "2.0.0"
     react-jss "10.1"
 
-"@heswell/layout@3.0.17", "@heswell/layout@^3.0.17":
-  version "3.0.17"
-  resolved "https://registry.yarnpkg.com/@heswell/layout/-/layout-3.0.17.tgz#452dcd567735fd4ca0e480b5897263827519526c"
-  integrity sha512-coyEqwT+DceU2cl7BxkmbeO2OlSS+gREgYS7sAXq7/V3YIXuqQ+0OY2R6EBddyQ1Viy5aM/Zj8guFK3IpXf+qw==
+"@heswell/layout@3.0.20", "@heswell/layout@^3.0.20":
+  version "3.0.20"
+  resolved "https://registry.yarnpkg.com/@heswell/layout/-/layout-3.0.20.tgz#266a24c7260d43020d282ea05468ff39d532764a"
+  integrity sha512-LUHYPJP2ntyYc/fFHqqzq+vcV2IxLV19DLFH6augM1iAupuFWRH7WY9sLWXMPypy8sWMeIPiyDv+63WC7JaNDA==
   dependencies:
-    "@heswell/layout" "^3.0.17"
+    "@heswell/layout" "^3.0.20"
     classnames "2.2.6"
     d3-selection "2.0.0"
     d3-transition "2.0.0"

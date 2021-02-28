@@ -382,8 +382,7 @@ function resizeColumn(state, {phase, column, width}){
 
 /** @type {GridModelReducer<GridModelRowHeightAction>} */
 function setRowHeight(state, {rowHeight}){
-  const {height, headerHeight, headingDepth, viewportHeight} = state;
-  const totalHeaderHeight = headerHeight * headingDepth;
+  const {height, totalHeaderHeight} = state;
   return {
     ...state,
     rowHeight,
@@ -424,10 +423,10 @@ function resizeGrid(state, {height, width}){
     });
   }
 
-  console.log(`gridModel resizeGrid new Height = ${height} width ${width}
+  console.log(`%cgridModel resizeGrid new Height = ${height} width ${width}
     current viewPortHeight ${viewportHeight}
     heightDiff = ${heightDiff}
-  `)
+  `,'color:green;font-weight: bold;')
 
   return {
     ...state,
