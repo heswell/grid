@@ -4,8 +4,9 @@
   "main": "src/index.js",
   "license": "UNLICENSED",
   "peerDependencies": {
-    "@heswell/utils": "^2.0.0",
-    "@vuu-ui/data-source": "^1.0.0",
+    "@heswell/utils": "latest",
+    "@heswell/popup": "latest",
+    "@vuu-ui/data-source": "latest",
     "classnames": "^2.2.6"
   },
   "dependencies": {

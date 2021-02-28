@@ -23,5 +23,7 @@ Grid.Header = Header;
 Grid.InlineHeader = InlineHeader;
 Grid.Footer = Footer;
 
+Grid.displayName = "Grid";
+
 export default Grid;
 

@@ -24,6 +24,7 @@ const TableList = ({className,  ...props}) => {
 
   const dispatch = useLayoutDispatch();
   const tables = useTables();
+  console.log({tables})
 
   function handleMouseDown(evt) {
     const {idx} = evt.target.dataset;
@@ -43,7 +44,7 @@ const TableList = ({className,  ...props}) => {
       instructions: {
         DoNotRemove: true,
         DoNotTransform: true,
-        dragThreshold: 0,
+        dragThreshold: 10,
       },
       dragRect: {
         left,
