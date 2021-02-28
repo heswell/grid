@@ -1,0 +1,34 @@
+body {
+  font-family: Roboto;
+
+  --border-color: #ccc;
+}
+
+.Toolbar {
+  height: 32px;
+  align-items: center;
+  border-bottom: solid 1px var(--border-color);
+
+}
+
+.hwButton {
+  height: 28px;
+  border-radius: 0;
+  border: none;
+}
+
+.hwInput {
+  height: 28px;
+  padding: 0 4px;
+  border: solid 1px var(--border-color);
+}
+
+.View {
+  border: solid 1px var(--border-color);
+  overflow: hidden;
+
+}
+
+.list-item {
+  user-select: none;
+}

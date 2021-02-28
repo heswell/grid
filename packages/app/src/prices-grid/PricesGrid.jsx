@@ -1,6 +1,6 @@
 
 import { Grid } from "@vuu-ui/datagrid";
-import {View} from "@uitk/layout";
+import {View} from "@heswell/layout";
 
 export const pricesSchema = {
   columns: [
@@ -30,9 +30,9 @@ export const pricesSchema = {
   ]
 };
 
-const PricesGrid = ({resizeable, resizing, style, ...props}) => {
+const PricesGrid = ({id, resizeable, resizing, style, ...props}) => {
   return (
-    <View resizeable resizing={resizing} style={style}>
+    <View id={id} resizeable resizing={resizing} style={style}>
       <Grid {...props} columns={pricesSchema.columns} columnSizing="fill" renderBufferSize={20}/>
     </View>
   );

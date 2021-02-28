@@ -11,7 +11,7 @@ const createLogger = (source, labelColor=plain, msgColor=plain) => ({
   warn: (msg) => console.warn(`[${source}] ${msg}`)
 });
 
-const logger = createLogger('WebsocketConnection', logColor.brown);
+const logger$2 = createLogger('WebsocketConnection', logColor.brown);
 
 const connectionAttempts = {};
 
@@ -27,7 +27,7 @@ async function connect(connectionString, callback, connectionStatusCallback) {
           console.log(`swallowing HB in WebsocketConnection`);
       } else if (type === 'Welcome'){
         // Note: we are actually resolving the connection before we get this session message
-        logger.log(`Session established clientId: ${msg.clientId}`);
+        logger$2.log(`Session established clientId: ${msg.clientId}`);
       } else {
         callback(msg);
       }
@@ -143,7 +143,7 @@ class Connection {
     };
 
     const warn = msg => {
-      logger.log(`Message cannot be sent, socket closed: ${msg.type}`);
+      logger$2.log(`Message cannot be sent, socket closed: ${msg.type}`);
     };
 
     const queue = msg => {
@@ -524,7 +524,6 @@ class ServerProxy {
         break;
       case CREATE_VISUAL_LINK_SUCCESS:
       case SET_SELECTION_SUCCESS:
-        console.log(`message received ${body.type}`);
         break;
       case TABLE_ROW: {
         const { batch, isLast, timestamp, rows } = body;
@@ -585,7 +584,7 @@ class ServerProxy {
 
 }
 
-const logger$2 = createLogger('Worker', logColor.brown);
+const logger = createLogger('Worker', logColor.brown);
 
 let server;
 
@@ -596,7 +595,7 @@ async function connectToServer(url) {
     // if this was called during connect, we would get a ReferenceError, but it will
     // never be called until subscriptions have been made, so this is safe.
     msg => server.handleMessageFromServer(msg),
-    msg => logger$2.log(JSON.stringify(msg))
+    msg => logger.log(JSON.stringify(msg))
     // msg => {
     //   onConnectionStatusMessage(msg);
     //   if (msg.status === 'disconnected'){

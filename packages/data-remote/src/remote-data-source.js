@@ -90,9 +90,9 @@ export default class RemoteDataSource  extends EventEmitter {
   }
 
   unsubscribe() {
-    logger.log(`unsubscribe from ${this.tableName} (viewport ${this.viewport})`);
-    this.server.unsubscribe(this.viewport);
-    this.server.destroy();
+    logger.log(`unsubscribe from ${this?.tableName ?? 'no table'} (viewport ${this?.viewport})`);
+    this.server?.unsubscribe(this.viewport);
+    this.server?.destroy();
   }
 
   setColumns(columns){
@@ -110,7 +110,7 @@ export default class RemoteDataSource  extends EventEmitter {
 
   setRange(lo, hi, dataType=ROW_DATA) {
     const {bufferSize} = this;
-    this.server.handleMessageFromClient({
+    this.server?.handleMessageFromClient({
       viewport: this.viewport,
       type: Msg.setViewRange,
       range: getFullRange({ lo, hi, bufferSize }),
@@ -119,7 +119,7 @@ export default class RemoteDataSource  extends EventEmitter {
   }
 
   select(idx, rangeSelect, keepExistingSelection, dataType=ROW_DATA){
-    this.server.handleMessageFromClient({
+    this.server?.handleMessageFromClient({
       viewport: this.viewport,
       type: Msg.select,
       idx,
@@ -130,7 +130,7 @@ export default class RemoteDataSource  extends EventEmitter {
   }
 
   selectAll(dataType=ROW_DATA){
-    this.server.handleMessageFromClient({
+    this.server?.handleMessageFromClient({
       viewport: this.viewport,
       type: Msg.selectAll,
       dataType
@@ -138,7 +138,7 @@ export default class RemoteDataSource  extends EventEmitter {
   }
 
   selectNone(dataType=ROW_DATA){
-    this.server.handleMessageFromClient({
+    this.server?.handleMessageFromClient({
       viewport: this.viewport,
       type: Msg.selectNone,
       dataType
@@ -147,7 +147,7 @@ export default class RemoteDataSource  extends EventEmitter {
   }
 
   filter(filter, dataType = ROW_DATA, incremental=false) {
-    this.server.handleMessageFromClient({
+    this.server?.handleMessageFromClient({
       viewport: this.viewport,
       type: Msg.filter,
       filter,
@@ -157,7 +157,7 @@ export default class RemoteDataSource  extends EventEmitter {
   }
 
   filterQuery(filter) {
-    this.server.handleMessageFromClient({
+    this.server?.handleMessageFromClient({
       viewport: this.viewport,
       type: Msg.filterQuery,
       filter,
@@ -166,7 +166,7 @@ export default class RemoteDataSource  extends EventEmitter {
 
   group(columns) {
     this.emit('group', columns);
-    this.server.handleMessageFromClient({
+    this.server?.handleMessageFromClient({
       viewport: this.viewport,
       type: Msg.groupBy,
       groupBy: columns
@@ -174,7 +174,7 @@ export default class RemoteDataSource  extends EventEmitter {
   }
 
   setGroupState(groupState) {
-    this.server.handleMessageFromClient({
+    this.server?.handleMessageFromClient({
       viewport: this.viewport,
       type: Msg.setGroupState,
       groupState
@@ -183,7 +183,7 @@ export default class RemoteDataSource  extends EventEmitter {
 
   sort(columns) {
     this.emit('sort', columns);
-    this.server.handleMessageFromClient({
+    this.server?.handleMessageFromClient({
       viewport: this.viewport,
       type: Msg.sort,
       sortCriteria: columns
@@ -192,7 +192,7 @@ export default class RemoteDataSource  extends EventEmitter {
 
   getFilterData(column, searchText) {
     console.log(`[RemoteDataView] getFilterData`)
-    this.server.handleMessageFromClient({
+    this.server?.handleMessageFromClient({
       viewport: this.viewport,
       type: Msg.getFilterData,
       column,
@@ -201,7 +201,7 @@ export default class RemoteDataSource  extends EventEmitter {
   }
 
   createLink({parentVpId, link: {fromColumn, toColumn, toTable}}){
-    this.server.handleMessageFromClient({
+    this.server?.handleMessageFromClient({
       viewport: this.viewport,
       type: Msg.createLink,
       parentVpId: parentVpId,

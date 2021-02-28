@@ -78,14 +78,19 @@ export const initModel = ([gridProps, custom]) => {
     defaultColumnWidth = DEFAULT_COLUMN_WIDTH,
     groupBy: groupByProp,
     headerHeight = 32,
-    height,
     minColumnWidth = MIN_COLUMN_WIDTH,
     noColumnHeaders=false,
     pivotBy: pivotByProp,
     renderBufferSize=0,
     rowHeight = 24,
     selectionModel, // default should be none
-    width } = gridProps;
+    size: {
+      height: assignedHeight, measuredHeight:height=assignedHeight,
+      width: assignedWidth, measuredWidth: width=assignedWidth
+    }
+  } = gridProps;
+
+  console.log({assignedHeight, height, assignedWidth, width})
 
   const groupColumns = sortMap(groupByProp) || undefined;
   // We won't be able to build the column headers for pivot columns until we start to get data
@@ -99,6 +104,8 @@ export const initModel = ([gridProps, custom]) => {
     } = custom;
 
   const state = {
+    assignedHeight,
+    assignedWidth,
     columnNames: null,
     columnGroups: undefined,
     columnSizing,
@@ -383,6 +390,8 @@ function setRowHeight(state, {rowHeight}){
   //TODO what abl=our scroll bar calculations
 
 }
+
+// TODO how i this affected by the assigned height/width ?
 
 /** @type {GridModelReducer<GridModelResizeAction>} */
 function resizeGrid(state, {height, width}){

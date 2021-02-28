@@ -1,5 +1,186 @@
-import * as Message from './messages';
-import { ServerApiMessageTypes as API } from '../../messages.js';
+const logColor = {
+  plain : 'color: black; font-weight: normal',
+  blue : 'color: blue; font-weight: bold',
+  brown : 'color: brown; font-weight: bold',
+  green : 'color: green; font-weight: bold',
+};
+
+const {plain} = logColor;
+const createLogger = (source, labelColor=plain, msgColor=plain) => ({
+  log: (msg, args='') => console.log(`[${Date.now()}]%c[${source}] %c${msg}`,labelColor, msgColor, args),
+  warn: (msg) => console.warn(`[${source}] ${msg}`)
+});
+
+const logger = createLogger('WebsocketConnection', logColor.brown);
+
+const connectionAttempts = {};
+
+const setWebsocket = Symbol('setWebsocket');
+const connectionCallback = Symbol('connectionCallback');
+
+async function connect(connectionString, callback, connectionStatusCallback) {
+    return makeConnection(connectionString, msg => {
+      const {type} = msg;
+      if (type === 'connection-status'){
+        connectionStatusCallback(msg);
+      } else if (type === 'HB'){
+          console.log(`swallowing HB in WebsocketConnection`);
+      } else if (type === 'Welcome'){
+        // Note: we are actually resolving the connection before we get this session message
+        logger.log(`Session established clientId: ${msg.clientId}`);
+      } else {
+        callback(msg);
+      }
+    });
+}
+
+async function reconnect(connection){
+  console.log(`reconnect connection at ${connection.url}`);
+  makeConnection(connection.url, connection[connectionCallback], connection);
+}
+
+async function makeConnection(url, callback, connection){
+
+  const connectionStatus = connectionAttempts[url] || (connectionAttempts[url] = {
+    attemptsRemaining: 5,
+    status: 'not-connected'
+  });
+
+  try {
+    callback({type: 'connection-status', status: 'connecting'});
+    const reconnecting = typeof connection !== 'undefined';
+    const ws = await createWebsocket(url);
+
+    console.log(`%c⚡ %c${url}`, 'font-size: 24px;color: green;font-weight: bold;','color:green; font-size: 14px;');
+
+    if (reconnecting){
+      connection[setWebsocket](ws);
+    } else {
+      connection = new Connection(ws, url, callback);
+    }
+
+    const status = reconnecting ? 'reconnected' : 'connected';
+
+    callback({type: 'connection-status', status});
+
+    connection.status = status;
+
+    return connection;
+
+  } catch(evt){
+    const retry = --connectionStatus.attemptsRemaining > 0;
+    callback({type: 'connection-status', status: 'not-connected', reason: 'failed to connect', retry});
+    if (retry){
+      return makeConnectionIn(url, callback, connection, 10000);
+    }
+  }
+}
+
+const makeConnectionIn = (url, callback, connection, delay) => new Promise(resolve => {
+  setTimeout(() => {
+    resolve(makeConnection(url, callback, connection));
+  }, delay);
+});
+
+const createWebsocket = connectionString => new Promise((resolve, reject) => {
+  //TODO add timeout
+    const ws = new WebSocket('ws://' + connectionString);
+    ws.onopen = () => resolve(ws);
+    ws.onerror = evt => reject(evt);
+});
+
+
+class Connection {
+
+  constructor(ws, url, callback) {
+
+    this.url = url;
+    this[connectionCallback] = callback;
+    this[setWebsocket](ws);
+    this.status = 'ready';
+
+  }
+
+  reconnect(){
+    reconnect(this);
+  }
+
+  [setWebsocket](ws){
+
+    const callback = this[connectionCallback];
+
+    ws.onmessage = evt => {
+      const message = JSON.parse(evt.data);
+      // console.log(`%c<<< [${new Date().toISOString().slice(11,23)}]  (WebSocket) ${message.type || JSON.stringify(message)}`,'color:white;background-color:blue;font-weight:bold;');
+      if (Array.isArray(message)){
+        message.map(callback);
+      } else {
+        callback(message);
+      }
+    };
+
+    ws.onerror = evt => {
+      console.log(`%c⚡ %c${this.url}`, 'font-size: 24px;color: red;font-weight: bold;','color:red; font-size: 14px;');
+      callback({type: 'connection-status', status: 'disconnected', reason: 'error'});
+      if (this.status !== 'closed'){
+        reconnect(this);
+        this.send = queue;
+      }
+    };
+
+    ws.onclose = evt => {
+      console.log(`%c⚡ %c${this.url}`, 'font-size: 24px;color: orange;font-weight: bold;','color:orange; font-size: 14px;');
+      callback({type: 'connection-status', status: 'disconnected', reason: 'close'});
+      if (this.status !== 'closed'){
+        reconnect(this);
+        this.send = queue;
+      }
+    };
+
+    const send = msg => {
+      // console.log(`%c>>>  (WebSocket) ${JSON.stringify(msg)}`,'color:blue;font-weight:bold;');
+      ws.send(JSON.stringify(msg));
+    };
+
+    const warn = msg => {
+      logger.log(`Message cannot be sent, socket closed: ${msg.type}`);
+    };
+
+    const queue = msg => {
+      console.log(`queuing message ${JSON.stringify(msg)} until websocket reconnected`);
+    };
+
+    this.send = send;
+
+    this.close = () => {
+      console.log('[Connection] close websocket');
+      this.status = 'closed';
+      ws.close();
+      this.send = warn;
+    };
+
+  }
+
+}
+
+const AUTH = 'AUTH';
+const AUTH_SUCCESS = 'AUTH_SUCCESS';
+const LOGIN = 'LOGIN';
+const LOGIN_SUCCESS = 'LOGIN_SUCCESS';
+const CREATE_VP = 'CREATE_VP';
+const CREATE_VP_SUCCESS = 'CREATE_VP_SUCCESS';
+const CHANGE_VP = 'CHANGE_VP';
+const CHANGE_VP_SUCCESS = 'CHANGE_VP_SUCCESS';
+const CREATE_VISUAL_LINK = 'CREATE_VISUAL_LINK';
+const CREATE_VISUAL_LINK_SUCCESS = 'CREATE_VISUAL_LINK_SUCCESS';
+const SET_SELECTION = 'SET_SELECTION';
+const SET_SELECTION_SUCCESS = 'SET_SELECTION_SUCCESS';
+const CHANGE_VP_RANGE = 'CHANGE_VP_RANGE';
+const CHANGE_VP_RANGE_SUCCESS = 'CHANGE_VP_RANGE_SUCCESS';
+const TABLE_ROW = 'TABLE_ROW';
+const HB = "HB";
+const HB_RESP = "HB_RESP";
+const UPDATE = 'U';
 
 function partition(array, test, pass = [], fail = []) {
 
@@ -17,9 +198,9 @@ const byRowIndex = (row1, row2) => row1[0] - row2[0];
 let _requestId = 1;
 
 
-const logger = console;
+const logger$1 = console;
 
-export class ServerProxy {
+class ServerProxy {
 
   constructor(connection, callback) {
     this.connection = connection;
@@ -41,12 +222,11 @@ export class ServerProxy {
     if (!viewport) {
       switch (message.type) {
         case "GET_TABLE_LIST":
-          this.sendMessageToServer({ type: "GET_TABLE_LIST" }, message.requestId)
+          this.sendMessageToServer({ type: "GET_TABLE_LIST" }, message.requestId);
           break;
         case "GET_TABLE_META":
-          this.sendMessageToServer({ type: "GET_TABLE_META", table: message.table }, message.requestId)
+          this.sendMessageToServer({ type: "GET_TABLE_META", table: message.table }, message.requestId);
           break;
-        default:
       }
       return;
     }
@@ -55,18 +235,18 @@ export class ServerProxy {
     switch (message.type) {
       case 'setViewRange':
         this.sendIfReady({
-          type: Message.CHANGE_VP_RANGE,
+          type: CHANGE_VP_RANGE,
           viewPortId: viewport.serverViewportId,
           from: message.range.lo,
           to: message.range.hi
         },
           _requestId++,
-          isReady)
+          isReady);
         break;
       case 'groupBy':
         viewport.groupByStatus = 'pending';
         this.sendIfReady({
-          type: Message.CHANGE_VP,
+          type: CHANGE_VP,
           viewPortId: viewport.serverViewportId,
           columns: ["ric", "description", "currency", "exchange", "lotSize", "bid", "ask", "last", "open", "close", "scenario"],
           sort: {
@@ -76,12 +256,12 @@ export class ServerProxy {
           filterSpec: null
         },
           _requestId++,
-          isReady)
+          isReady);
         break;
 
       case 'sort':
         this.sendIfReady({
-          type: Message.CHANGE_VP,
+          type: CHANGE_VP,
           viewPortId: viewport.serverViewportId,
           columns: ["ric", "description", "currency", "exchange", "lotSize", "bid", "ask", "last", "open", "close", "scenario"],
           sort: {
@@ -91,12 +271,12 @@ export class ServerProxy {
           filterSpec: null
         },
           _requestId++,
-          isReady)
+          isReady);
         break;
 
       case 'filterQuery':
         this.sendIfReady({
-          type: Message.CHANGE_VP,
+          type: CHANGE_VP,
           viewPortId: viewport.serverViewportId,
           columns: viewport.columns,
           sort: null, // need to preserve
@@ -104,36 +284,36 @@ export class ServerProxy {
           filterSpec: { filter: message.filter }
         },
           _requestId++,
-          isReady)
+          isReady);
         break;
 
       case 'select':
         this.sendIfReady({
-          type: Message.SET_SELECTION,
+          type: SET_SELECTION,
           vpId: viewport.serverViewportId,
           selection: [message.idx]
         },
           _requestId++,
-          isReady)
+          isReady);
 
         break;
 
       case "createLink": {
         const { parentVpId, childVpId, parentColumnName, childColumnName } = message;
         this.sendIfReady({
-          type: Message.CREATE_VISUAL_LINK,
+          type: CREATE_VISUAL_LINK,
           parentVpId,
           childVpId,
           parentColumnName,
           childColumnName
         },
           _requestId++,
-          isReady)
+          isReady);
       }
         break;
 
       default:
-        console.log(`Vuu ServerProxy Unexpected message from client ${JSON.stringify(message)}`)
+        console.log(`Vuu ServerProxy Unexpected message from client ${JSON.stringify(message)}`);
 
     }
 
@@ -165,18 +345,18 @@ export class ServerProxy {
   }
 
   disconnected() {
-    logger.log(`disconnected`);
+    logger$1.log(`disconnected`);
     for (let [viewport, { postMessageToClient }] of Object.entries(this.viewportStatus)) {
       postMessageToClient({
         rows: [],
         size: 0,
         range: { lo: 0, hi: 0 }
-      })
+      });
     }
   }
 
   resubscribeAll() {
-    logger.log(`resubscribe all`)
+    logger$1.log(`resubscribe all`);
     // for (let [viewport, {request}] of Object.entries(this.viewportStatus)) {
     //     this.sendMessageToServer({
     //         type: API.addSubscription,
@@ -187,8 +367,8 @@ export class ServerProxy {
 
   async authenticate(username, password) {
     return new Promise((resolve, reject) => {
-      this.sendMessageToServer({ type: Message.AUTH, username, password }, "");
-      this.pendingAuthentication = { resolve, reject }
+      this.sendMessageToServer({ type: AUTH, username, password }, "");
+      this.pendingAuthentication = { resolve, reject };
     })
   }
 
@@ -199,8 +379,8 @@ export class ServerProxy {
 
   async login() {
     return new Promise((resolve, reject) => {
-      this.sendMessageToServer({ type: Message.LOGIN, token: this.loginToken, user: "user" }, "");
-      this.pendingLogin = { resolve, reject }
+      this.sendMessageToServer({ type: LOGIN, token: this.loginToken, user: "user" }, "");
+      this.pendingLogin = { resolve, reject };
     })
   }
 
@@ -210,7 +390,7 @@ export class ServerProxy {
   }
 
   subscribe(message, callback) {
-    logger.log(`subscribe ${JSON.stringify(message)}`)
+    logger$1.log(`subscribe ${JSON.stringify(message)}`);
     // the session should live at the connection level
     const isReady = this.sessionId !== "";
     const { viewport, tablename, columns, range: { lo, hi } } = message;
@@ -218,12 +398,12 @@ export class ServerProxy {
       clientViewportId: viewport,
       status: 'subscribing',
       request: message,
-    }
+    };
 
     // use client side viewport as request id, so that when we process the response,
     // with the serverside viewport we can establish a mapping between the two
     this.sendIfReady({
-      type: Message.CREATE_VP,
+      type: CREATE_VP,
       table: tablename,
       range: {
         from: lo,
@@ -237,7 +417,7 @@ export class ServerProxy {
       filterSpec: {
         filter: ""
       }
-    }, viewport, isReady)
+    }, viewport, isReady);
 
   }
 
@@ -261,7 +441,7 @@ export class ServerProxy {
       // TODO don't think we need to support queued requests any more ? We block
       // now until connection is established
       const byViewport = vp => item => item.viewport === vp;
-      const byMessageType = msg => msg.type === Message.CHANGE_VP;
+      const byMessageType = msg => msg.type === CHANGE_VP;
       const [messagesForThisViewport, messagesForOtherViewports] = partition(this.queuedRequests, byViewport(viewport));
       const [rangeMessages, otherMessages] = partition(messagesForThisViewport, byMessageType);
 
@@ -276,16 +456,16 @@ export class ServerProxy {
 
       this.postMessageToClient({ type: "subscribed", clientViewportId, serverViewportId, columns });
 
-      this.sendMessageToServer({ type: "GET_VP_VISUAL_LINKS", vpId: serverViewportId })
+      this.sendMessageToServer({ type: "GET_VP_VISUAL_LINKS", vpId: serverViewportId });
     }
   }
 
   unsubscribe() {
-    console.log(`%cserver-proxy<VUU> unsubscribe`, 'color: blue;font-weight:bold;')
+    console.log(`%cserver-proxy<VUU> unsubscribe`, 'color: blue;font-weight:bold;');
   }
 
   destroy() {
-    console.log(`%cserver-proxy<VUU> destroy`, 'color: blue;font-weight:bold;')
+    console.log(`%cserver-proxy<VUU> destroy`, 'color: blue;font-weight:bold;');
   }
 
   batchByViewport(rows) {
@@ -298,61 +478,60 @@ export class ServerProxy {
         console.log(`ignoring ${updateType} message whilst waiting for grouped rows`);
       } else if (groupByStatus === 'pending' && rowKey === '$root') {
         this.viewportStatus[viewPortId].groupByStatus = 'complete';
-        console.log(`groupBy in place, $root received`)
-      } else if (updateType === Message.UPDATE) {
+        console.log(`groupBy in place, $root received`);
+      } else if (updateType === UPDATE) {
         const record = (viewports[viewPortId] || (viewports[viewPortId] = { viewPortId, size: vpSize, rows: [] }));
         if (groupByStatus === 'complete') {
           let [depth, expanded, path, unknown, label, count, ...rest] = data;
           if (!expanded) {
             depth = -depth;
           }
-          rest.push(rowIndex - 1, 0, depth, count, path, 0)
+          rest.push(rowIndex - 1, 0, depth, count, path, 0);
           record.rows.push(rest);
         } else {
           // TODO populate the key field correctly, i.e. don't just assume first field
           if (isSelected) {
-            console.log(`row ${rowIndex} is selected`)
+            console.log(`row ${rowIndex} is selected`);
           }
           record.rows.push([rowIndex, 0, 0, 0, data[0], isSelected, , , , ,].concat(data));
         }
-      } else if (updateType === Message.SIZE) {
-        // console.log(`size record ${JSON.stringify(rows[i],null,2)}`)
-      }
+      } else ;
     }
     return Object.values(viewports);
   }
 
   handleMessageFromServer(message) {
     if (!message.body) {
-      console.error('invalid message', message)
+      console.error('invalid message', message);
       return;
-    } else if (message.body.type === Message.HB) {
-      this.sendMessageToServer({ type: Message.HB_RESP, ts: +(new Date()) }, "NA");
+    } else if (message.body.type === HB) {
+      this.sendMessageToServer({ type: HB_RESP, ts: +(new Date()) }, "NA");
       return;
     }
 
     const { requestId, sessionId, token, body } = message;
 
     switch (body.type) {
-      case Message.AUTH_SUCCESS:
+      case AUTH_SUCCESS:
         return this.authenticated(token);
-      case Message.LOGIN_SUCCESS:
+      case LOGIN_SUCCESS:
         return this.loggedIn(sessionId);
-      case Message.CREATE_VP_SUCCESS:
+      case CREATE_VP_SUCCESS:
         return this.subscribed(requestId, body);
-      case Message.CHANGE_VP_RANGE_SUCCESS:
-      case Message.CHANGE_VP_SUCCESS:
-        logger.log(body.type)
+      case CHANGE_VP_RANGE_SUCCESS:
+      case CHANGE_VP_SUCCESS:
+        logger$1.log(body.type);
         break;
-      case Message.CREATE_VISUAL_LINK_SUCCESS:
-      case Message.SET_SELECTION_SUCCESS:
+      case CREATE_VISUAL_LINK_SUCCESS:
+      case SET_SELECTION_SUCCESS:
+        console.log(`message received ${body.type}`);
         break;
-      case Message.TABLE_ROW: {
+      case TABLE_ROW: {
         const { batch, isLast, timestamp, rows } = body;
         const rowsByViewport = this.batchByViewport(rows);
         rowsByViewport.forEach(({ viewPortId, size, rows }) => {
           const { clientViewportId } = this.viewportStatus[viewPortId];
-          rows.sort(byRowIndex)
+          rows.sort(byRowIndex);
           const clientMessage = {
             type: "table-row",
             clientViewportId,
@@ -360,9 +539,9 @@ export class ServerProxy {
             offset: 0,
             range: { lo: 0, hi: 27 },
             rows
-          }
+          };
           this.postMessageToClient(clientMessage);
-        })
+        });
       }
 
         break;
@@ -380,7 +559,7 @@ export class ServerProxy {
       break;
 
       case "ERROR":
-        console.error(body.msg)
+        console.error(body.msg);
         break;
       // case Message.FILTER_DATA:
       // case Message.SEARCH_DATA:
@@ -406,3 +585,54 @@ export class ServerProxy {
 
 }
 
+const logger$2 = createLogger('Worker', logColor.brown);
+
+let server;
+
+async function connectToServer(url) {
+
+  const connection = await connect(
+    url,
+    // if this was called during connect, we would get a ReferenceError, but it will
+    // never be called until subscriptions have been made, so this is safe.
+    msg => server.handleMessageFromServer(msg),
+    msg => logger$2.log(JSON.stringify(msg))
+    // msg => {
+    //   onConnectionStatusMessage(msg);
+    //   if (msg.status === 'disconnected'){
+    //     server.disconnected();
+    //   } else if (msg.status === 'reconnected'){
+    //     server.resubscribeAll();
+    //   }
+    // }
+  );
+  server = new ServerProxy(connection, msg => postMessage(msg));
+  // TODO handle authentication, login
+  if (typeof server.authenticate === 'function') {
+    await server.authenticate('steve', 'pword');
+  }
+  if (typeof server.login === 'function') {
+    await server.login();
+  }
+
+}
+
+const handleMessageFromClient = async ({ data: message }) => {
+  switch (message.type) {
+    case 'connect':
+      await connectToServer(message.url);
+      postMessage({ type: 'connected' });
+      break;
+    case 'subscribe':
+      server.subscribe(message);
+      break;
+    default:
+      server.handleMessageFromClient(message);
+    }
+};
+
+/* eslint-disable-next-line no-restricted-globals */
+self.addEventListener('message',handleMessageFromClient);
+
+postMessage({ type: "ready" });
+//# sourceMappingURL=worker.js.map

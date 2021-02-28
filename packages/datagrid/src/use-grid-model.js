@@ -47,7 +47,7 @@ export const useGridModel = (props) => {
     } else {
       dispatchGridModel({type: ROW_HEIGHT, rowHeight: props.rowHeight})
     }
-  }, [props.rowHeight]);
+  }, [props.rowHeight, gridModel.rowHeight]);
 
   //TODO do we need to useCallback here - can we ever send stale props ?
   useEffectSkipFirst(() => {
@@ -76,7 +76,7 @@ export const useGridModel = (props) => {
     return () => {
       dataSource.removeListener("*", datasourceHandler);
     };
-  }, [dataSource]);
+  }, [dataSource, datasourceHandler]);
 
 
   return [rootRef, gridModel, dataSource, dispatchGridModel, custom]

@@ -1,6 +1,13 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from 'react';
+
+export const WidthHeight = ['height', 'width']
 
 const observedMap = new Map();
+
+const isScrollAttribute = {
+  scrollHeight: true,
+  scrollWidth: true,
+};
 
 // TODO should we make this create-on-demand
 const resizeObserver = new ResizeObserver((entries) => {
@@ -10,15 +17,18 @@ const resizeObserver = new ResizeObserver((entries) => {
       const { onResize, measurements } = observedMap.get(target);
       let sizeChanged = false;
       for (let [dimension, size] of Object.entries(measurements)) {
-        if (contentRect[dimension] !== size) {
+        const newSize = isScrollAttribute[dimension]
+          ? target[dimension]
+          : contentRect[dimension];
+        if (newSize !== size) {
           sizeChanged = true;
-          measurements[dimension] = contentRect[dimension];
+          measurements[dimension] = newSize;
         }
       }
       if (sizeChanged) {
         // TODO only return measured sizes
         // const { height, width } = contentRect;
-        onResize && onResize(contentRect);
+        onResize && onResize(measurements);
       }
     }
   }
@@ -28,6 +38,18 @@ const resizeObserver = new ResizeObserver((entries) => {
 // with initial size
 export default function useResizeObserver(ref, dimensions, onResize) {
   const dimensionsRef = useRef(dimensions);
+
+  const measure = useCallback((target) => {
+    const rect = target.getBoundingClientRect();
+    return dimensionsRef.current.reduce((map, dim) => {
+      if (isScrollAttribute[dim]) {
+        map[dim] = target[dim];
+      } else {
+        map[dim] = rect[dim];
+      }
+      return map;
+    }, {});
+  }, []);
 
   // TODO use ref to store resizeHandler here
   // resize handler registered with REsizeObserver will never change
@@ -39,18 +61,14 @@ export default function useResizeObserver(ref, dimensions, onResize) {
   // initiate new observation when ref changes.
   useEffect(() => {
     const target = ref.current;
+    console.log(`resizeObserver useEffect ref=`, ref.current)
     async function registerObserver() {
       // Create the map entry immediately. useEffect may fire below
       // before fonts are ready and attempt to update entry
-      observedMap.set(target, { onResize, measurements: [] });
+      observedMap.set(target, { measurements: [] });
       await document.fonts.ready;
-      const rect = target.getBoundingClientRect();
-      const measurements = dimensionsRef.current.reduce(
-        (map, dim) => ((map[dim] = rect[dim]), map),
-        {}
-      );
+      const measurements = measure(target);
       observedMap.get(target).measurements = measurements;
-      console.log(`ResizeObserver observe ${target.className}`)
       resizeObserver.observe(target);
     }
 
@@ -58,7 +76,7 @@ export default function useResizeObserver(ref, dimensions, onResize) {
       // TODO might we want multiple callers to attach a listener to the same element ?
       if (observedMap.has(target)) {
         throw Error(
-          "useResizeObserver attemping to observe same element twice"
+          'useResizeObserver attemping to observe same element twice',
         );
       }
       // TODO set a pending entry on map
@@ -70,7 +88,7 @@ export default function useResizeObserver(ref, dimensions, onResize) {
         observedMap.delete(target);
       }
     };
-  }, [dimensionsRef, ref]);
+  }, [measure, ref]);
 
   useEffect(() => {
     const target = ref.current;
@@ -78,17 +96,13 @@ export default function useResizeObserver(ref, dimensions, onResize) {
     if (record) {
       if (dimensionsRef.current !== dimensions) {
         dimensionsRef.current = dimensions;
-        const rect = target.getBoundingClientRect();
-        const measurements = dimensionsRef.current.reduce(
-          (map, dim) => ((map[dim] = rect[dim]), map),
-          {}
-        );
+        const measurements = measure(target);
         record.measurements = measurements;
       }
       // Might not have changed, but no harm ...
       record.onResize = onResize;
     }
-  }, [dimensions, ref, onResize]);
+  }, [dimensions, measure, ref, onResize]);
 
   // TODO might be a good idea to ref and return the current measurememnts. That way, derived hooks
   // e.g useBreakpoints don't have to measure and client cn make onResize callback simpler

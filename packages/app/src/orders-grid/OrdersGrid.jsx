@@ -1,7 +1,6 @@
 import {useRef, useState} from 'react';
-import {View} from "@uitk/layout";
+import {Toolbar, Tooltray, View} from "@heswell/layout";
 import { Grid } from "@vuu-ui/datagrid";
-import {Button, ControlLabel, Icon, Input, Pill, Toolbar, Tooltray} from "@uitk/toolkit";
 
 export const ordersSchema = {
   columns: [
@@ -16,7 +15,7 @@ export const ordersSchema = {
       ]
 };
 
-const OrdersGrid = ({onFilter, resizeable, style, ...props}) => {
+const OrdersGrid = ({id, onFilter, resizeable, style, ...props}) => {
 
   const filterValue = useRef('');
   const filterName = useRef('');
@@ -52,18 +51,17 @@ const OrdersGrid = ({onFilter, resizeable, style, ...props}) => {
 
 
   return (
-    <View resizeable style={style}>
+    <View resizeable style={style} id={id}>
       <Toolbar style={{borderBottom: 'solid 1px #ccc'}}>
-        <ControlLabel label="Filter">
-          <Input defaultValue="Enter filter query" onChange={handleFilterValueChange} onFocus={handleFocus}/>
-          </ControlLabel>
-        <Button onClick={handleFilter}>Apply</Button>
-        <Input defaultValue="" onChange={handleFilterNameChange} onFocus={handleFocus}/>
-        <Button onClick={saveFilter} variant="secondary"><Icon name="save"/></Button>
+        <label className="hwFormLabel">Filter</label>
+          <input className="hwInput" defaultValue="Enter filter query" onChange={handleFilterValueChange} onFocus={handleFocus}/>
+        <button className="hwButton" onClick={handleFilter}>Apply</button>
+        <input className="hwInput" defaultValue="" onChange={handleFilterNameChange} onFocus={handleFocus}/>
+        <button className="hwButton" onClick={saveFilter} variant="secondary">Save</button>
         {filters.length > 0 ? (
           <Tooltray>
             {filters.map(filter => (
-              <Pill variant="selectable" label={filter.name} />
+              <button className="hwPill" variant="selectable" label={filter.name} />
             ))}
           </Tooltray>
         ) : null}

@@ -1,5 +1,5 @@
 .Grid {
-  background-color: var(--background);
+  background-color: var(--hw-grid-background);
   box-sizing: border-box;
   position: relative;
   font-family: var(--app-font-family, Roboto);

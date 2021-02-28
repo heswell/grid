@@ -44,18 +44,18 @@ const GridBase = forwardRef(function GridBase(props, ref){
       //     onSingleSelect(selected[0], selectedItem);
       // }
     },
-    []
+    [dataSource]
   );
 
-  const handleHorizontalScrollStart = () => {
+  const handleHorizontalScrollStart = useCallback(() => {
     if (!draggingColumn.current) {
       viewportRef.current.beginHorizontalScroll();
       rootRef.current.classList.add("scrolling-x");
       rootRef.current.style.paddingTop = gridModel.customHeaderHeight + "px";
     }
-  };
+  },[gridModel.customHeaderHeight, rootRef]);
 
-  const handleHorizontalScrollEnd = () => {
+  const handleHorizontalScrollEnd = useCallback(() => {
     if (!draggingColumn.current) {
       viewportRef.current.endHorizontalScroll();
       rootRef.current.classList.remove("scrolling-x");
@@ -71,7 +71,7 @@ const GridBase = forwardRef(function GridBase(props, ref){
         customInlineHeaderHeight;
       rootRef.current.style.paddingTop = totalHeaderHeight + "px";
     }
-  };
+  },[gridModel, rootRef]);
 
   const invokeDataSourceOperation = (operation) => {
     switch (operation.type) {
@@ -120,7 +120,7 @@ const GridBase = forwardRef(function GridBase(props, ref){
       });
       draggingColumn.current = true;
     },
-    [gridModel]
+    [gridModel, handleHorizontalScrollStart, rootRef]
   );
   const handleColumnDrop = useCallback(
     (phase, ...args) => {
@@ -131,11 +131,11 @@ const GridBase = forwardRef(function GridBase(props, ref){
       handleHorizontalScrollEnd();
       dispatchGridModel({ type: "add-col", column, insertIdx });
     },
-    [gridModel]
+    [dispatchGridModel, handleHorizontalScrollEnd]
   );
 
 
-  const { height, width, headerHeight, headingDepth } = gridModel;
+  const { assignedWidth, assignedHeight, headerHeight, headingDepth } = gridModel;
   const totalHeaderHeight =
     custom.header.height +
     headerHeight * headingDepth +
@@ -156,7 +156,7 @@ const GridBase = forwardRef(function GridBase(props, ref){
           <div
             className={cx("Grid", props.className)}
             ref={useForkRef(ref, rootRef)}
-            style={{ width, height, paddingTop: totalHeaderHeight }}
+            style={{ width: assignedWidth, height: assignedHeight, paddingTop: totalHeaderHeight }}
           >
             <RowHeightCanary/>
             {custom.header.component}

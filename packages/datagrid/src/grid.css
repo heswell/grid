@@ -1,5 +1,5 @@
 .Grid {
-  --hw-grid-background: var(--grid-background, white);
+  --hw-grid-background: var(--grid-background, yellow);
   --hw-grid-row-height: var(--grid-row-height, 24px);
   --hw-grid-row-selected-bg: #2b8bf8;
 

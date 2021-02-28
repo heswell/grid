@@ -75,7 +75,7 @@ const methods = {
   },
 
   unsubscribe: () => {
-    console.log(`unsubscribe`, args)
+    console.log(`unsubscribe`)
   },
 
   handleMessageFromClient: (message) => {
@@ -111,10 +111,10 @@ class ConnectionManager extends EventEmitter {
     const target = {};
     const handler = {
       get: function (target, methodName) {
-        if (methods[methodName]) {
+        if (typeof methodName === "string" && methods[methodName]) {
           return methods[methodName];
         } else {
-          console.log(`attempto to invoke ${methodName}`)
+          console.log(`attempto to invoke ${methodName.toStringTag ? methodName.toStringTag() : String(methodName)}`)
         }
       },
     };
