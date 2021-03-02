@@ -48,7 +48,7 @@ function sortMap(sortBy) {
 
 /** @type {GridModelReducer} */
 export default (state, action) => {
-  console.log(`%cGridModelReducer ${action.type}`, 'color:red;font-weight:bold;')
+  // console.log(`%cGridModelReducer ${action.type}`, 'color:red;font-weight:bold;')
   // @ts-ignore
   return reducerActionHandlers[action.type](state, action);
 };
@@ -217,6 +217,7 @@ function setAvailableColumns(state, action) {
 
 
 function addVisualLinks(state, { links }) {
+  console.log({links})
   return {
     ...state,
     visualLinks: links
@@ -333,7 +334,6 @@ function hideColumn(state, { column }) {
 
 /** @type {GridModelReducer<GridModelShowColumnAction>} */
 function showColumn(state, { column }) {
-  console.log(`showColumn ${column.name}`);
   return state;
 }
 
@@ -438,10 +438,10 @@ function resizeGrid(state, { height, width }) {
     });
   }
 
-  console.log(`%cgridModel resizeGrid new Height = ${height} width ${width}
-    current viewPortHeight ${viewportHeight}
-    heightDiff = ${heightDiff}
-  `, 'color:green;font-weight: bold;')
+  // console.log(`%cgridModel resizeGrid new Height = ${height} width ${width}
+  //   current viewPortHeight ${viewportHeight}
+  //   heightDiff = ${heightDiff}
+  // `, 'color:green;font-weight: bold;')
 
   return {
     ...state,

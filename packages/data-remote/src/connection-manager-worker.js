@@ -114,11 +114,11 @@ class ConnectionManager extends EventEmitter {
         if (typeof methodName === "string" && methods[methodName]) {
           return methods[methodName];
         } else {
-          console.log(`attempto to invoke ${methodName.toStringTag ? methodName.toStringTag() : String(methodName)}`)
+          //console.log(`attempto to invoke ${methodName.toStringTag ? methodName.toStringTag() : String(methodName)}`)
         }
       },
     };
-
+    // TODO proxy is overkill here
     return new Proxy(target, handler);
 
     // });

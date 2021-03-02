@@ -18,3 +18,7 @@
 .view-main {
   overflow: hidden;
 }
+
+.DragIcon.dragging {
+  background-color: orange !important;
+}

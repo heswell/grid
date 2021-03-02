@@ -158,7 +158,6 @@ const Viewport = forwardRef(function Viewport(
     (type, options) => {
       switch (type) {
         case "subscribed":
-          console.log(`subscribed viewportId= ${options.serverViewportId}`)
           dispatchGridModelAction({
             type: "set-available-columns",
             columns: options.columns,
@@ -202,7 +201,6 @@ const Viewport = forwardRef(function Viewport(
   );
 
   useUpdate(() => {
-    console.log(`viewportRowCount = ${gridModel.viewportRowCount}`);
     setRange(
       firstVisibleRow.current,
       firstVisibleRow.current +
@@ -211,7 +209,6 @@ const Viewport = forwardRef(function Viewport(
   }, [gridModel.viewportRowCount]);
 
   useUpdate(() => {
-    console.log(`row height = ${gridModel.rowHeight}`);
     contentHeight.current = gridModel.rowHeight * rowCount.current;
   },[gridModel.rowHeight, rowCount])
 

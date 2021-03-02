@@ -36,14 +36,6 @@ function App() {
                 </View>
                 <OrdersGrid resizeable style={{ flex: 1 }} dataSource={dataSourceOrders} onFilter={handleFilter} />
               </Flexbox>
-              {/* <Flexbox style={{ flexDirection: 'row', flex: 1 }}>
-                <View resizeable header style={{ flex: 1 }}>
-                  <Grid dataSource={dataSourceParentOrders} columnSizing="fill" renderBufferSize={20} />
-                </View>
-                <View resizeable header style={{ flex: 1 }}>
-                  <Grid dataSource={dataSourceChildOrders} columnSizing="fill" renderBufferSize={20} />
-                </View>
-              </Flexbox> */}
             </Flexbox>
             <View title="Blank Page">
               <div  style={{ backgroundColor: "#ccc" }}></div>

@@ -390,7 +390,6 @@ class ServerProxy {
   }
 
   subscribe(message, callback) {
-    logger$1.log(`subscribe ${JSON.stringify(message)}`);
     // the session should live at the connection level
     const isReady = this.sessionId !== "";
     const { viewport, tablename, columns, range: { lo, hi } } = message;
@@ -552,6 +551,17 @@ class ServerProxy {
       case "VP_VISUAL_LINKS_RESP":
         if (body.links.length){
           const { clientViewportId } = this.viewportStatus[body.vpId];
+          console.group(`links for (${this.viewportStatus[body.vpId].spec.table})`);
+          body.links.forEach(({parentVpId, link}) => {
+            console.log(`link parentVpId = ${parentVpId}`);
+            const vp = this.viewportStatus[parentVpId];
+            if (vp){
+              console.log(`   parent table = ${vp.spec.table}`);
+              console.log(JSON.stringify(link,null,2));
+            }
+
+          });
+          console.groupEnd();
           this.postMessageToClient({ type: "VP_VISUAL_LINKS_RESP", links: body.links, clientViewportId });
         }
       break;

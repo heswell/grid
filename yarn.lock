@@ -1490,7 +1490,16 @@
   dependencies:
     "@hapi/hoek" "^8.3.0"
 
-"@heswell/layout@3.0.26", "@heswell/layout@latest":
+"@heswell/layout@3.0.30":
+  version "3.0.30"
+  resolved "https://registry.yarnpkg.com/@heswell/layout/-/layout-3.0.30.tgz#e339b3745667d02a845ed6118c1066113592cb91"
+  integrity sha512-+twAnihksyQnjh4gYLA4h+bZ58Xt033OKJIAHnjVGtg9V+etu+rXNukyCi/u4GVnSiAKH2NJBn/MsojmcKnV5A==
+  dependencies:
+    classnames "2.2.6"
+    d3-selection "2.0.0"
+    d3-transition "2.0.0"
+
+"@heswell/layout@latest":
   version "3.0.26"
   resolved "https://registry.yarnpkg.com/@heswell/layout/-/layout-3.0.26.tgz#c28a7475cade19198ea73618d47b1cffd31862d2"
   integrity sha512-+6lFJPkGO3x4hioI4MiXuJom8JjupbFRmTei3miz7ROJTpFNHaVLXqrEzqgk6BaXhVu+Z15pHbsmFBBGe5DL9Q==
@@ -1504,7 +1513,15 @@
   resolved "https://registry.yarnpkg.com/@heswell/popup/-/popup-2.1.13.tgz#b556dfa0dda80343d14386aefe43ba6c10ecb376"
   integrity sha512-PI4Ra7VxJckaiqNrc5kbetxI6xGeT/voMDce6sCYnJXcpZXqNujNeP0A6pZk8BCoQeWdKrnzwURe1Y3/wbdriA==
 
-"@heswell/ui-controls@2.0.14", "@heswell/ui-controls@latest":
+"@heswell/ui-controls@2.0.16":
+  version "2.0.16"
+  resolved "https://registry.yarnpkg.com/@heswell/ui-controls/-/ui-controls-2.0.16.tgz#30952e8d8e12b37713863fc9e5cba3c119fee771"
+  integrity sha512-nvgAEBnGxKT+sBOzl7ij9RDBydVGw8LyvfGtr5pgBOjipBd3vJ9yLkcepkihxWVk4a4hUBGdhTcCWSasvoqJvw==
+  dependencies:
+    date-fns "^2.9.0"
+    xstate "^4.2.2"
+
+"@heswell/ui-controls@latest":
   version "2.0.14"
   resolved "https://registry.yarnpkg.com/@heswell/ui-controls/-/ui-controls-2.0.14.tgz#39021371055fb0011bbd6c8d01f51d62ba6579b8"
   integrity sha512-qxCmAUgppqUhrQEBu28Pa/wh+4VFZNt0v/FZjP15MGp/ijIMsEs+nSYnVmijV7+VWcA2VvY5BYlvO3UvezucFg==

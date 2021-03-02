@@ -62,7 +62,6 @@ export default class RemoteDataSource  extends EventEmitter {
     this.viewport = viewport;
     this.tableName = tableName;
     this.columns = columns;
-    logger.log(`subscribe to ${tableName} range = ${JSON.stringify(range)}`)
 
     this.server = await this.pendingServer;
 
@@ -76,7 +75,6 @@ export default class RemoteDataSource  extends EventEmitter {
           if (message.dataType === DataTypes.FILTER_DATA) {
             this.filterDataCallback(message);
           } else if (message.type === "subscribed"){
-            console.log(`%cRemoteDataSource subscribed`,'color:rebeccapurple;font-weight: bold;')
             this.serverViewportId = message.serverViewportId;
             this.emit("subscribed", message);
             const {viewportId, ...rest} = message
