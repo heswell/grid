@@ -197,7 +197,7 @@ function addToBuffer(
     incomingRows = incomingRows.slice(firstGoodIncomingIndex);
   }
 
-  //   console.log(`addToBuffer 
+  //   console.log(`addToBuffer
   //   vpLow=${vpLow} vpHigh=${vpHigh}
   //   incomingRowLow=${incomingRowLow} incomingRowHigh ${incomingRowHigh}
   // `)
@@ -214,7 +214,7 @@ function addToBuffer(
       const doomedRowCount = newBufferLow - bufferLow;
       buffer.splice(0, doomedRowCount);
     } else if (overlap === "bwd-overlap" || overlap === "bwd-extend" || overlap === 'extend') {
-      // We cannot be sure that incomingRows carry all the rows we need to fill the 
+      // We cannot be sure that incomingRows carry all the rows we need to fill the
       // range gap, so take that into account
 
       if (incomingRowLow >= bufferLow){
@@ -226,15 +226,15 @@ function addToBuffer(
         // console.log(`2) overlap=${overlap} rowsRequiredToFillRange=${rowsRequiredToFillRange} shortFallIncomingRows=${shortFallIncomingRows}
         //   bufferLow=${bufferLow}, bufferHigh=${bufferHigh} => newBuffer:Low=${newBufferLow} newBufferHigh=${newBufferHigh}
         // `)
-  
+
         let rowsAvailableToFillRange = shortFallIncomingRows > 0
           ? Math.max(0, rowsRequiredToFillRange - shortFallIncomingRows)
           : rowsRequiredToFillRange;
-  
+
         if (shortFallIncomingRows > 0) {
           newBufferLow += Math.max(0, rowsRequiredToFillRange - rowsAvailableToFillRange);
         }
-  
+
         buffer = Array(rowsAvailableToFillRange).concat(buffer);
       }
   }

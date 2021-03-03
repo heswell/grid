@@ -305,14 +305,16 @@ export class ServerProxy {
           if (!expanded) {
             depth = -depth;
           }
-          rest.push(rowIndex - 1, 0, depth, count, path, 0)
+          rest.push(rowIndex - 1, 0, depth, count, path, 0);
           record.rows.push(rest);
         } else {
           // TODO populate the key field correctly, i.e. don't just assume first field
-          if (isSelected) {
-            console.log(`row ${rowIndex} is selected`)
-          }
           record.rows.push([rowIndex, 0, 0, 0, data[0], isSelected, , , , ,].concat(data));
+          // We get a SIZE record when vp size changes but not in every batch - not if the size hasn't changed. Hence
+          // we take the size from TABLE. However, if size does change, it might do so part way through a batch.
+          if (vpSize > record.size){
+            record.size = vpSize;
+          }
         }
       } else if (updateType === Message.SIZE) {
         // console.log(`size record ${JSON.stringify(rows[i],null,2)}`)

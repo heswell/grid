@@ -13,8 +13,6 @@ import './App.css';
 function App() {
   const dataSourceOrders = useMemo(() => createDataSource('orders', ordersSchema), []);
   const dataSourcePrices = useMemo(() => createDataSource('prices', pricesSchema), []);
-  const dataSourceParentOrders = useMemo(() => createDataSource('parentOrders', ordersSchema), []);
-  const dataSourceChildOrders = useMemo(() => createDataSource('childOrders', pricesSchema), []);
 
   const handleFilter = (table = 'orders', filter) => {
     console.log(`filter ${table}`);
