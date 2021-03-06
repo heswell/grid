@@ -7,10 +7,6 @@
     "build": "rollup -c --environment BUILD:production",
     "build:dev": "rollup -c --environment BUILD:development"
   },
-  "dependencies": {
-    "@heswell/utils": "^2.0.9",
-    "@vuu-ui/data-remote": "1.0.0"
-  },
   "devDependencies": {
     "rollup": "^2.39.0",
     "rollup-plugin-commonjs": "^10.1.0",

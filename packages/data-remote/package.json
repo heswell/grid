@@ -5,8 +5,5 @@
   "license": "UNLICENSED",
   "files": [
     "src"
-  ],
-  "peerDependencies": {
-    "@heswell/utils": "^2.0.0"
-  }
+  ]
 }

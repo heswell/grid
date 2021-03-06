@@ -68,7 +68,7 @@ export class ServerProxy {
         this.sendIfReady({
           type: Message.CHANGE_VP,
           viewPortId: viewport.serverViewportId,
-          columns: ["ric", "description", "currency", "exchange", "lotSize", "bid", "ask", "last", "open", "close", "scenario"],
+          columns: viewport.columns,
           sort: {
             sortDefs: []
           },
@@ -83,7 +83,7 @@ export class ServerProxy {
         this.sendIfReady({
           type: Message.CHANGE_VP,
           viewPortId: viewport.serverViewportId,
-          columns: ["ric", "description", "currency", "exchange", "lotSize", "bid", "ask", "last", "open", "close", "scenario"],
+          columns: viewport.columns,
           sort: {
             sortDefs: message.sortCriteria.map(([column, dir = 'asc']) => ({ column, sortType: SORT[dir] }))
           },

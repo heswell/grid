@@ -2,8 +2,5 @@
   "name": "@vuu-ui/data-source",
   "version": "1.0.0",
   "main": "src/index.js",
-  "license": "UNLICENSED",
-  "dependencies": {
-    "@heswell/utils": "^2.0.9"
-  }
+  "license": "UNLICENSED"
 }

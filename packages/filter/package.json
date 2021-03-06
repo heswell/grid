@@ -1,0 +1,15 @@
+{
+  "name": "@vuu-ui/filter",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "license": "UNLICENSED",
+  "peerDependencies": {
+    "@heswell/popup": "latest"
+  },
+  "dependencies": {
+    "@adobe/react-spectrum": "^3.8.0",
+    "@heswell/utils": "3.0.1",
+    "@spectrum-icons/workflow": "^3.2.0",
+    "classnames": "^2.2.6"
+  }
+}

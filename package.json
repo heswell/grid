@@ -14,6 +14,8 @@
   "scripts": {
     "start": "modular start app",
     "build": "modular build app",
+    "build:all": "modular build utils && modular build data-store && modular build data-source && modular build data-remote && modular build datagrid && modular build filter && modular build app && rollup --config packages/remote-worker/rollup.config.js",
+    "build:worker": "rollup --config packages/remote-worker/rollup.config.js",
     "test": "modular test",
     "lint": "eslint . --ext .js,.ts,.tsx",
     "prettier": "prettier --write .",
@@ -30,7 +32,7 @@
     "proseWrap": "always"
   },
   "dependencies": {
-    "@heswell/layout": "3.0.30",
+    "@heswell/layout": "3.0.31",
     "@heswell/popup": "2.1.13",
     "@heswell/ui-controls": "2.0.16",
     "@testing-library/dom": "^7.29.4",

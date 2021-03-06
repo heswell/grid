@@ -1,6 +1,7 @@
 
+import {useRef} from 'react';
 import { Grid } from "@vuu-ui/datagrid";
-import {View} from "@heswell/layout";
+import {QueryFilter} from "@vuu-ui/filter";
 
 export const pricesSchema = {
   columns: [
@@ -30,9 +31,13 @@ export const pricesSchema = {
   ]
 };
 
-const PricesGrid = (props) => {
+const PricesGrid = ({onFilterChange,onClearFilters, query,  ...props}) => {
+
   return (
+    <>
+      <QueryFilter onChange={q => onFilterChange('prices', q)}/>
       <Grid {...props} columns={pricesSchema.columns} columnSizing="fill" renderBufferSize={20}/>
+      </>
   );
 
 }

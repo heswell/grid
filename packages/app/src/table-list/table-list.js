@@ -3,16 +3,27 @@ import cx from "classnames";
 import {useLayoutDispatch, Action, View, registerComponent, DragIcon} from "@heswell/layout";
 import { uuid } from "@heswell/utils";
 import { Grid } from "@vuu-ui/datagrid";
+import {QueryFilter} from "@vuu-ui/filter";
 import {List, ListItem} from "@heswell/ui-controls";
 import useTables from "../useTables";
 import {createDataSource} from "../utils"
 
 
+const FilteredGrid = ({dataSource, schema}) => {
+
+  return (
+  <>
+    <QueryFilter onChange={q => dataSource.filterQuery(q)}/>
+    <Grid dataSource={dataSource} columns={schema.columns} columnSizing="fill" renderBufferSize={20} />
+  </>
+  )
+}
+
 const DataGrid = ({schema, ...props}) => {
   const dataSource = useMemo(() => createDataSource(schema.table, schema), [schema]);
   return (
     <View header resizeable title={schema.table} {...props}>
-      <Grid dataSource={dataSource} columns={schema.columns} columnSizing="fill" renderBufferSize={20} />
+      <FilteredGrid dataSource={dataSource} schema={schema}  />
     </View>
   )
 }

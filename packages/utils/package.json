@@ -1,0 +1,13 @@
+{
+  "name": "@heswell/utils",
+  "version": "3.0.1",
+  "main": "src/index.js",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "nanoid": "^3.1.20"
+  },
+  "peerDepencencies": {
+    "react": "latest",
+    "react-dom": "latest"
+  }
+}
