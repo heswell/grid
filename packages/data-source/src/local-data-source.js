@@ -1,6 +1,6 @@
 
 import {createLogger, DataTypes, EventEmitter, logColor} from '@heswell/utils'
-import {DataStore, Table} from '@vuu-ui/data-store';
+import {DataStore, Table} from '@heswell/data-store';
 import LocalUpdateQueue from './local-update-queue';
 
 const {ROW_DATA} = DataTypes;

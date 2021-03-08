@@ -22,3 +22,7 @@
 .DragIcon.dragging {
   background-color: orange !important;
 }
+
+.hwChest-content {
+  background-color: inherit;
+}

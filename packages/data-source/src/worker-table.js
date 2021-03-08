@@ -1,4 +1,4 @@
-import {Table as BaseTable} from '@vuu-ui/data-store';
+import {Table as BaseTable} from '@heswell/data-store';
 
 export default class Table extends BaseTable {
 

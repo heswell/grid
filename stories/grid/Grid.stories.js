@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from "react";
 
 import { Grid } from "@vuu-ui/datagrid";
-import { LocalDataSource } from "@vuu-ui/data-source";
+import { LocalDataSource } from "@heswell/data-source";
 import { RemoteDataSource, Servers } from "@vuu-ui/data-remote";
 
 import "../assets/material-design.css";

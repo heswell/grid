@@ -6,7 +6,7 @@
   "peerDependencies": {
     "@heswell/utils": "latest",
     "@heswell/popup": "latest",
-    "@vuu-ui/data-source": "latest",
+    "@heswell/data-source": "latest",
     "classnames": "^2.2.6"
   },
   "dependencies": {

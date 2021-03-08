@@ -1,6 +1,6 @@
 {
-  "name": "@vuu-ui/data-source",
-  "version": "1.0.0",
+  "name": "@heswell/data-source",
+  "version": "3.0.3",
   "main": "src/index.js",
   "license": "UNLICENSED"
 }
