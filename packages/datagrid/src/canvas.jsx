@@ -3,6 +3,7 @@ import React, {
   useCallback,
   useContext,
   useImperativeHandle,
+  useMemo,
   useReducer,
   useRef,
 } from "react";
@@ -18,7 +19,7 @@ import { getColumnOffset } from "./grid-model-utils";
 
 import "./canvas.css";
 
-const { IDX, RENDER_IDX } = metadataKeys;
+const { IDX, RENDER_IDX, count: metadataCount } = metadataKeys;
 const byKey = (row1, row2) => row1[RENDER_IDX] - row2[RENDER_IDX];
 
 /** @type {Canvas} */
@@ -51,6 +52,13 @@ const Canvas = forwardRef(function Canvas(
     columnGroup,
     initCanvasReducer
   );
+
+  const columnMap = useMemo(() => {
+    return gridModel.columnNames.reduce((map, columnName, idx) => {
+      map[columnName] = metadataCount + idx;
+      return map;
+    },{})
+  },[gridModel.columnNames])
 
   useUpdate(() => {
     dispatchCanvasAction({ type: "refresh", columnGroup });
@@ -253,7 +261,7 @@ const Canvas = forwardRef(function Canvas(
   const handleRowClick = useCallback(
     (idx, row, rangeSelect, keepExistingSelection) => {
       // This poses an interesting question. If selection is server side
-      // at what point can re fire a selectionChange event - we have to do that clientSide - 
+      // at what point can re fire a selectionChange event - we have to do that clientSide -
       // need to watch for the selectionACK
       if (onRowClick){
         onRowClick(row);
@@ -310,6 +318,7 @@ const Canvas = forwardRef(function Canvas(
         {rows.sort(byKey).map((row) => (
           <Row
             key={row[RENDER_IDX]}
+            columnMap={columnMap}
             columns={columns}
             height={gridModel.rowHeight}
             idx={row[IDX]}

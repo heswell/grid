@@ -43,6 +43,9 @@ const handleMessageFromClient = async ({ data: message }) => {
     case 'subscribe':
       server.subscribe(message);
       break;
+    case 'unsubscribe':
+      server.unsubscribe(message.viewport);
+      break;
     default:
       server.handleMessageFromClient(message);
     }

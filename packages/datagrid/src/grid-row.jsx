@@ -9,6 +9,7 @@ import "./grid-row.css";
 const { DEPTH, KEY, SELECTED } = metadataKeys;
 
 const Row = memo(function Row({
+  columnMap,
   columns,
   height,
   idx,
@@ -57,7 +58,7 @@ const Row = memo(function Row({
             toggleStrategy={toggleStrategy}
           />
         ) : (
-          <Cell key={column.key} column={column} row={row} />
+          <Cell key={column.key} column={column} columnMap={columnMap} row={row} />
         )
       )}
     </div>

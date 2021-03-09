@@ -14,15 +14,15 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
   if (callback !== callbackRef.current){
     callbackRef.current = callback;
   }
-  
+
   const latestState = useRef(null);
   function getLatestState(){
     let instance = latestState.current;
     if (instance !== null){
       return instance;
     }
-    let newInstance = dataReducer(undefined, { 
-      type: 'clear', 
+    let newInstance = dataReducer(undefined, {
+      type: 'clear',
       range: subscriptionDetails.range,
       bufferSize: dataSource.bufferSize
     })
@@ -42,7 +42,7 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
         hi: hi + renderBufferSize
     };
   },[renderBufferSize]);
-  
+
 
   const dispatchData = useCallback(action => {
     latestState.current = dataReducer(latestState.current, action);
@@ -73,7 +73,7 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
     const range = expandRange(lo,hi);
     dispatchData({
       type: 'range', range});
-    
+
     if (latestState.current.dataRequired){
       dataSource.setRange(range.lo, range.hi);
     }
@@ -131,6 +131,7 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
     dataSource.on('group', clearBuffer)
 
     return () => {
+      console.log(`%cUNSUBSCRIBE`,'color: green;font-weight: bold;')
       dataSource.unsubscribe();
       dataSource.removeListener('group', clearBuffer);
       const {bufferSize, range, renderBufferSize} = latestState.current;

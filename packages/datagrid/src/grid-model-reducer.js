@@ -47,11 +47,12 @@ function sortMap(sortBy) {
 }
 
 /** @type {GridModelReducer} */
-export default (state, action) => {
+const GridModelReducer = (state, action) => {
   // console.log(`%cGridModelReducer ${action.type}`, 'color:red;font-weight:bold;')
   // @ts-ignore
   return reducerActionHandlers[action.type](state, action);
 };
+export default GridModelReducer;
 
 /** @type {GridModelReducerTable} */
 const reducerActionHandlers = {
@@ -63,7 +64,7 @@ const reducerActionHandlers = {
   'sort': sortRows,
   'group': groupRows,
   // 'pivot': pivotRows,
-  'toggle': toggleRow,
+  // 'toggle': toggleRow,
   'set-available-columns': setAvailableColumns,
   'set-pivot-columns': setPivotColumns,
   'column-hide': hideColumn,
@@ -116,7 +117,7 @@ export const initModel = ([gridProps, size, custom]) => {
     customInlineHeaderHeight,
     defaultColumnWidth,
     groupColumns,
-    groupState: null,
+    // groupState: null,
     headerHeight: noColumnHeaders ? 0 : headerHeight,
     headingDepth: undefined,
     height,
@@ -224,16 +225,16 @@ function addVisualLinks(state, { links }) {
   }
 }
 
-// Do we need this in the model ?
-/** @type {GridModelReducer<GridModelToggleAction>} */
-function toggleRow(state, { row }) {
-  // TODO does groupState actually need to live in the grid model ?
-  const groupState = GridModel.toggleGroupState(state, row);
-  return {
-    ...state,
-    groupState
-  }
-}
+// // Do we need this in the model ?
+// /** @type {GridModelReducer<GridModelToggleAction>} */
+// function toggleRow(state, { row }) {
+//   // TODO does groupState actually need to live in the grid model ?
+//   const groupState = GridModel.toggleGroupState(state, row);
+//   return {
+//     ...state,
+//     groupState
+//   }
+// }
 
 /** @type {GridModelReducer<GridModelSortAction>} */
 function sortRows(state, { columns }) {

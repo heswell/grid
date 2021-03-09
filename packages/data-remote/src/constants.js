@@ -21,10 +21,10 @@ export const msgType = {
   createLink: 'createLink',
 
   addSubscription: 'AddSubscription',
-  collapseGroup : 'CollapseGroup',
+  closeTreeNode : 'closeTreeNode',
   columnList : 'ColumnList',
   data : 'data',
-  expandGroup : 'ExpandGroup',
+  openTreeNode : 'openTreeNode',
   filter : 'filter',
   filterQuery : 'filterQuery',
   filterData : 'filterData',

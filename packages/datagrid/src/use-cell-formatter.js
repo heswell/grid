@@ -1,5 +1,5 @@
 import {createElement, useRef} from 'react';
-import {roundDecimal, DECIMALS_AUTO} from './grid-cell-number-utils';
+import {roundDecimal} from './grid-cell-number-utils';
 
 const defaultFormatter = value => value == null ? '' : value;
 
@@ -35,7 +35,7 @@ function numericFormatter({align='right', alignOnDecimals=false, decimals=4, zer
 }
 
 // class NumberFormatter {
-    
+
 //     static cellCSS({formatting=defaultFormatting}){
 //         const {align=Right} = formatting;
 //         if (align === Right){
@@ -58,5 +58,5 @@ function numericFormatter({align='right', alignOnDecimals=false, decimals=4, zer
 //         )
 //     }
 
-// } 
+// }
 

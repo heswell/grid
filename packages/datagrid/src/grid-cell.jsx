@@ -34,7 +34,8 @@ const cellValuesAreEqual = (prev, next) => {
   );
 };
 
-const GridCell = React.memo(function GridCell({ column, row }) {
+// perhaps context would be more appropriate for columnMap
+const GridCell = React.memo(function GridCell({ column, columnMap, row }) {
   const components = useContext(ComponentContext);
   const [format] = useFormatter(column);
   const className = useGridCellClassName(column);
@@ -43,7 +44,7 @@ const GridCell = React.memo(function GridCell({ column, row }) {
   const Cell = rendererName && components[rendererName];
 
   if (Cell) {
-    return <Cell className={className} column={column} row={row} />;
+    return <Cell className={className} column={column} columnMap={columnMap} row={row} />;
   } else {
     return (
       <div

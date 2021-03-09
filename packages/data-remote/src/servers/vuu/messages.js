@@ -15,8 +15,12 @@ export const CHANGE_VP_RANGE_SUCCESS = 'CHANGE_VP_RANGE_SUCCESS';
 export const TABLE_ROW = 'TABLE_ROW';
 export const HB = "HB";
 export const HB_RESP = "HB_RESP";
-
-
+export const OPEN_TREE_NODE = "OPEN_TREE_NODE";
+export const OPEN_TREE_SUCCESS = "OPEN_TREE_SUCCESS";
+export const OPEN_TREE_REJECT = "OPEN_TREE_REJECT";
+export const CLOSE_TREE_NODE = "CLOSE_TREE_NODE";
+export const CLOSE_TREE_SUCCESS = "CLOSE_TREE_SUCCESS";
+export const CLOSE_TREE_REJECT = "CLOSE_TREE_REJECT";
 
 
 export const SIZE = 'SIZE'

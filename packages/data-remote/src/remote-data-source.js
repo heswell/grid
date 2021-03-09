@@ -162,6 +162,23 @@ export default class RemoteDataSource  extends EventEmitter {
     })
   }
 
+  openTreeNode(key){
+    this.server?.handleMessageFromClient({
+      viewport: this.viewport,
+      type: Msg.openTreeNode,
+      key
+    });
+
+  }
+
+  closeTreeNode(key){
+    this.server?.handleMessageFromClient({
+      viewport: this.viewport,
+      type: Msg.closeTreeNode,
+      key
+    });
+  }
+
   group(columns) {
     this.emit('group', columns);
     this.server?.handleMessageFromClient({

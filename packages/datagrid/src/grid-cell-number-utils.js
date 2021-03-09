@@ -58,14 +58,14 @@ function pad(n,dp, Pad){
         if (diff < 0){
             n = n.slice(0, dp);
             len = dp;
-        }	
+        }
 
         if (Pad === Space && n.charAt(len-1) === '0'){
             n = n.replace(/0+$/,'');
             return pad(n,dp,Pad);
         }
     }
-    return n;	
+    return n;
 }
 
 export function roundDecimal(value, align=Align.Right, decimals=4, zeroPad, alignOnDecimals){
@@ -89,7 +89,8 @@ export function roundDecimal(value, align=Align.Right, decimals=4, zeroPad, alig
     } else if (actualDecimals > decimals){
         fraction = parseFloat('0.'+part2).toFixed(decimals).slice(2);
     } else {
-        if (Pad = zeroPad ? Zero 
+        /* eslint-disable no-cond-assign */
+        if (Pad = zeroPad ? Zero
                 : alignOnDecimals && align !== Align.Left ? Space
                 : null) {
 

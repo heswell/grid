@@ -9,7 +9,16 @@ export const ordersSchema = {
       { name: 'ric', width: 100} ,
       { name: 'ccy', width: 100} ,
       { name: 'quantity', width: 100} ,
-      { name: 'filledQuantity', width: 100} ,
+      {
+        name: 'filledQuantity',
+       width: 100,
+       type: {
+        name: 'number',
+        renderer: { name: 'progress', associatedField: 'quantity' },
+        format: { decimals: 0 }
+      },
+
+      } ,
       { name: 'trader', width: 100} ,
       { name: 'lastUpdate', width: 100} ,
       ]

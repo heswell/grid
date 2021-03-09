@@ -74,8 +74,9 @@ const methods = {
     worker.postMessage({ type: "subscribe", ...message });
   },
 
-  unsubscribe: () => {
-    console.log(`unsubscribe`)
+  unsubscribe: (viewport) => {
+    console.log(`ConnectionManagerWorker, unsubscribe from vp ${viewport}`);
+    worker.postMessage({ type: "unsubscribe", viewport });
   },
 
   handleMessageFromClient: (message) => {

@@ -1,4 +1,4 @@
-import React, { useEffect,useRef } from 'react';
+import React from 'react';
 import cx from "classnames";
 import { metadataKeys } from "@heswell/utils";
 import useFormatter from "../use-cell-formatter";

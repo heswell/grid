@@ -24,10 +24,9 @@
 .GridCell.resizing {
   background-color: var(--header-cell-highlight-bg);
 }
-.GridCell.number {
-  text-align: right;
-}
+
 .GridCell .num {
   display: inline-block;
+  text-align: right;
   width: 100%;
 }

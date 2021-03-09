@@ -11,15 +11,16 @@ const GroupCell = React.memo(function GroupCell({
   row,
   toggleStrategy,
 }) {
-  const { dispatchGridModelAction } = useContext(GridContext);
+  const { dispatchGridAction } = useContext(GridContext);
 
   const handleClick = useCallback(
     (e) => {
       e.preventDefault();
       e.stopPropagation();
-      dispatchGridModelAction({ type: "toggle", row });
+      const type = row[metadataKeys.DEPTH] > 0 ? "closeTreeNode" : "openTreeNode";
+      dispatchGridAction({ type, key: row[metadataKeys.KEY] });
     },
-    [dispatchGridModelAction, row]
+    [dispatchGridAction, row]
   );
 
   const allowToggle =

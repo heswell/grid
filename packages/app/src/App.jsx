@@ -34,7 +34,7 @@ function App() {
         <Flexbox className="App" style={{ flexDirection: 'column', height: '100vh' }}>
           <div style={{ height: 60, borderBottom: 'solid 1px #ccc' }} />
           <Chest style={{ flex: 1 }}>
-            <Drawer position="left" inline open={drawerOpen}>
+            <Drawer position="left" inline peekaboo clickToOpen>
               <TableList style={{ width: 120 }} />
             </Drawer>
             <Stack style={{ width: '100%', height: '100%' }} showTabs enableAddTab>

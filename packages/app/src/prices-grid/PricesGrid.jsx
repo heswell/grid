@@ -11,7 +11,7 @@ export const pricesSchema = {
       type: {
         name: 'number',
         renderer: { name: 'background', flashStyle: 'arrow-bg' },
-        formatting: { decimals: 2, zeroPad: true }
+        format: { decimals: 2, zeroPad: true }
       },
       aggregate: 'avg'
     },
@@ -20,7 +20,7 @@ export const pricesSchema = {
       type: {
         name: 'number',
         renderer: { name: 'background', flashStyle: 'arrow-bg' },
-        formatting: { decimals: 2, zeroPad: true }
+        format: { decimals: 2, zeroPad: true }
       },
       aggregate: 'avg'
     },

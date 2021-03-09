@@ -78,6 +78,10 @@ const GridBase = forwardRef(function GridBase(props, ref){
     switch (operation.type) {
       case "group":
         return dataSource.group(operation.columns);
+      case "openTreeNode":
+        return dataSource.openTreeNode(operation.key);
+      case "closeTreeNode":
+        return dataSource.closeTreeNode(operation.key);
       case "sort":
         return dataSource.sort(operation.columns);
       case "link-table":
@@ -92,6 +96,8 @@ const GridBase = forwardRef(function GridBase(props, ref){
   const dispatchGridAction = (action) =>
     ({
       group: invokeDataSourceOperation,
+      openTreeNode: invokeDataSourceOperation,
+      closeTreeNode: invokeDataSourceOperation,
       sort: invokeDataSourceOperation,
       'link-table': invokeDataSourceOperation,
       selection: handleSelectionChange,

@@ -180,6 +180,10 @@ const CHANGE_VP_RANGE_SUCCESS = 'CHANGE_VP_RANGE_SUCCESS';
 const TABLE_ROW = 'TABLE_ROW';
 const HB = "HB";
 const HB_RESP = "HB_RESP";
+const OPEN_TREE_NODE = "OPEN_TREE_NODE";
+const OPEN_TREE_SUCCESS = "OPEN_TREE_SUCCESS";
+const CLOSE_TREE_NODE = "CLOSE_TREE_NODE";
+const CLOSE_TREE_SUCCESS = "CLOSE_TREE_SUCCESS";
 const UPDATE = 'U';
 
 function partition(array, test, pass = [], fail = []) {
@@ -259,6 +263,26 @@ class ServerProxy {
           isReady);
         break;
 
+      case 'openTreeNode':
+        this.sendIfReady({
+          type: OPEN_TREE_NODE,
+          vpId: viewport.serverViewportId,
+          treeKey: message.key
+        },
+          _requestId++,
+          isReady);
+        break;
+
+      case 'closeTreeNode':
+        this.sendIfReady({
+          type: CLOSE_TREE_NODE,
+          vpId: viewport.serverViewportId,
+          treeKey: message.key
+        },
+          _requestId++,
+          isReady);
+
+        break;
       case 'sort':
         this.sendIfReady({
           type: CHANGE_VP,
@@ -459,8 +483,15 @@ class ServerProxy {
     }
   }
 
-  unsubscribe() {
+  unsubscribe(clientViewportId) {
+    const viewport = this.viewportStatus[clientViewportId];
     console.log(`%cserver-proxy<VUU> unsubscribe`, 'color: blue;font-weight:bold;');
+    if (viewport) {
+      this.sendMessageToServer({ type: "REMOVE_VP", viewPortId: viewport.serverViewportId });
+    } else {
+      console.error(`unable to unsubscribe from ${clientViewportId}, viewport not found`);
+    }
+
   }
 
   destroy() {
@@ -472,31 +503,46 @@ class ServerProxy {
     for (let i = 0; i < rows.length; i++) {
       const { viewPortId, vpSize, rowIndex, rowKey, sel: isSelected, updateType, ts, data } = rows[i];
       //TODO it is probably more efficient to do the groupBy checks at next level
-      const { groupByStatus } = this.viewportStatus[viewPortId];
-      if (groupByStatus === 'pending' && rowKey !== '$root') {
-        console.log(`ignoring ${updateType} message whilst waiting for grouped rows`);
-      } else if (groupByStatus === 'pending' && rowKey === '$root') {
-        this.viewportStatus[viewPortId].groupByStatus = 'complete';
-        console.log(`groupBy in place, $root received`);
-      } else if (updateType === UPDATE) {
-        const record = (viewports[viewPortId] || (viewports[viewPortId] = { viewPortId, size: vpSize, rows: [] }));
-        if (groupByStatus === 'complete') {
-          let [depth, expanded, path, unknown, label, count, ...rest] = data;
-          if (!expanded) {
-            depth = -depth;
-          }
-          rest.push(rowIndex - 1, 0, depth, count, path, 0);
-          record.rows.push(rest);
-        } else {
-          // TODO populate the key field correctly, i.e. don't just assume first field
-          record.rows.push([rowIndex, 0, 0, 0, data[0], isSelected, , , , ,].concat(data));
-          // We get a SIZE record when vp size changes but not in every batch - not if the size hasn't changed. Hence
-          // we take the size from TABLE. However, if size does change, it might do so part way through a batch.
-          if (vpSize > record.size){
-            record.size = vpSize;
+      const viewport = this.viewportStatus[viewPortId];
+      if (viewport) {
+        let { groupByStatus } = viewport;
+
+        if (groupByStatus === 'pending' && rowKey !== '$root') {
+          console.log(`ignoring ${updateType} message whilst waiting for grouped rows`);
+        } else if (groupByStatus === 'pending' && rowKey === '$root') {
+          groupByStatus = this.viewportStatus[viewPortId].groupByStatus = 'complete';
+          console.log(`groupBy in place, $root received`);
+        }
+
+        if (updateType === UPDATE) {
+          const record = (viewports[viewPortId] || (viewports[viewPortId] = {
+            viewPortId,
+            // VUU sends the root row, which we discard
+            size: groupByStatus === 'complete' ? vpSize - 1 : vpSize,
+            rows: []
+          }));
+          if (groupByStatus === 'complete') {
+            let [depth, expanded, path, unknown, label, count, ...rest] = data;
+            if (!expanded) {
+              depth = -depth;
+            }
+            rest.push(rowIndex - 1, 0, depth, count, path, 0);
+            record.rows.push([rowIndex - 1, 0, depth, count, path, 0, , , , ,].concat(rest));
+          } else {
+            // TODO populate the key field correctly, i.e. don't just assume first field
+            record.rows.push([rowIndex, 0, 0, 0, data[0], isSelected, , , , ,].concat(data));
+            // We get a SIZE record when vp size changes but not in every batch - not if the size hasn't changed. Hence
+            // we take the size from TABLE. However, if size does change, it might do so part way through a batch.
+            if (vpSize > record.size) {
+              record.size = vpSize;
+            }
           }
         }
-      } else ;
+
+      } else {
+        // If we are missing the viewport, bail now
+        break;
+      }
     }
     return Object.values(viewports);
   }
@@ -522,6 +568,10 @@ class ServerProxy {
       case CHANGE_VP_RANGE_SUCCESS:
       case CHANGE_VP_SUCCESS:
         break;
+      case OPEN_TREE_SUCCESS:
+      case CLOSE_TREE_SUCCESS:
+        console.log('successful tree operation');
+        break;
       case CREATE_VISUAL_LINK_SUCCESS:
       case SET_SELECTION_SUCCESS:
         break;
@@ -544,6 +594,13 @@ class ServerProxy {
       }
 
         break;
+      case "REMOVE_VP_SUCCESS": {
+        const { clientViewportId } = this.viewportStatus[body.viewPortId];
+        delete this.viewportStatus[body.viewPortId];
+        delete this.viewportStatus[clientViewportId];
+      }
+        console.log(`REMOVE_VP_SUCCESS ${JSON.stringify(body)}`);
+        break;
       case "TABLE_LIST_RESP":
         this.postMessageToClient({ type: "TABLE_LIST_RESP", tables: body.tables, requestId });
         break;
@@ -551,22 +608,22 @@ class ServerProxy {
         this.postMessageToClient({ type: "TABLE_META_RESP", table: body.table, columns: body.columns, requestId });
         break;
       case "VP_VISUAL_LINKS_RESP":
-        if (body.links.length){
+        if (body.links.length) {
           const { clientViewportId } = this.viewportStatus[body.vpId];
-          console.group(`links for (${this.viewportStatus[body.vpId].spec.table})`);
-          body.links.forEach(({parentVpId, link}) => {
-            console.log(`link parentVpId = ${parentVpId}`);
-            const vp = this.viewportStatus[parentVpId];
-            if (vp){
-              console.log(`   parent table = ${vp.spec.table}`);
-              console.log(JSON.stringify(link,null,2));
-            }
+          // console.group(`links for (${this.viewportStatus[body.vpId].spec.table})`);
+          // body.links.forEach(({parentVpId, link}) => {
+          //   console.log(`link parentVpId = ${parentVpId}`);
+          //   const vp = this.viewportStatus[parentVpId];
+          //   if (vp){
+          //     console.log(`   parent table = ${vp.spec.table}`)
+          //     console.log(JSON.stringify(link,null,2))
+          //   }
 
-          });
-          console.groupEnd();
+          // })
+          // console.groupEnd();
           this.postMessageToClient({ type: "VP_VISUAL_LINKS_RESP", links: body.links, clientViewportId });
         }
-      break;
+        break;
 
       case "ERROR":
         console.error(body.msg);
@@ -635,6 +692,9 @@ const handleMessageFromClient = async ({ data: message }) => {
       break;
     case 'subscribe':
       server.subscribe(message);
+      break;
+    case 'unsubscribe':
+      server.unsubscribe(message.viewport);
       break;
     default:
       server.handleMessageFromClient(message);
