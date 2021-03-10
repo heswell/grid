@@ -354,7 +354,14 @@ export class ServerProxy {
             }
           }
         } else if (updateType === Message.SIZE) {
-          // console.log(`size record ${JSON.stringify(rows[i],null,2)}`)
+          console.log(`Size record ${vpSize}`)
+          if (vpSize === 0){
+            viewports[viewPortId] = {
+              viewPortId,
+              size: 0,
+              rows: []
+            };
+          }
         }
 
       } else {

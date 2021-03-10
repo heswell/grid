@@ -11,6 +11,13 @@ import { TableList } from "./table-list";
 
 import './App.css';
 
+const newPage = (index) => (
+  <View title="New Page" style={{flexGrow: 1, flexShrink: 0, flexBasis: 0}} closeable>
+    <div style={{ backgroundColor: "#ccc" }}></div>
+  </View>
+
+)
+
 function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const data = useMemo(() => ({
@@ -23,10 +30,16 @@ function App() {
     data[table].filterQuery(filterQuery);
   }
 
+
+
+
   const toggleDrawer = () => {
 
     setDrawerOpen(!drawerOpen)
   }
+
+
+  console.log({ defaultTheme })
 
   return (
     <Provider theme={defaultTheme}>
@@ -34,10 +47,12 @@ function App() {
         <Flexbox className="App" style={{ flexDirection: 'column', height: '100vh' }}>
           <div style={{ height: 60, borderBottom: 'solid 1px #ccc' }} />
           <Chest style={{ flex: 1 }}>
-            <Drawer position="left" inline peekaboo clickToOpen>
-              <TableList style={{ width: 120 }} />
+            <Drawer position="left" inline peekaboo clickToOpen sizeOpen={150}>
+              <View title="Tables" header style={{ height: '100%' }}>
+                <TableList style={{ width: 120 }} />
+              </View>
             </Drawer>
-            <Stack style={{ width: '100%', height: '100%' }} showTabs enableAddTab>
+            <Stack style={{ width: '100%', height: '100%' }} showTabs enableAddTab createNewChild={newPage}>
               <Flexbox title="Page 1" style={{ flexDirection: 'column' }}>
                 <Flexbox style={{ flexDirection: 'row', flex: 1 }}>
                   <View resizeable header style={{ flex: 1 }}>
@@ -48,12 +63,9 @@ function App() {
                   </View>
                 </Flexbox>
               </Flexbox>
-              <View title="Blank Page">
-                <div style={{ backgroundColor: "#ccc" }}></div>
-              </View>
             </Stack>
           </Chest>
-          <div style={{ height: 60, borderTop: 'solid 1px #ccc' }}  onClick={toggleDrawer}/>
+          <div style={{ height: 60, borderTop: 'solid 1px #ccc' }} onClick={toggleDrawer} />
         </Flexbox>
       </DraggableLayout>
     </Provider>

@@ -1495,10 +1495,10 @@
   dependencies:
     "@hapi/hoek" "^8.3.0"
 
-"@heswell/layout@3.0.36":
-  version "3.0.36"
-  resolved "https://registry.yarnpkg.com/@heswell/layout/-/layout-3.0.36.tgz#467f01ed0f80caa400e33dac92fb55e63ac7dcfe"
-  integrity sha512-MoCBcuQ8VeYxlhrbaCt/QFRUpp8OrhAz9lt+KfI+vpRvBLq32M7Nrh6dTmcJ7bYZyxEixZ2R9p3UCZBneJ0mdA==
+"@heswell/layout@3.0.45":
+  version "3.0.45"
+  resolved "https://registry.yarnpkg.com/@heswell/layout/-/layout-3.0.45.tgz#9e8cb7f0d87ff2255e25f045b3deae6e27f8165f"
+  integrity sha512-kiTWtp2lZ27quFKt4CNS/PeTLsTtrR6wbZcL+KHc5wOzzKWfARikgQLqYlQQYBsLeC9KwGmePl5NPkDZPQ6oEw==
   dependencies:
     "@adobe/react-spectrum" "^3.8.0"
     "@spectrum-icons/workflow" "^3.2.0"
@@ -1511,10 +1511,10 @@
   resolved "https://registry.yarnpkg.com/@heswell/popup/-/popup-2.1.13.tgz#b556dfa0dda80343d14386aefe43ba6c10ecb376"
   integrity sha512-PI4Ra7VxJckaiqNrc5kbetxI6xGeT/voMDce6sCYnJXcpZXqNujNeP0A6pZk8BCoQeWdKrnzwURe1Y3/wbdriA==
 
-"@heswell/ui-controls@2.0.16":
-  version "2.0.16"
-  resolved "https://registry.yarnpkg.com/@heswell/ui-controls/-/ui-controls-2.0.16.tgz#30952e8d8e12b37713863fc9e5cba3c119fee771"
-  integrity sha512-nvgAEBnGxKT+sBOzl7ij9RDBydVGw8LyvfGtr5pgBOjipBd3vJ9yLkcepkihxWVk4a4hUBGdhTcCWSasvoqJvw==
+"@heswell/ui-controls@2.0.18":
+  version "2.0.18"
+  resolved "https://registry.yarnpkg.com/@heswell/ui-controls/-/ui-controls-2.0.18.tgz#ec59727b71f57ee4000555cdbc3fc88666996413"
+  integrity sha512-TMXWP40RJzFtpoNQ5l35nOMCEhP0JZMv7k+V/K3FCLB7h/b6RFBRPOJxkKRDNATMfSyhJcqzsCqI5SsrOcsKZA==
   dependencies:
     date-fns "^2.9.0"
     xstate "^4.2.2"

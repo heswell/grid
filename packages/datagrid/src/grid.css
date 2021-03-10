@@ -1,7 +1,9 @@
 .Grid {
-  --hw-grid-background: var(--grid-background, yellow);
+  --hw-grid-background: var(--grid-background, inherit);
   --hw-grid-row-height: var(--grid-row-height, 24px);
   --hw-grid-row-selected-bg: #2b8bf8;
+
+  --hw-activation-indicator-thumb-bg: #2c2c2c;
 
   --cell-bg: var(--grid-cell-bg, var(--background));
   --cell-border-color: var(--grid-cell-border-color, #d4d4d4);

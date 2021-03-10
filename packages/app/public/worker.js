@@ -184,6 +184,9 @@ const OPEN_TREE_NODE = "OPEN_TREE_NODE";
 const OPEN_TREE_SUCCESS = "OPEN_TREE_SUCCESS";
 const CLOSE_TREE_NODE = "CLOSE_TREE_NODE";
 const CLOSE_TREE_SUCCESS = "CLOSE_TREE_SUCCESS";
+
+
+const SIZE = 'SIZE';
 const UPDATE = 'U';
 
 function partition(array, test, pass = [], fail = []) {
@@ -536,6 +539,15 @@ class ServerProxy {
             if (vpSize > record.size) {
               record.size = vpSize;
             }
+          }
+        } else if (updateType === SIZE) {
+          console.log(`Size record ${vpSize}`);
+          if (vpSize === 0){
+            viewports[viewPortId] = {
+              viewPortId,
+              size: 0,
+              rows: []
+            };
           }
         }
 

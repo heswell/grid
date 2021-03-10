@@ -137,8 +137,21 @@ function setData(state, action) {
 
   // console.log(JSON.stringify(action.rows));
 
-  if (state.buffer.length > 0 && !anyRowsInRange(state, action.rows, rowCount)) {
+  if (state.buffer.length > 0 && rowCount && !anyRowsInRange(state, action.rows, rowCount)) {
     return state;
+  }
+
+  if (rowCount === 0){
+    return {
+      ...state,
+      bufferIdx: { lo: 0, hi: 0 },
+      buffer: [],
+      keys: initKeys(state.range),
+      rows: [],
+      rowCount,
+      dataRequired: false
+    };
+
   }
 
   const [buffer, bufferIdx, rowsChanged] = addToBuffer(

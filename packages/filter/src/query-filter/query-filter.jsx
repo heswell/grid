@@ -1,24 +1,31 @@
-import React, { useState} from 'react';
+import React, { useState } from 'react';
 import cx from 'classnames';
-import {ActionButton, TextField, ToggleButton} from '@adobe/react-spectrum';
+import { ActionButton, TextField, ToggleButton } from '@adobe/react-spectrum';
 import CloseCircle from "@spectrum-icons/workflow/CloseCircle";
 import FilterIcon from "@spectrum-icons/workflow/Filter";
-import {Toolbar, Tooltray} from "@heswell/layout";
+import { Toolbar, Tooltray } from "@heswell/layout";
 
 import "./query-filter.css";
 
-const isValidQuery = filterQuery => true
+const isValidQuery = filterQuery => {
+  if (!filterQuery || !filterQuery.trim()) {
+    return false;
+  }
+  // TODO match against regex
+  return true;
+}
 
-const buildFilterQuery = filters =>
+const buildFilterQuery = (filters, joinOp = 'or') =>
   Object.values(filters)
-    .filter(({enabled}) => enabled)
-    .map(({filterQuery}) => filterQuery)
-    .join(' or ');
+    .filter(({ enabled }) => enabled)
+    .map(({ filterQuery }) => filterQuery)
+    .join(` ${joinOp} `);
 
 
-const QueryFilter = ({onChange}) => {
+const QueryFilter = ({ onChange }) => {
 
   const [filters, setFilters] = useState({});
+  const [joinOp, setJoinOp] = useState('or');
 
   const [filterValue, setFilterValue] = useState('');
 
@@ -29,9 +36,9 @@ const QueryFilter = ({onChange}) => {
   const addFilter = filter => {
     let match, filterQuery, filterName;
     /* eslint-disable no-cond-assign */
-    if (match = filter.match(/(.*)\s+as\s+(\S+)/)){
+    if (match = filter.match(/(.*)\s+as\s+(\S+)/)) {
       ([, filterQuery, filterName] = match);
-    } else{
+    } else {
       filterQuery = filter;
       filterName = filter;
     }
@@ -62,9 +69,9 @@ const QueryFilter = ({onChange}) => {
 
   }
 
-  const handleKeyDown = ({key}) => {
-    if (key === "Enter"){
-      if (isValidQuery(filterValue)){
+  const handleKeyDown = ({ key }) => {
+    if (key === "Enter") {
+      if (isValidQuery(filterValue)) {
         addFilter(filterValue);
         setFilterValue('');
       } else {
@@ -82,9 +89,17 @@ const QueryFilter = ({onChange}) => {
       }
     };
 
-    onChange(buildFilterQuery(newState));
+    onChange(buildFilterQuery(newState, joinOp));
     setFilters(newState);
 
+  }
+
+  const toggleOr = (value) => {
+    const op = joinOp === "or" ? "and" : "or";
+    if (joinOp !== op) {
+      onChange(buildFilterQuery(filters, op));
+      setJoinOp(op);
+    }
 
   }
 
@@ -94,12 +109,19 @@ const QueryFilter = ({onChange}) => {
     onChange('')
   }
 
-  const handleFilterTagKeyDown = ({key}, filterName) => {
+  const handleFilterTagKeyDown = ({ key }, filterName) => {
     if (key === 'Backspace') {
       removeFilter(filterName)
     }
   }
 
+  const ToggleBoolean = () =>
+    <ToggleButton width={25} UNSAFE_className={cx(
+      `${classBase}-andor`, {
+      [`${classBase}-andor-selected`]: joinOp === 'or'
+    })}
+      isSelected={joinOp === 'or'}
+      onChange={toggleOr} >{joinOp}</ToggleButton>
 
   const classBase = "hwQueryFilter";
   const filterKeys = Object.keys(filters);
@@ -110,25 +132,35 @@ const QueryFilter = ({onChange}) => {
         labelPosition="side"
         onChange={handleFilterValueChange}
         onKeyDown={handleKeyDown}
+        placeholder="filter query [as name]"
         value={filterValue}
-        width={150}
-        />
-        {filterKeys.length > 0 ? (
-          <Tooltray>
-            {filterKeys.map(filterName => (
+        width={170}
+      />
+      {filterKeys.length > 0 ? (
+        <Tooltray>
+          {filterKeys.reduce((list, filterName, i, arr) => {
+              list.push(
               <ToggleButton
+                UNSAFE_className={cx(`${classBase}-pill`, {
+                  [`${classBase}-pill-selected`]: filters[filterName].enabled
+                })}
                 isSelected={filters[filterName].enabled}
                 onChange={() => toggleFilter(filterName)}
                 onKeyDown={(e) => handleFilterTagKeyDown(e, filterName)}>
                 <span>{filterName}</span>
-              </ToggleButton>
-            ))}
-          </Tooltray>
-        ) : null}
-        <ActionButton onPress={handleClearFilters} align="right">
+              </ToggleButton>);
+              if (i < arr.length - 1){
+                list.push(<ToggleBoolean />)
+              }
+            return list;
+          }, [])}
+        </Tooltray>
+      ) : null}
+      {filterKeys.length > 0 ? (
+        <ActionButton onPress={handleClearFilters} >
           <CloseCircle />
         </ActionButton>
-
+      ) : null}
     </Toolbar>
   )
 }

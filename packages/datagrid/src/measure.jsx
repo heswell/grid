@@ -28,7 +28,7 @@ const Measure = ({height, width, onMeasure}) => {
     }
   },[h,w,onMeasure])
   return (
-    <div ref={el} style={{width: w, height: h, backgroundColor: 'yellow'}}/>
+    <div ref={el} style={{width: w, height: hs}}/>
   )
 }
 

@@ -1,4 +1,11 @@
 .App {
+  --spectrum-alias-single-line-height: 20px;
+  --spectrum-global-dimension-size-400: 20px;
+  --spectrum-alias-border-radius-regular: 0;
+  --spectrum-alias-border-size-thin: 0;
+  --spectrum-global-dimension-size-85: 3px;
+  --spectrum-global-dimension-size-225: 16px;
+
   --app-font-family: var(--uitk-font-family);
   font-family: var(--app-font-family);
 }
@@ -23,6 +30,8 @@
   background-color: orange !important;
 }
 
-.hwChest-content {
-  background-color: inherit;
+.ToolbarField > svg {
+  fill: var(--spectrum-global-color-static-gray-600);
+  width: 18px;
+  height: 18px;
 }
