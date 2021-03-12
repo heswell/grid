@@ -251,7 +251,9 @@ class ServerProxy {
           isReady);
         break;
       case 'groupBy':
-        viewport.groupByStatus = 'pending';
+        if (viewport.groupByStatus !== 'complete') {
+          viewport.groupByStatus = 'pending';
+        }
         this.sendIfReady({
           type: CHANGE_VP,
           viewPortId: viewport.serverViewportId,
@@ -510,9 +512,9 @@ class ServerProxy {
       if (viewport) {
         let { groupByStatus } = viewport;
 
-        if (groupByStatus === 'pending' && rowKey !== '$root') {
+        if (groupByStatus === 'pending' && !rowKey.startsWith('$root')) {
           console.log(`ignoring ${updateType} message whilst waiting for grouped rows`);
-        } else if (groupByStatus === 'pending' && rowKey === '$root') {
+        } else if (groupByStatus === 'pending' && rowKey.startsWith('$root')) {
           groupByStatus = this.viewportStatus[viewPortId].groupByStatus = 'complete';
           console.log(`groupBy in place, $root received`);
         }
@@ -521,19 +523,14 @@ class ServerProxy {
           const record = (viewports[viewPortId] || (viewports[viewPortId] = {
             viewPortId,
             // VUU sends the root row, which we discard
-            size: groupByStatus === 'complete' ? vpSize - 1 : vpSize,
+            size: vpSize,
             rows: []
           }));
           if (groupByStatus === 'complete') {
-            let [depth, expanded, path, unknown, label, count, ...rest] = data;
-            if (!expanded) {
-              depth = -depth;
-            }
-            rest.push(rowIndex - 1, 0, depth, count, path, 0);
-            record.rows.push([rowIndex - 1, 0, depth, count, path, 0, , , , ,].concat(rest));
+            let [depth, isExpanded, path, isLeaf, label, count, ...rest] = data;
+            record.rows.push([rowIndex, 0, isLeaf, isExpanded, depth, count, rowKey, isSelected].concat(rest));
           } else {
-            // TODO populate the key field correctly, i.e. don't just assume first field
-            record.rows.push([rowIndex, 0, 0, 0, data[0], isSelected, , , , ,].concat(data));
+            record.rows.push([rowIndex, 0, true, null, null, 1, rowKey, isSelected].concat(data));
             // We get a SIZE record when vp size changes but not in every batch - not if the size hasn't changed. Hence
             // we take the size from TABLE. However, if size does change, it might do so part way through a batch.
             if (vpSize > record.size) {
@@ -541,14 +538,11 @@ class ServerProxy {
             }
           }
         } else if (updateType === SIZE) {
-          console.log(`Size record ${vpSize}`);
-          if (vpSize === 0){
-            viewports[viewPortId] = {
-              viewPortId,
-              size: 0,
-              rows: []
-            };
-          }
+          viewports[viewPortId] = {
+            viewPortId,
+            size: vpSize,
+            rows: []
+          };
         }
 
       } else {
@@ -578,7 +572,9 @@ class ServerProxy {
       case CREATE_VP_SUCCESS:
         return this.subscribed(requestId, body);
       case CHANGE_VP_RANGE_SUCCESS:
+        break;
       case CHANGE_VP_SUCCESS:
+        console.log('change VP success');
         break;
       case OPEN_TREE_SUCCESS:
       case CLOSE_TREE_SUCCESS:

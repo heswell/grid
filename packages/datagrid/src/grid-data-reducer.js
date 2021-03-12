@@ -12,7 +12,7 @@ import {
   scrollDirection
 } from './grid-data-helpers';
 import * as Action from "./grid-data-actions";
-// import { storeAction } from "./test-data-capture";
+import { storeAction } from "./test-data-capture";
 
 const { IDX, RENDER_IDX } = metadataKeys;
 
@@ -39,20 +39,20 @@ export const initData = ({ range, bufferSize = 100, renderBufferSize = 0 }) => (
 });
 
 const bruteForceResetKeys = (state) => {
-  state.keys = initKeys(state.range),
-    state.rows.forEach(row => {
-      const key = state.keys.free.shift();
-      row[RENDER_IDX] = key;
-      state.keys.used[key] = 1;
-    })
+  state.keys = initKeys(state.range);
+  state.rows.forEach(row => {
+    const key = state.keys.free.shift();
+    row[RENDER_IDX] = key;
+    state.keys.used[key] = 1;
+  })
 }
 
 
 // This assumes model.meta never changes. If it does (columns etc)
 // we will need additional action types to update
-export default (state = initData({}), action) => {
+const GridDataReducer = (state = initData({}), action) => {
   // console.log(`reducer ${JSON.stringify(action)}`)
-  // storeAction(action);
+  storeAction(action);
   if (action.type === "range") {
     // console.log(`setRange ${JSON.stringify(action.range)}`)
     return setRange(state, action);
@@ -76,6 +76,8 @@ export default (state = initData({}), action) => {
     throw Error(`GridDataReducer unknown action type ${action.type}`);
   }
 }
+
+export default GridDataReducer;
 
 function setSize(state, { rowCount }) {
   return { ...state, rowCount };
@@ -136,8 +138,8 @@ function setData(state, action) {
   const { rowCount } = action;
 
   // console.log(JSON.stringify(action.rows));
-
-  if (state.buffer.length > 0 && rowCount && !anyRowsInRange(state, action.rows, rowCount)) {
+  console.table(action.rows)
+  if (state.buffer.length > 0 && rowCount === state.rowCount && !anyRowsInRange(state, action.rows, rowCount)) {
     return state;
   }
 
@@ -205,7 +207,7 @@ function addToBuffer(
   const [incomingRowLow, incomingRowHigh] = bufferLowHigh(incomingRows, newBufferLow, newBufferHigh);
   const [vpLow, vpHigh] = rangeLowHigh(range, rowCount, renderBufferSize);
 
-  if (incomingRowLow > incomingRows[0][IDX]) {
+  if (incomingRowLow !== -1 && incomingRowLow > incomingRows[0][IDX]) {
     const firstGoodIncomingIndex = incomingRows.findIndex(row => row[IDX] === incomingRowLow);
     incomingRows = incomingRows.slice(firstGoodIncomingIndex);
   }
@@ -301,6 +303,8 @@ function addToBuffer(
   }
 
 
+  let rowsChanged = false;
+
   const surplusTrailingRows = Math.max(0, bufferHigh - newBufferHigh);
   if (surplusTrailingRows > 0) {
     // Before we truncate the buffer, make sure we relase any keys in use
@@ -313,6 +317,7 @@ function addToBuffer(
         const rowIdx = row[IDX];
         const key = row[RENDER_IDX];
         if (rowIdx >= state.range.lo && rowIdx < state.range.hi && keys.used[key]) {
+          rowsChanged = true;
           keys.free.push(key);
           keys.used[key] = undefined;
         } else {
@@ -335,7 +340,6 @@ function addToBuffer(
 
   }
 
-  let rowsChanged = false;
   let prevRowIdx = null;
   let rowIdx = null;
   let rowInViewport;

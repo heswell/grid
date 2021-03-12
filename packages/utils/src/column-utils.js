@@ -1,5 +1,5 @@
 import {
-  functor, 
+  functor,
   overrideColName
 } from './filter-utils';
 
@@ -27,7 +27,7 @@ export const toKeyedColumn = (column, key) =>
           : {...column, key};
 
 export function buildColumnMap(columns){
-  const start = metadataKeys.count;  
+  const start = metadataKeys.count;
   if (columns){
       return columns.reduce((map, column, i) => {
           if (typeof column === 'string'){
@@ -61,7 +61,7 @@ export function projectColumns(tableRowColumnMap, columns){
   return (startIdx, offset, selectedRows=[]) => (row,i) => {
       // selectedRows are indices of rows within underlying dataset (not sorted or filtered)
       // row is the original row from this set, with original index in IDX pos, which might
-      // be overwritten with a different value below if rows are sorted/filtered 
+      // be overwritten with a different value below if rows are sorted/filtered
       const baseRowIdx = row[IDX];
       const out = [];
       for (let i=0; i < columnCount;i++){
@@ -139,33 +139,16 @@ export function getDataType({type=null}){
 export const metadataKeys = {
     IDX: 0,
     RENDER_IDX: 1,
-    DEPTH: 2,
-    COUNT: 3,
-    KEY: 4,
-    SELECTED: 5,
-    PARENT_IDX: 6,
-    IDX_POINTER: 7,
-    FILTER_COUNT: 8,
-    NEXT_FILTER_IDX: 9,
-    count: 10
+    IS_LEAF: 2,
+    IS_EXPANDED: 3,
+    DEPTH: 4,
+    COUNT: 5,
+    KEY: 6,
+    SELECTED: 7,
+    // PARENT_IDX: 8,
+    // IDX_POINTER: 9,
+    // FILTER_COUNT: 10,
+    // NEXT_FILTER_IDX: 11,
+    count: 8
 }
 
-// Deprecated
-export function metaData(columns){
-    const start = columns.length === 0
-        ? -1
-        : Math.max(...columns.map((column, idx) => typeof column.key === 'number' ? column.key : idx));
-    return {
-        IDX: start + 1,
-        RENDER_IDX: start + 2,
-        DEPTH: start + 3,
-        COUNT: start + 4,
-        KEY: start + 5,
-        SELECTED: start + 6,
-        PARENT_IDX: start + 7,
-        IDX_POINTER: start + 8,
-        FILTER_COUNT: start + 9,
-        NEXT_FILTER_IDX: start + 10,
-        count: start + 11
-    }
-  }
