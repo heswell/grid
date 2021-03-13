@@ -108,6 +108,4 @@ export default function useResizeObserver(ref, dimensions, onResize, reportIniti
     }
   }, [dimensions, measure, ref, onResize]);
 
-  // TODO might be a good idea to ref and return the current measurememnts. That way, derived hooks
-  // e.g useBreakpoints don't have to measure and client cn make onResize callback simpler
 }

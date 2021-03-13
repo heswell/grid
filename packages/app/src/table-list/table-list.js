@@ -22,7 +22,7 @@ const FilteredGrid = ({dataSource, schema}) => {
 const DataGrid = ({schema, ...props}) => {
   const dataSource = useMemo(() => createDataSource(schema.table, schema), [schema]);
   return (
-    <View header closeable resizeable title={schema.table} {...props}>
+    <View header closeable resizeable title={schema.table} {...props} resize="defer">
       <FilteredGrid dataSource={dataSource} schema={schema}  />
     </View>
   )

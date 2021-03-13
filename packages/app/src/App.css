@@ -1,3 +1,11 @@
+body {
+  padding:0;
+  margin:0;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
 .App {
   --spectrum-alias-single-line-height: 20px;
   --spectrum-global-dimension-size-400: 20px;
@@ -22,9 +30,6 @@
   height: 100%;
 }
 
-.view-main {
-  overflow: hidden;
-}
 
 .DragIcon.dragging {
   background-color: orange !important;
@@ -34,4 +39,8 @@
   fill: var(--spectrum-global-color-static-gray-600);
   width: 18px;
   height: 18px;
+}
+
+.hwView-main {
+  overflow: hidden;
 }

@@ -291,7 +291,12 @@ function addToBuffer(
       if (rowIdx >= range.lo && rowIdx < range.hi) {
         const rowKey = state.keys.free.shift();
         state.keys.used[rowKey] = 1;
-        buffer[i][RENDER_IDX] = rowKey
+        if (buffer[i]){
+          buffer[i][RENDER_IDX] = rowKey
+        } else {
+          debugger;
+          console.log(`what's going on here`)
+        }
       }
 
     }
