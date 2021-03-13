@@ -174,7 +174,6 @@ function toggleGroupState(gridModel, row) {
 }
 
 function updateGroupColumnWidth(state, column, width) {
-
   if (state.columnSizing === 'fill') {
     return updateGroupFillColumnWidth(state, column, width);
   }
@@ -203,18 +202,19 @@ function updateGroupColumnWidth(state, column, width) {
 /**
  * Column Sizing  mode === 'fill'
  * if we are resizing a fill column and there are other fill columns to our right
- *    1) adjust the width of these fill columns according to their flex values 
+ *    1) adjust the width of these fill columns according to their flex values
  *    2) adjust the flex of resized column, distribute diff to the flex columns to right
  * if we are resizing and there are other fill columns, but none to our right
- *    1) adjust the width of all other fill columns according to their flex values 
+ *    1) adjust the width of all other fill columns according to their flex values
  *    2) adjust the flex of resized column, distribute diff to the other flex columns
  * if we are resizing a non-flex column
- *    1) adjust the width of all other fill columns according to their flex values 
+ *    1) adjust the width of all other fill columns according to their flex values
  * if we try to adjust teh width of a flex column and it is the only flex column
  *    disallow the resize
  */
 function updateGroupFillColumnWidth(state, column, width) {
-  const columns = GridModel.columns(state);
+  const columns = state.columnGroups.flatMap(columnGroup => columnGroup.columns);
+  // const columns = GridModel.columns(state);
   const { length: noFlexCount } = columns.filter(c => c.flex === undefined);
   const noFlexValues = noFlexCount === columns.length;
   const widthDiff = column.width - width;
@@ -306,7 +306,7 @@ function addGroupColumn({ groupColumns }, column, direction = 'asc') {
 
 function addSortColumn({ sortColumns }, column, direction = 'asc') {
   if (sortColumns) {
-      return mapSortColumns(sortColumns).concat([[column.name, direction]]);
+    return mapSortColumns(sortColumns).concat([[column.name, direction]]);
   } else {
     return [[column.name, direction]];
   }
@@ -391,7 +391,8 @@ export function extractGroupColumn(columns, groupBy) {
     // Note: groupedColumns will be in column order, not groupBy order
     const [groupedColumns, rest] = columns.reduce((result, column, i) => {
       const [g, r] = result;
-      if (indexOfCol(column.name, groupBy) !== -1) {
+      // if (indexOfCol(column.name, groupBy) !== -1) {
+      if (groupBy.includes(column.name)) {
         g.push({
           ...column,
           originalIdx: i
@@ -406,7 +407,7 @@ export function extractGroupColumn(columns, groupBy) {
       throw Error(`extractGroupColumn: no column definition found for all groupBy cols ${JSON.stringify(groupBy)} `);
     }
     const groupCount = groupBy.length;
-    const groupCols = groupBy.map(([name], idx) => {
+    const groupCols = groupBy.map((name, idx) => {
       // Keep the cols in same order defined on groupBy
       const column = groupedColumns.find(col => col.name === name);
       return {
@@ -448,16 +449,20 @@ export const assignKeysToColumns = (columns, defaultWidth) => {
   )
 }
 
+const { DEPTH, IS_LEAF /*, KEY, IS_EXPANDED, COUNT */ } = metadataKeys;
+
 export const getGroupValueAndOffset = (columns, row) => {
-  const { DEPTH } = metadataKeys;
-  const depth = Math.abs(row[DEPTH]);
-  const lastDepth = columns.length;
-  for (let i = 0; i < columns.length; i++) {
-    const column = columns[i];
-    const inverseDepth = lastDepth - i;
-    if (inverseDepth === depth) {
-      return [row[column.key], i];
-    }
+  const { [DEPTH]: depth, [IS_LEAF]: isLeaf } = row;
+  // Depth can be greater tha group columns when we have just removed a column from groupby
+  // but new data has not yet been received.
+  if (isLeaf || depth > columns.length) {
+    return [null, null]
+  } else if (depth === 0) {
+    return ["$root", 0];
+  } else {
+    // offset 1 for now to allow for $root
+    const column = columns[depth - 1];
+    return [row[column.key], depth];
+
   }
-  return [null, null];
 }

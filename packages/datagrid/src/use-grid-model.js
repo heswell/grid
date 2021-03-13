@@ -86,8 +86,8 @@ export const useGridModel = (props) => {
   // Should these go in a separate useDataSource hook ?
   const datasourceHandler = useCallback((eventName, ...args) => {
     switch (eventName) {
-      case "group":
-        return dispatchGridModel({ type: "group", columns: args[0] });
+      // case "group":
+      //   return dispatchGridModel({ type: "group", columns: args[0] });
       case "sort":
         return dispatchGridModel({ type: "sort", columns: args[0] });
       case "visual-links":

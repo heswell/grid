@@ -138,7 +138,7 @@ function setData(state, action) {
   const { rowCount } = action;
 
   // console.log(JSON.stringify(action.rows));
-  console.table(action.rows)
+  // console.table(action.rows)
   if (state.buffer.length > 0 && rowCount === state.rowCount && !anyRowsInRange(state, action.rows, rowCount)) {
     return state;
   }

@@ -26,6 +26,12 @@ const getWorker = async (url, server) => {
 
 }
 
+const messagesToRelayToClient = {
+  'table-row': true,
+  VP_VISUAL_LINKS_RESP: true,
+  groupBy: true
+}
+
 function handleMessageFromWorker({ data: message }) {
   const { type, clientViewportId, requestId } = message
   const viewport = viewportStatus[clientViewportId];
@@ -33,7 +39,7 @@ function handleMessageFromWorker({ data: message }) {
     const { postMessageToClient } = viewport;
     if (type === "subscribed") {
       postMessageToClient(message);
-    } else if (type === 'table-row' || message.type === 'VP_VISUAL_LINKS_RESP') {
+    } else if (messagesToRelayToClient[type]) {
       postMessageToClient(message);
     } else {
       logger.log(`message from the worker ${type}`)

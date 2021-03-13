@@ -1,4 +1,5 @@
-.HeaderCell {
+.vuHeaderCell {
+  --header-cell-highlight-bg: yellow;
   align-items: stretch;
   background: var(--grid-header-cell-background);
   border-bottom: solid 1px var(--heading-border-color);
@@ -12,11 +13,11 @@
   vertical-align: top;
 }
 
-.HeaderCell.noBottomBorder {
+.vuHeaderCell.noBottomBorder {
   border-bottom: solid 1px transparent;
 }
 
-.HeaderCell.resizing {
+.vuHeaderCell-resizing {
   background-color: var(--header-cell-highlight-bg);
 }
 

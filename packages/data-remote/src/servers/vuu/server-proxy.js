@@ -1,5 +1,8 @@
 import * as Message from './messages';
+import Viewport from "./viewport";
 import { ServerApiMessageTypes as API } from '../../messages.js';
+
+const {SIZE, UPDATE} = Message;
 
 function partition(array, test, pass = [], fail = []) {
 
@@ -15,7 +18,7 @@ const SORT = { asc: 'D', dsc: 'A' };
 const byRowIndex = (row1, row2) => row1[0] - row2[0];
 
 let _requestId = 1;
-
+const nextRequestId = () => `${_requestId++}`;
 
 const logger = console;
 
@@ -63,22 +66,12 @@ export class ServerProxy {
           _requestId++,
           isReady)
         break;
-      case 'groupBy':
-        if (viewport.groupByStatus !== 'complete') {
-          viewport.groupByStatus = 'pending';
-        }
-        this.sendIfReady({
-          type: Message.CHANGE_VP,
-          viewPortId: viewport.serverViewportId,
-          columns: viewport.columns,
-          sort: {
-            sortDefs: []
-          },
-          groupBy: message.groupBy.map(([columnName]) => columnName),
-          filterSpec: null
-        },
-          _requestId++,
-          isReady)
+
+      case 'groupBy': {
+        const requestId = nextRequestId();
+        const request = viewport.groupByRequest(requestId, message.groupBy)
+        this.sendIfReady(request, requestId, isReady)
+      }
         break;
 
       case 'openTreeNode':
@@ -176,6 +169,7 @@ export class ServerProxy {
   sendIfReady(message, requestId, isReady = true) {
     // TODO implement the message queuing in remote data view
     if (isReady) {
+      console.log(`sendMessageToServer ${message.type} reqId: ${requestId}`)
       this.sendMessageToServer(message, requestId);
     } else {
       // TODO need to make sure we keep the requestId
@@ -234,12 +228,9 @@ export class ServerProxy {
   subscribe(message, callback) {
     // the session should live at the connection level
     const isReady = this.sessionId !== "";
+    // TODO we need to explicitly store all the viewport attributes here
     const { viewport, tablename, columns, range: { lo, hi } } = message;
-    this.viewportStatus[viewport] = {
-      clientViewportId: viewport,
-      status: 'subscribing',
-      request: message,
-    }
+    this.viewportStatus[viewport] = new Viewport(viewport, message);
 
     // use client side viewport as request id, so that when we process the response,
     // with the serverside viewport we can establish a mapping between the two
@@ -265,38 +256,11 @@ export class ServerProxy {
   subscribed(/* server message */ clientViewportId, message) {
     const viewport = this.viewportStatus[clientViewportId];
     const { viewPortId: serverViewportId, columns } = message;
-
     if (viewport) {
       // key the viewport on server viewport ID as well as client id
       this.viewportStatus[serverViewportId] = viewport;
-
-      viewport.status = 'subscribed';
-      viewport.serverViewportId = serverViewportId;
-      viewport.columns = columns;
-
-      const { table, range, sort, groupBy, filterSpec } = message;
-      viewport.spec = {
-        table, range, columns, sort, groupBy, filterSpec
-      };
-
-      // TODO don't think we need to support queued requests any more ? We block
-      // now until connection is established
-      const byViewport = vp => item => item.viewport === vp;
-      const byMessageType = msg => msg.type === Message.CHANGE_VP;
-      const [messagesForThisViewport, messagesForOtherViewports] = partition(this.queuedRequests, byViewport(viewport));
-      const [rangeMessages, otherMessages] = partition(messagesForThisViewport, byMessageType);
-
-      this.queuedRequests = messagesForOtherViewports;
-      rangeMessages.forEach(msg => {
-        range = msg.range;
-      });
-
-      if (otherMessages.length) {
-        console.log(`we have ${otherMessages.length} messages still to process`);
-      }
-
+      viewport.subscribe(message);
       this.postMessageToClient({ type: "subscribed", clientViewportId, serverViewportId, columns });
-
       this.sendMessageToServer({ type: "GET_VP_VISUAL_LINKS", vpId: serverViewportId })
     }
   }
@@ -323,39 +287,36 @@ export class ServerProxy {
       //TODO it is probably more efficient to do the groupBy checks at next level
       const viewport = this.viewportStatus[viewPortId];
       if (viewport) {
-        let { groupByStatus } = viewport;
 
-        if (groupByStatus === 'pending' && !rowKey.startsWith('$root')) {
-          console.log(`ignoring ${updateType} message whilst waiting for grouped rows`);
-        } else if (groupByStatus === 'pending' && rowKey.startsWith('$root')) {
-          groupByStatus = this.viewportStatus[viewPortId].groupByStatus = 'complete';
-          console.log(`groupBy in place, $root received`)
-        }
+        if (viewport.isTree && updateType === UPDATE && !rowKey.startsWith('$root')) {
+          //console.log(`ignoring ${updateType} message whilst waiting for grouped rows`);
+        } else {
 
-        if (updateType === Message.UPDATE) {
-          const record = (viewports[viewPortId] || (viewports[viewPortId] = {
-            viewPortId,
-            // VUU sends the root row, which we discard
-            size: vpSize,
-            rows: []
-          }));
-          if (groupByStatus === 'complete') {
-            let [depth, isExpanded, path, isLeaf, label, count, ...rest] = data;
-            record.rows.push([rowIndex, 0, isLeaf, isExpanded, depth, count, rowKey, isSelected].concat(rest));
-          } else {
-            record.rows.push([rowIndex, 0, true, null, null, 1, rowKey, isSelected].concat(data));
-            // We get a SIZE record when vp size changes but not in every batch - not if the size hasn't changed. Hence
-            // we take the size from TABLE. However, if size does change, it might do so part way through a batch.
-            if (vpSize > record.size) {
-              record.size = vpSize;
+          if (updateType === UPDATE) {
+            const record = (viewports[viewPortId] || (viewports[viewPortId] = {
+              viewPortId,
+              size: vpSize,
+              rows: []
+            }));
+            if (viewport.isTree) {
+              let [depth, isExpanded, path, isLeaf, label, count, ...rest] = data;
+              record.rows.push([rowIndex, 0, isLeaf, isExpanded, depth, count, rowKey, isSelected].concat(rest));
+            } else {
+              record.rows.push([rowIndex, 0, true, null, null, 1, rowKey, isSelected].concat(data));
+              // We get a SIZE record when vp size changes but not in every batch - not if the size hasn't changed. Hence
+              // we take the size from TABLE. However, if size does change, it might do so part way through a batch.
+              if (vpSize > record.size) {
+                record.size = vpSize;
+              }
             }
+          } else if (updateType === SIZE) {
+            viewports[viewPortId] = {
+              viewPortId,
+              size: vpSize,
+              rows: []
+            };
           }
-        } else if (updateType === Message.SIZE) {
-          viewports[viewPortId] = {
-            viewPortId,
-            size: vpSize,
-            rows: []
-          };
+
         }
 
       } else {
@@ -386,8 +347,12 @@ export class ServerProxy {
         return this.subscribed(requestId, body);
       case Message.CHANGE_VP_RANGE_SUCCESS:
         break;
-      case Message.CHANGE_VP_SUCCESS:
-        console.log('change VP success')
+      case Message.CHANGE_VP_SUCCESS:{
+        const response = this.viewportStatus[body.viewPortId].completeOperation(requestId);
+        if (response){
+          this.postMessageToClient(response);
+        }
+      }
         break;
       case Message.OPEN_TREE_SUCCESS:
       case Message.CLOSE_TREE_SUCCESS:

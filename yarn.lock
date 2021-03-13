@@ -1495,10 +1495,10 @@
   dependencies:
     "@hapi/hoek" "^8.3.0"
 
-"@heswell/layout@3.0.45":
-  version "3.0.45"
-  resolved "https://registry.yarnpkg.com/@heswell/layout/-/layout-3.0.45.tgz#9e8cb7f0d87ff2255e25f045b3deae6e27f8165f"
-  integrity sha512-kiTWtp2lZ27quFKt4CNS/PeTLsTtrR6wbZcL+KHc5wOzzKWfARikgQLqYlQQYBsLeC9KwGmePl5NPkDZPQ6oEw==
+"@heswell/layout@3.0.47":
+  version "3.0.47"
+  resolved "https://registry.yarnpkg.com/@heswell/layout/-/layout-3.0.47.tgz#d9edc546769b75c5bb384082bcdc79a0498bb190"
+  integrity sha512-lxavKVCmoR3k8qCYtD2KpdMGqxztbdsDoX4BuM/6Q2VPbkzgJ1F/+J9SKu46uJwnjpvhhz7hQCNBOiimvK04CQ==
   dependencies:
     "@adobe/react-spectrum" "^3.8.0"
     "@spectrum-icons/workflow" "^3.2.0"
@@ -1518,6 +1518,14 @@
   dependencies:
     date-fns "^2.9.0"
     xstate "^4.2.2"
+
+"@heswell/utils@3.0.1":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@heswell/utils/-/utils-3.0.1.tgz#57920626b5008e6d279735a17c27723c02caa05d"
+  integrity sha512-IOc7PHywEkPzFOgGWfJNKAw4uqRVLnjDZjXdwjrvZ8ZcUCXHNuaLu8puQNGt0EfSOuYVNZqMlMem9KigqRujlA==
+  dependencies:
+    nanoid "^3.1.20"
+    react "^17.0.1"
 
 "@icons/material@^0.2.4":
   version "0.2.4"

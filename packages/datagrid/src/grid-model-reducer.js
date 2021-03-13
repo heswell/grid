@@ -225,17 +225,6 @@ function addVisualLinks(state, { links }) {
   }
 }
 
-// // Do we need this in the model ?
-// /** @type {GridModelReducer<GridModelToggleAction>} */
-// function toggleRow(state, { row }) {
-//   // TODO does groupState actually need to live in the grid model ?
-//   const groupState = GridModel.toggleGroupState(state, row);
-//   return {
-//     ...state,
-//     groupState
-//   }
-// }
-
 /** @type {GridModelReducer<GridModelSortAction>} */
 function sortRows(state, { columns }) {
   const sortColumns = columns && sortByToMap(columns);
@@ -248,7 +237,7 @@ function sortRows(state, { columns }) {
 
 /** @type {GridModelReducer<GridModelGroupAction>} */
 function groupRows(state, { columns = null }) {
-  const groupColumns = columns && columns.reduce((map, [columnName, direction]) => (map[columnName] = direction, map), {});
+  const groupColumns = columns && columns.reduce((map, columnName) => (map[columnName] = "asc", map), {});
   const { columnGroups } = buildColumnGroups(state, GridModel.columns(state), columns);
 
   return {
@@ -382,7 +371,7 @@ function addColumn(state, { insertIdx: absInsertIdx, targetColumnGroup, column }
 /** @type {GridModelReducer<'resize-col'>} */
 function resizeColumn(state, { phase, column, width }) {
   if (phase === 'resize') {
-
+    console.log(`resize width = ${width}`)
     const columnGroups = GridModel.updateGroupColumnWidth(state, column, width);
     return { ...state, columnGroups };
 

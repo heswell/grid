@@ -169,6 +169,9 @@ const Viewport = forwardRef(function Viewport(
             columns: options,
           });
           break;
+        case 'groupBy':
+          dispatchGridModelAction({ type: "group", columns: options });
+          break;
         case "size":
           // How do we handle this withoput having this dependency on gridModel ?
           // This is the important one, it comes with every rowSet

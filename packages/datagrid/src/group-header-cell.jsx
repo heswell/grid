@@ -40,7 +40,7 @@ const ColHeader = (props) => {
 };
 
 const GroupHeaderCell = ({
-  className: propClassName = undefined,
+  className: classNameProp,
   column: groupCol,
   groupState = {},
   onClick,
@@ -50,6 +50,8 @@ const GroupHeaderCell = ({
 }) => {
   const el = useRef(null);
   const column = useRef(groupCol);
+
+  const classBase = 'vuGroupHeaderCell';
 
   useEffect(() => {
     column.current = groupCol;
@@ -81,8 +83,11 @@ const GroupHeaderCell = ({
   const handleContextMenu = useContextMenu("header", { column });
 
   const { columns, resizing, width } = groupCol;
-  const className = cx("HeaderCell", "GroupHeaderCell", propClassName, {
-    resizing,
+  const className = cx(
+    classBase,
+    classNameProp,
+    'vuHeaderCell', {
+    [`${classBase}-resizing`]: resizing,
   });
   const expandStates = expandStatesfromGroupState(groupCol, groupState);
   return (

@@ -99,6 +99,8 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
         } else if (msg.type === 'pivot') {
           // Callback is for data oriented operations, should this be emitted ?
           callbackRef.current('pivot', msg.columns);
+        } else if (messageType === 'groupBy'){
+          callbackRef.current(messageType, msg.groupBy);
         }
 
         if (msg.filter !== undefined) {
@@ -128,7 +130,7 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
       }
     );
 
-    dataSource.on('group', clearBuffer)
+    // dataSource.on('group', clearBuffer)
 
     return () => {
       console.log(`%cUNSUBSCRIBE`,'color: green;font-weight: bold;')

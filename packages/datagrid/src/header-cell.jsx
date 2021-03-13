@@ -21,6 +21,7 @@ const HeaderCell = function HeaderCell({
   const col = useRef(column);
   const isResizing = useRef(false);
   const { dispatchGridAction, gridModel } = useContext(GridContext);
+  const classBase = 'vuHeaderCell';
   // essential that handlers for resize do not use stale column
   // we could mitigate this by only passing column key and passing delta,
   // so we don't rely on current width in column
@@ -79,7 +80,7 @@ const HeaderCell = function HeaderCell({
   const { name, label = name, resizing, width, marginLeft = null } = column;
   return (
     <div
-      className={cx("HeaderCell", className, { resizing })}
+      className={cx(classBase, className, { [`$classBase}-resizing`]: resizing })}
       onContextMenu={handleContextMenu}
       onMouseDown={handleMouseDown}
       onClick={handleClick}

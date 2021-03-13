@@ -182,28 +182,133 @@ const HB = "HB";
 const HB_RESP = "HB_RESP";
 const OPEN_TREE_NODE = "OPEN_TREE_NODE";
 const OPEN_TREE_SUCCESS = "OPEN_TREE_SUCCESS";
+const OPEN_TREE_REJECT = "OPEN_TREE_REJECT";
 const CLOSE_TREE_NODE = "CLOSE_TREE_NODE";
 const CLOSE_TREE_SUCCESS = "CLOSE_TREE_SUCCESS";
+const CLOSE_TREE_REJECT = "CLOSE_TREE_REJECT";
 
 
-const SIZE = 'SIZE';
-const UPDATE = 'U';
+const SIZE$1 = 'SIZE';
+const UPDATE$1 = 'U';
 
-function partition(array, test, pass = [], fail = []) {
+var Message = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  AUTH: AUTH,
+  AUTH_SUCCESS: AUTH_SUCCESS,
+  LOGIN: LOGIN,
+  LOGIN_SUCCESS: LOGIN_SUCCESS,
+  CREATE_VP: CREATE_VP,
+  CREATE_VP_SUCCESS: CREATE_VP_SUCCESS,
+  CHANGE_VP: CHANGE_VP,
+  CHANGE_VP_SUCCESS: CHANGE_VP_SUCCESS,
+  CREATE_VISUAL_LINK: CREATE_VISUAL_LINK,
+  CREATE_VISUAL_LINK_SUCCESS: CREATE_VISUAL_LINK_SUCCESS,
+  SET_SELECTION: SET_SELECTION,
+  SET_SELECTION_SUCCESS: SET_SELECTION_SUCCESS,
+  CHANGE_VP_RANGE: CHANGE_VP_RANGE,
+  CHANGE_VP_RANGE_SUCCESS: CHANGE_VP_RANGE_SUCCESS,
+  TABLE_ROW: TABLE_ROW,
+  HB: HB,
+  HB_RESP: HB_RESP,
+  OPEN_TREE_NODE: OPEN_TREE_NODE,
+  OPEN_TREE_SUCCESS: OPEN_TREE_SUCCESS,
+  OPEN_TREE_REJECT: OPEN_TREE_REJECT,
+  CLOSE_TREE_NODE: CLOSE_TREE_NODE,
+  CLOSE_TREE_SUCCESS: CLOSE_TREE_SUCCESS,
+  CLOSE_TREE_REJECT: CLOSE_TREE_REJECT,
+  SIZE: SIZE$1,
+  UPDATE: UPDATE$1
+});
 
-  for (let i = 0, len = array.length; i < len; i++) {
-    (test(array[i], i) ? pass : fail).push(array[i]);
+const EMPTY_ARRAY = [];
+
+class Viewport {
+
+  constructor(clientViewportId, request, status = 'subscribing'){
+    this.clientViewportId = clientViewportId;
+    this.request = request;
+    this.status = status;
+    this.serverViewportId = null;
+    this.pendingOperations= [];
+    this.columns = null;
+    this.table = null;
+    this.range = null;
+    this.sort = null;
+    this.groupBy = null;
+    this.filterSpec = null;
+    this.pendingOperations = new Map();
+    this.isTree = false;
   }
 
-  return [pass, fail];
+  subscribe({viewPortId, columns, table, range, sort, groupBy, filterSpec}){
+    this.serverViewportId = viewPortId;
+    this.status = 'subscribed';
+    this.columns = columns;
+    this.table = table;
+    this.range = range;
+    this.sort = sort;
+    this.groupBy = groupBy;
+    this.filterSpec = filterSpec;
+
+    console.log(`%cViewport subscribed
+      clientVpId: ${this.clientViewportId}
+      serverVpId: ${this.serverViewportId}
+      table: ${this.table}
+      columns: ${columns.join(',')}
+      range: ${JSON.stringify(range)}
+      sort: ${JSON.stringify(sort)}
+      groupBy: ${JSON.stringify(groupBy)}
+      filterSpec: ${JSON.stringify(filterSpec)}
+    `,'color: blue');
+  }
+
+  awaitOperation(requestId, type){
+    console.log(`await ${type} operation ${requestId}`);
+    //TODO set uip a timeout mechanism here
+    this.pendingOperations.set(requestId, type);
+  }
+
+  completeOperation(requestId){
+    const {clientViewportId, pendingOperations} = this;
+    const {type, data} = pendingOperations.get(requestId);
+    pendingOperations.delete(requestId);
+    console.log(`operation ${requestId} (${type}) complete`);
+    if (type === 'groupBy'){
+      this.isTree = true;
+      this.groupBy = data;
+      return {clientViewportId, type, groupBy: data};
+    } else if (type === "groupByClear"){
+      this.isTree = false;
+      this.groupBy = [];
+      return { clientViewportId, type: "groupBy", groupBy: null };
+    }
+  }
+
+  groupByRequest(requestId, requestedGroupBy ){
+    const groupBy = requestedGroupBy?.map(([columnName]) => columnName) ?? EMPTY_ARRAY;
+    const type = groupBy === EMPTY_ARRAY ? "groupByClear" : "groupBy";
+    this.awaitOperation(requestId, {type, data: groupBy});
+    return {
+      type: CHANGE_VP,
+      viewPortId: this.serverViewportId,
+      columns: this.columns,
+      sort: {
+        sortDefs: []
+      },
+      groupBy,
+      filterSpec: null
+    }
+  }
 }
+
+const {SIZE, UPDATE} = Message;
 
 const SORT = { asc: 'D', dsc: 'A' };
 
 const byRowIndex = (row1, row2) => row1[0] - row2[0];
 
 let _requestId = 1;
-
+const nextRequestId = () => `${_requestId++}`;
 
 const logger$1 = console;
 
@@ -250,22 +355,12 @@ class ServerProxy {
           _requestId++,
           isReady);
         break;
-      case 'groupBy':
-        if (viewport.groupByStatus !== 'complete') {
-          viewport.groupByStatus = 'pending';
-        }
-        this.sendIfReady({
-          type: CHANGE_VP,
-          viewPortId: viewport.serverViewportId,
-          columns: viewport.columns,
-          sort: {
-            sortDefs: []
-          },
-          groupBy: message.groupBy.map(([columnName]) => columnName),
-          filterSpec: null
-        },
-          _requestId++,
-          isReady);
+
+      case 'groupBy': {
+        const requestId = nextRequestId();
+        const request = viewport.groupByRequest(requestId, message.groupBy);
+        this.sendIfReady(request, requestId, isReady);
+      }
         break;
 
       case 'openTreeNode':
@@ -363,6 +458,7 @@ class ServerProxy {
   sendIfReady(message, requestId, isReady = true) {
     // TODO implement the message queuing in remote data view
     if (isReady) {
+      console.log(`sendMessageToServer ${message.type} reqId: ${requestId}`);
       this.sendMessageToServer(message, requestId);
     } else {
       // TODO need to make sure we keep the requestId
@@ -421,12 +517,9 @@ class ServerProxy {
   subscribe(message, callback) {
     // the session should live at the connection level
     const isReady = this.sessionId !== "";
+    // TODO we need to explicitly store all the viewport attributes here
     const { viewport, tablename, columns, range: { lo, hi } } = message;
-    this.viewportStatus[viewport] = {
-      clientViewportId: viewport,
-      status: 'subscribing',
-      request: message,
-    };
+    this.viewportStatus[viewport] = new Viewport(viewport, message);
 
     // use client side viewport as request id, so that when we process the response,
     // with the serverside viewport we can establish a mapping between the two
@@ -452,38 +545,11 @@ class ServerProxy {
   subscribed(/* server message */ clientViewportId, message) {
     const viewport = this.viewportStatus[clientViewportId];
     const { viewPortId: serverViewportId, columns } = message;
-
     if (viewport) {
       // key the viewport on server viewport ID as well as client id
       this.viewportStatus[serverViewportId] = viewport;
-
-      viewport.status = 'subscribed';
-      viewport.serverViewportId = serverViewportId;
-      viewport.columns = columns;
-
-      const { table, range, sort, groupBy, filterSpec } = message;
-      viewport.spec = {
-        table, range, columns, sort, groupBy, filterSpec
-      };
-
-      // TODO don't think we need to support queued requests any more ? We block
-      // now until connection is established
-      const byViewport = vp => item => item.viewport === vp;
-      const byMessageType = msg => msg.type === CHANGE_VP;
-      const [messagesForThisViewport, messagesForOtherViewports] = partition(this.queuedRequests, byViewport(viewport));
-      const [rangeMessages, otherMessages] = partition(messagesForThisViewport, byMessageType);
-
-      this.queuedRequests = messagesForOtherViewports;
-      rangeMessages.forEach(msg => {
-        range = msg.range;
-      });
-
-      if (otherMessages.length) {
-        console.log(`we have ${otherMessages.length} messages still to process`);
-      }
-
+      viewport.subscribe(message);
       this.postMessageToClient({ type: "subscribed", clientViewportId, serverViewportId, columns });
-
       this.sendMessageToServer({ type: "GET_VP_VISUAL_LINKS", vpId: serverViewportId });
     }
   }
@@ -510,39 +576,34 @@ class ServerProxy {
       //TODO it is probably more efficient to do the groupBy checks at next level
       const viewport = this.viewportStatus[viewPortId];
       if (viewport) {
-        let { groupByStatus } = viewport;
 
-        if (groupByStatus === 'pending' && !rowKey.startsWith('$root')) {
-          console.log(`ignoring ${updateType} message whilst waiting for grouped rows`);
-        } else if (groupByStatus === 'pending' && rowKey.startsWith('$root')) {
-          groupByStatus = this.viewportStatus[viewPortId].groupByStatus = 'complete';
-          console.log(`groupBy in place, $root received`);
-        }
+        if (viewport.isTree && updateType === UPDATE && !rowKey.startsWith('$root')) ; else {
 
-        if (updateType === UPDATE) {
-          const record = (viewports[viewPortId] || (viewports[viewPortId] = {
-            viewPortId,
-            // VUU sends the root row, which we discard
-            size: vpSize,
-            rows: []
-          }));
-          if (groupByStatus === 'complete') {
-            let [depth, isExpanded, path, isLeaf, label, count, ...rest] = data;
-            record.rows.push([rowIndex, 0, isLeaf, isExpanded, depth, count, rowKey, isSelected].concat(rest));
-          } else {
-            record.rows.push([rowIndex, 0, true, null, null, 1, rowKey, isSelected].concat(data));
-            // We get a SIZE record when vp size changes but not in every batch - not if the size hasn't changed. Hence
-            // we take the size from TABLE. However, if size does change, it might do so part way through a batch.
-            if (vpSize > record.size) {
-              record.size = vpSize;
+          if (updateType === UPDATE) {
+            const record = (viewports[viewPortId] || (viewports[viewPortId] = {
+              viewPortId,
+              size: vpSize,
+              rows: []
+            }));
+            if (viewport.isTree) {
+              let [depth, isExpanded, path, isLeaf, label, count, ...rest] = data;
+              record.rows.push([rowIndex, 0, isLeaf, isExpanded, depth, count, rowKey, isSelected].concat(rest));
+            } else {
+              record.rows.push([rowIndex, 0, true, null, null, 1, rowKey, isSelected].concat(data));
+              // We get a SIZE record when vp size changes but not in every batch - not if the size hasn't changed. Hence
+              // we take the size from TABLE. However, if size does change, it might do so part way through a batch.
+              if (vpSize > record.size) {
+                record.size = vpSize;
+              }
             }
+          } else if (updateType === SIZE) {
+            viewports[viewPortId] = {
+              viewPortId,
+              size: vpSize,
+              rows: []
+            };
           }
-        } else if (updateType === SIZE) {
-          viewports[viewPortId] = {
-            viewPortId,
-            size: vpSize,
-            rows: []
-          };
+
         }
 
       } else {
@@ -573,8 +634,12 @@ class ServerProxy {
         return this.subscribed(requestId, body);
       case CHANGE_VP_RANGE_SUCCESS:
         break;
-      case CHANGE_VP_SUCCESS:
-        console.log('change VP success');
+      case CHANGE_VP_SUCCESS:{
+        const response = this.viewportStatus[body.viewPortId].completeOperation(requestId);
+        if (response){
+          this.postMessageToClient(response);
+        }
+      }
         break;
       case OPEN_TREE_SUCCESS:
       case CLOSE_TREE_SUCCESS:

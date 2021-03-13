@@ -52,7 +52,7 @@ function App() {
                 <TableList style={{ width: 120 }} />
               </View>
             </Drawer>
-            <Stack style={{ width: '100%', height: '100%' }} showTabs enableAddTab createNewChild={newPage}>
+            <Stack style={{ width: '100%', height: '100%' }} showTabs enableAddTab createNewChild={newPage} preserve>
               <Flexbox title="Page 1" style={{ flexDirection: 'column' }}>
                 <Flexbox style={{ flexDirection: 'row', flex: 1 }}>
                   <View resizeable header style={{ flex: 1 }}>
