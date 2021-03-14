@@ -1,6 +1,7 @@
 import * as Message from './messages';
 
 const EMPTY_ARRAY = [];
+const SORT = { asc: 'D', dsc: 'A' };
 
 export default class Viewport {
 
@@ -48,11 +49,11 @@ export default class Viewport {
     this.pendingOperations.set(requestId, type);
   }
 
+  // Return a message if we need to communicate this to client UI
   completeOperation(requestId){
     const {clientViewportId, pendingOperations} = this;
     const {type, data} = pendingOperations.get(requestId);
     pendingOperations.delete(requestId);
-    console.log(`operation ${requestId} (${type}) complete`);
     if (type === 'groupBy'){
       this.isTree = true;
       this.groupBy = data;
@@ -61,22 +62,46 @@ export default class Viewport {
       this.isTree = false;
       this.groupBy = [];
       return { clientViewportId, type: "groupBy", groupBy: null };
+    } else if (type === 'filter'){
+      this.filterSpec = {
+        filter: data
+      };
+    } else if (type === 'sort'){
+      this.sort = {
+        sortDefs: data
+      }
     }
+  }
+
+  filterRequest(requestId, filter ){
+    this.awaitOperation(requestId, {type: "filter", data: filter});
+    return this.createRequest({filterSpec: { filter }});
+  }
+
+  sortRequest(requestId, requestedSort ){
+    const sortDefs = requestedSort.map(([column, dir = 'asc']) => ({ column, sortType: SORT[dir] }));
+    this.awaitOperation(requestId, {type: "sort", data: sortDefs});
+    return this.createRequest({sort: { sortDefs }})
   }
 
   groupByRequest(requestId, requestedGroupBy ){
     const groupBy = requestedGroupBy?.map(([columnName]) => columnName) ?? EMPTY_ARRAY;
     const type = groupBy === EMPTY_ARRAY ? "groupByClear" : "groupBy";
     this.awaitOperation(requestId, {type, data: groupBy});
+    return this.createRequest({groupBy})
+  }
+
+  createRequest( params){
     return {
       type: Message.CHANGE_VP,
       viewPortId: this.serverViewportId,
       columns: this.columns,
-      sort: {
-        sortDefs: []
-      },
-      groupBy,
-      filterSpec: null
+      sort: this.sort,
+      groupBy: this.groupBy,
+      filterSpec: this.filterSpec,
+      ...params
     }
   }
+
 }
+

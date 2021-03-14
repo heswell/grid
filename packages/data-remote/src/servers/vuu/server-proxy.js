@@ -2,7 +2,7 @@ import * as Message from './messages';
 import Viewport from "./viewport";
 import { ServerApiMessageTypes as API } from '../../messages.js';
 
-const {SIZE, UPDATE} = Message;
+const { SIZE, UPDATE } = Message;
 
 function partition(array, test, pass = [], fail = []) {
 
@@ -67,11 +67,36 @@ export class ServerProxy {
           isReady)
         break;
 
+        case 'sort': {
+          const requestId = nextRequestId();
+          const request = viewport.sortRequest(requestId, message.sortCriteria)
+          this.sendIfReady(request, requestId, isReady)
+        }
+        break
+
       case 'groupBy': {
         const requestId = nextRequestId();
         const request = viewport.groupByRequest(requestId, message.groupBy)
         this.sendIfReady(request, requestId, isReady)
       }
+        break;
+
+      case 'filterQuery': {
+        const requestId = nextRequestId();
+        const request = viewport.filterRequest(requestId, message.filter)
+        this.sendIfReady(request, requestId, isReady)
+      }
+      break;
+        // this.sendIfReady({
+        //   type: Message.CHANGE_VP,
+        //   viewPortId: viewport.serverViewportId,
+        //   columns: viewport.columns,
+        //   sort: null, // need to preserve
+        //   groupBy: [],
+        //   filterSpec: { filter: message.filter }
+        // },
+        //   _requestId++,
+        //   isReady)
         break;
 
       case 'openTreeNode':
@@ -93,33 +118,6 @@ export class ServerProxy {
           _requestId++,
           isReady)
 
-        break;
-      case 'sort':
-        this.sendIfReady({
-          type: Message.CHANGE_VP,
-          viewPortId: viewport.serverViewportId,
-          columns: viewport.columns,
-          sort: {
-            sortDefs: message.sortCriteria.map(([column, dir = 'asc']) => ({ column, sortType: SORT[dir] }))
-          },
-          groupBy: [],
-          filterSpec: null
-        },
-          _requestId++,
-          isReady)
-        break;
-
-      case 'filterQuery':
-        this.sendIfReady({
-          type: Message.CHANGE_VP,
-          viewPortId: viewport.serverViewportId,
-          columns: viewport.columns,
-          sort: null, // need to preserve
-          groupBy: [],
-          filterSpec: { filter: message.filter }
-        },
-          _requestId++,
-          isReady)
         break;
 
       case 'select':
@@ -347,9 +345,9 @@ export class ServerProxy {
         return this.subscribed(requestId, body);
       case Message.CHANGE_VP_RANGE_SUCCESS:
         break;
-      case Message.CHANGE_VP_SUCCESS:{
+      case Message.CHANGE_VP_SUCCESS: {
         const response = this.viewportStatus[body.viewPortId].completeOperation(requestId);
-        if (response){
+        if (response) {
           this.postMessageToClient(response);
         }
       }
