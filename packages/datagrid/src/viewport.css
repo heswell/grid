@@ -1,6 +1,7 @@
 .Viewport {
   background-color: white;
 
+  outline: none;
   overflow-x: hidden;
   overflow-y: auto;
 }

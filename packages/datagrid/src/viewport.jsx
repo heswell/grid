@@ -259,6 +259,27 @@ const Viewport = forwardRef(function Viewport(
 
   const handleContextMenu = useContextMenu("grid");
 
+  const scrollBy = (rows) => {
+    const scrollTop = viewportEl.current.scrollTop + rows * gridModel.rowHeight;
+    const diff = scrollTop % gridModel.rowHeight;
+    viewportEl.current.scrollTop = scrollTop - diff;
+  }
+
+  const handleKeyDown = evt => {
+    console.log(`key ${evt.key}`)
+    switch(evt.key){
+      case 'ArrowDown':
+        evt.preventDefault();
+        scrollBy(1);
+        break;
+      case 'ArrowUp':
+        evt.preventDefault();
+        scrollBy(-1);
+        break;
+      default:
+    }
+  }
+
   return (
     <>
       <div
@@ -266,7 +287,9 @@ const Viewport = forwardRef(function Viewport(
         ref={viewportEl}
         style={{ height: gridModel.viewportHeight}}
         onContextMenu={handleContextMenu}
+        onKeyDown={handleKeyDown}
         onScroll={handleVerticalScroll}
+        tabIndex={-1}
       >
         <div
           className="scrollingCanvasContainer"
