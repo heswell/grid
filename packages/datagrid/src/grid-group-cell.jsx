@@ -15,7 +15,6 @@ const GroupCell = React.memo(function GroupCell({
   toggleStrategy,
 }) {
   const { dispatchGridAction } = useContext(GridContext);
-  const [, forceRender] = useState();
 
   const handleClick = useCallback(
     (e) => {
@@ -23,9 +22,6 @@ const GroupCell = React.memo(function GroupCell({
       e.stopPropagation();
       const type = row[IS_EXPANDED] ? "closeTreeNode" : "openTreeNode";
       dispatchGridAction({ type, key: row[KEY] });
-      // TEMP UNTIL SERVER FIXED
-      row[IS_EXPANDED] = !row[IS_EXPANDED];
-      forceRender({});
 
     },
     [dispatchGridAction, row]
