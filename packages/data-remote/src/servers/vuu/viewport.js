@@ -73,7 +73,7 @@ export default class Viewport {
       this.sort = {
         sortDefs: data
       }
-    } else if (type === "select"){
+    } else if (type === "selection"){
       this.selection = data;
     }
   }
@@ -97,9 +97,15 @@ export default class Viewport {
   }
 
   selectRequest(requestId, row, rangeSelect, keepExistingSelection){
+    const singleSelect =  !rangeSelect && !keepExistingSelection;
     const selection = row[SELECTED]
-      ? this.selection.filter(idx => idx !== row[IDX])
-      : this.selection.concat(row[IDX]);
+      ? singleSelect
+        ? []
+        : this.selection.filter(idx => idx !== row[IDX])
+      : keepExistingSelection
+        ? this.selection.concat(row[IDX])
+        : [row[IDX]];
+
     this.awaitOperation(requestId, {type: "selection", data: selection});
     return {
         type: Message.SET_SELECTION,
