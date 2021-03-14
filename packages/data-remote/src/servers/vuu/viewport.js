@@ -1,5 +1,7 @@
+import { metadataKeys } from "@heswell/utils/src/column-utils";
 import * as Message from './messages';
 
+const {IDX, SELECTED} = metadataKeys;
 const EMPTY_ARRAY = [];
 const SORT = { asc: 'D', dsc: 'A' };
 
@@ -19,6 +21,7 @@ export default class Viewport {
     this.filterSpec = null;
     this.pendingOperations = new Map();
     this.isTree = false;
+    this.selection = [];
   }
 
   subscribe({viewPortId, columns, table, range, sort, groupBy, filterSpec}){
@@ -70,6 +73,8 @@ export default class Viewport {
       this.sort = {
         sortDefs: data
       }
+    } else if (type === "select"){
+      this.selection = data;
     }
   }
 
@@ -89,6 +94,18 @@ export default class Viewport {
     const type = groupBy === EMPTY_ARRAY ? "groupByClear" : "groupBy";
     this.awaitOperation(requestId, {type, data: groupBy});
     return this.createRequest({groupBy})
+  }
+
+  selectRequest(requestId, row, rangeSelect, keepExistingSelection){
+    const selection = row[SELECTED]
+      ? this.selection.filter(idx => idx !== row[IDX])
+      : this.selection.concat(row[IDX]);
+    this.awaitOperation(requestId, {type: "selection", data: selection});
+    return {
+        type: Message.SET_SELECTION,
+        vpId: this.serverViewportId,
+        selection
+    }
   }
 
   createRequest( params){

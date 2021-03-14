@@ -116,11 +116,11 @@ export default class RemoteDataSource  extends EventEmitter {
     });
   }
 
-  select(idx, rangeSelect, keepExistingSelection, dataType=ROW_DATA){
+  select(row, rangeSelect, keepExistingSelection, dataType=ROW_DATA){
     this.server?.handleMessageFromClient({
       viewport: this.viewport,
       type: Msg.select,
-      idx,
+      row,
       rangeSelect,
       keepExistingSelection,
       dataType

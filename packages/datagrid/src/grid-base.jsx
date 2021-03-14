@@ -31,19 +31,8 @@ const GridBase = forwardRef(function GridBase(props, ref){
 
 
   const handleSelectionChange = useCallback(
-    ({ idx, row, rangeSelect, keepExistingSelection }) => {
-      console.log(
-        `Grid onSelectionChange idx=${idx} rangeSelect=${rangeSelect} keepExistingSelection=${keepExistingSelection}`
-      );
-      dataSource.select(idx, rangeSelect, keepExistingSelection);
-      //if (onSelectionChange){
-      //const isSelected = row[model.meta.SELECTED] === 1;
-      // TODO what about range selections
-      //onSelectionChange && onSelectionChange(idx, row, !isSelected)
-      //}
-      // if (selected.length === 1 && onSingleSelect) {
-      //     onSingleSelect(selected[0], selectedItem);
-      // }
+    ({ row, rangeSelect, keepExistingSelection }) => {
+      dataSource.select(row, rangeSelect, keepExistingSelection);
     },
     [dataSource]
   );
@@ -100,6 +89,7 @@ const GridBase = forwardRef(function GridBase(props, ref){
       closeTreeNode: invokeDataSourceOperation,
       sort: invokeDataSourceOperation,
       'link-table': invokeDataSourceOperation,
+      deselection: handleSelectionChange,
       selection: handleSelectionChange,
       "scroll-end-horizontal": handleHorizontalScrollEnd,
       "scroll-start-horizontal": handleHorizontalScrollStart,

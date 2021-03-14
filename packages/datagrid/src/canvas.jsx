@@ -261,11 +261,12 @@ const Canvas = forwardRef(function Canvas(
   const handleRowClick = useCallback(
     (idx, row, rangeSelect, keepExistingSelection) => {
       // This poses an interesting question. If selection is server side
-      // at what point can re fire a selectionChange event - we have to do that clientSide -
+      // at what point can we fire a selectionChange event - we have to do that clientSide -
       // need to watch for the selectionACK
       if (onRowClick){
         onRowClick(row);
       }
+
       dispatchGridAction({
         type: "selection",
         idx,
@@ -274,7 +275,7 @@ const Canvas = forwardRef(function Canvas(
         keepExistingSelection,
       });
     },
-    []
+    [dispatchGridAction, onRowClick]
   );
 
   const onHorizontalScroll = useScroll(

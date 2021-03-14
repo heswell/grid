@@ -38,7 +38,7 @@ const Row = memo(function Row({
       const keepExistingSelection = e.ctrlKey || e.metaKey; /* mac only */
       onClick(idx, row, rangeSelect, keepExistingSelection);
     },
-    [idx, row]
+    [idx, onClick, row]
   );
 
   return (

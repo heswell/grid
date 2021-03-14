@@ -67,11 +67,11 @@ export class ServerProxy {
           isReady)
         break;
 
-        case 'sort': {
-          const requestId = nextRequestId();
-          const request = viewport.sortRequest(requestId, message.sortCriteria)
-          this.sendIfReady(request, requestId, isReady)
-        }
+      case 'sort': {
+        const requestId = nextRequestId();
+        const request = viewport.sortRequest(requestId, message.sortCriteria)
+        this.sendIfReady(request, requestId, isReady)
+      }
         break
 
       case 'groupBy': {
@@ -86,17 +86,14 @@ export class ServerProxy {
         const request = viewport.filterRequest(requestId, message.filter)
         this.sendIfReady(request, requestId, isReady)
       }
-      break;
-        // this.sendIfReady({
-        //   type: Message.CHANGE_VP,
-        //   viewPortId: viewport.serverViewportId,
-        //   columns: viewport.columns,
-        //   sort: null, // need to preserve
-        //   groupBy: [],
-        //   filterSpec: { filter: message.filter }
-        // },
-        //   _requestId++,
-        //   isReady)
+        break;
+
+      case 'select': {
+        const requestId = nextRequestId();
+        const { row, rangeSelect, keepExistingSelection } = message;
+        const request = viewport.selectRequest(requestId, row, rangeSelect, keepExistingSelection)
+        this.sendIfReady(request, requestId, isReady)
+      }
         break;
 
       case 'openTreeNode':
@@ -120,16 +117,6 @@ export class ServerProxy {
 
         break;
 
-      case 'select':
-        this.sendIfReady({
-          type: Message.SET_SELECTION,
-          vpId: viewport.serverViewportId,
-          selection: [message.idx]
-        },
-          _requestId++,
-          isReady)
-
-        break;
 
       case "createLink": {
         const { parentVpId, childVpId, parentColumnName, childColumnName } = message;
@@ -345,8 +332,9 @@ export class ServerProxy {
         return this.subscribed(requestId, body);
       case Message.CHANGE_VP_RANGE_SUCCESS:
         break;
-      case Message.CHANGE_VP_SUCCESS: {
-        const response = this.viewportStatus[body.viewPortId].completeOperation(requestId);
+      case Message.CHANGE_VP_SUCCESS:
+      case Message.SET_SELECTION_SUCCESS: {
+        const response = this.viewportStatus[body.viewPortId || body.vpId].completeOperation(requestId);
         if (response) {
           this.postMessageToClient(response);
         }
@@ -357,7 +345,6 @@ export class ServerProxy {
         console.log('successful tree operation')
         break;
       case Message.CREATE_VISUAL_LINK_SUCCESS:
-      case Message.SET_SELECTION_SUCCESS:
         break;
       case Message.TABLE_ROW: {
         const { batch, isLast, timestamp, rows } = body;

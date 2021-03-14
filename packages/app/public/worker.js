@@ -220,6 +220,23 @@ var Message = /*#__PURE__*/Object.freeze({
   UPDATE: UPDATE$1
 });
 
+const metadataKeys = {
+    IDX: 0,
+    RENDER_IDX: 1,
+    IS_LEAF: 2,
+    IS_EXPANDED: 3,
+    DEPTH: 4,
+    COUNT: 5,
+    KEY: 6,
+    SELECTED: 7,
+    // PARENT_IDX: 8,
+    // IDX_POINTER: 9,
+    // FILTER_COUNT: 10,
+    // NEXT_FILTER_IDX: 11,
+    count: 8
+};
+
+const {IDX, SELECTED} = metadataKeys;
 const EMPTY_ARRAY = [];
 const SORT = { asc: 'D', dsc: 'A' };
 
@@ -239,6 +256,7 @@ class Viewport {
     this.filterSpec = null;
     this.pendingOperations = new Map();
     this.isTree = false;
+    this.selection = [];
   }
 
   subscribe({viewPortId, columns, table, range, sort, groupBy, filterSpec}){
@@ -290,6 +308,8 @@ class Viewport {
       this.sort = {
         sortDefs: data
       };
+    } else if (type === "select"){
+      this.selection = data;
     }
   }
 
@@ -309,6 +329,18 @@ class Viewport {
     const type = groupBy === EMPTY_ARRAY ? "groupByClear" : "groupBy";
     this.awaitOperation(requestId, {type, data: groupBy});
     return this.createRequest({groupBy})
+  }
+
+  selectRequest(requestId, row, rangeSelect, keepExistingSelection){
+    const selection = row[SELECTED]
+      ? this.selection.filter(idx => idx !== row[IDX])
+      : this.selection.concat(row[IDX]);
+    this.awaitOperation(requestId, {type: "selection", data: selection});
+    return {
+        type: SET_SELECTION,
+        vpId: this.serverViewportId,
+        selection
+    }
   }
 
   createRequest( params){
@@ -378,11 +410,11 @@ class ServerProxy {
           isReady);
         break;
 
-        case 'sort': {
-          const requestId = nextRequestId();
-          const request = viewport.sortRequest(requestId, message.sortCriteria);
-          this.sendIfReady(request, requestId, isReady);
-        }
+      case 'sort': {
+        const requestId = nextRequestId();
+        const request = viewport.sortRequest(requestId, message.sortCriteria);
+        this.sendIfReady(request, requestId, isReady);
+      }
         break
 
       case 'groupBy': {
@@ -397,7 +429,15 @@ class ServerProxy {
         const request = viewport.filterRequest(requestId, message.filter);
         this.sendIfReady(request, requestId, isReady);
       }
-      break;
+        break;
+
+      case 'select': {
+        const requestId = nextRequestId();
+        const { row, rangeSelect, keepExistingSelection } = message;
+        const request = viewport.selectRequest(requestId, row, rangeSelect, keepExistingSelection);
+        this.sendIfReady(request, requestId, isReady);
+      }
+        break;
 
       case 'openTreeNode':
         this.sendIfReady({
@@ -420,16 +460,6 @@ class ServerProxy {
 
         break;
 
-      case 'select':
-        this.sendIfReady({
-          type: SET_SELECTION,
-          vpId: viewport.serverViewportId,
-          selection: [message.idx]
-        },
-          _requestId++,
-          isReady);
-
-        break;
 
       case "createLink": {
         const { parentVpId, childVpId, parentColumnName, childColumnName } = message;
@@ -643,8 +673,9 @@ class ServerProxy {
         return this.subscribed(requestId, body);
       case CHANGE_VP_RANGE_SUCCESS:
         break;
-      case CHANGE_VP_SUCCESS: {
-        const response = this.viewportStatus[body.viewPortId].completeOperation(requestId);
+      case CHANGE_VP_SUCCESS:
+      case SET_SELECTION_SUCCESS: {
+        const response = this.viewportStatus[body.viewPortId || body.vpId].completeOperation(requestId);
         if (response) {
           this.postMessageToClient(response);
         }
@@ -655,7 +686,6 @@ class ServerProxy {
         console.log('successful tree operation');
         break;
       case CREATE_VISUAL_LINK_SUCCESS:
-      case SET_SELECTION_SUCCESS:
         break;
       case TABLE_ROW: {
         const { batch, isLast, timestamp, rows } = body;
