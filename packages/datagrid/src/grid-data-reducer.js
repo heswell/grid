@@ -12,7 +12,7 @@ import {
   scrollDirection
 } from './grid-data-helpers';
 import * as Action from "./grid-data-actions";
-import { storeAction } from "./test-data-capture";
+// import { storeAction } from "./test-data-capture";
 
 const { IDX, RENDER_IDX } = metadataKeys;
 
@@ -52,7 +52,7 @@ const bruteForceResetKeys = (state) => {
 // we will need additional action types to update
 const GridDataReducer = (state = initData({}), action) => {
   // console.log(`reducer ${JSON.stringify(action)}`)
-  storeAction(action);
+  // storeAction(action);
   if (action.type === "range") {
     // console.log(`setRange ${JSON.stringify(action.range)}`)
     return setRange(state, action);

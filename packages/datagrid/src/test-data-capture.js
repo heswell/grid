@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
+import "./test-data-capture.css"
 const data = [];
 
 export function storeAction(action) {
@@ -19,18 +20,18 @@ const getTestText = (actions) => {
   })
 
 
-  
+
 return `
 import GridDataReducer from '../../src/grid-data-reducer';
 describe('grid-data-reducer-generated-test', () => {
     test('init, default bufferSize', () => {
       let state = undefined;
 
-      
+
 
       ${tests.join('\n\n')}
     });
-  });    
+  });
 `
 }
 
@@ -70,6 +71,7 @@ function clearData() {
 }
 
 const div = document.createElement('div');
+div.className = "test-data-capture";
 document.body.appendChild(div);
 
 ReactDOM.render(
