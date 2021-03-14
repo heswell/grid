@@ -14,5 +14,7 @@
   --header-cell-height: 32px;
   --header-cell-highlight-bg: var(--grid-header-cell-highlight-bg);
   --heading-border-color: var(--grid-heading-border-color, #d4d4d4);
+  --line-number-bg: #d4d4d4;
+  --line-number-border-color: #ccc;
   --text-color: var(--grid-text-color, black);
 }

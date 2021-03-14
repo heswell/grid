@@ -56,7 +56,7 @@ function App() {
               <Flexbox title="Page 1" style={{ flexDirection: 'column' }}>
                 <Flexbox style={{ flexDirection: 'row', flex: 1 }}>
                   <View resizeable header style={{ flex: 1 }} resize="defer">
-                    <PricesGrid dataSource={data.prices} onFilterChange={handleFilterChange} />
+                    <PricesGrid dataSource={data.prices} onFilterChange={handleFilterChange} showLineNumbers/>
                   </View>
                   <View resizeable header style={{ flex: 1 }} resize="defer">
                     <OrdersGrid dataSource={data.orders} onFilterChange={handleFilterChange} />

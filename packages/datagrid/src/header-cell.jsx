@@ -11,7 +11,7 @@ import "./header-cell.css";
 
 /** @type {HeaderCellComponent} */
 const HeaderCell = function HeaderCell({
-  className,
+  className: classNameProp,
   column,
   onDrag,
   onResize,
@@ -22,6 +22,7 @@ const HeaderCell = function HeaderCell({
   const isResizing = useRef(false);
   const { dispatchGridAction, gridModel } = useContext(GridContext);
   const classBase = 'vuHeaderCell';
+
   // essential that handlers for resize do not use stale column
   // we could mitigate this by only passing column key and passing delta,
   // so we don't rely on current width in column
@@ -80,7 +81,7 @@ const HeaderCell = function HeaderCell({
   const { name, label = name, resizing, width, marginLeft = null } = column;
   return (
     <div
-      className={cx(classBase, className, { [`$classBase}-resizing`]: resizing })}
+      className={cx(classBase, classNameProp, column.className, { [`$classBase}-resizing`]: resizing })}
       onContextMenu={handleContextMenu}
       onMouseDown={handleMouseDown}
       onClick={handleClick}

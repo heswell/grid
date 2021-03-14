@@ -334,11 +334,13 @@ function removeGroupColumn({ groupColumns }, column) {
   }
 }
 
+const omitSystemColumns = column => !column.isSystemColumn;
+
 export const GridModel = {
   addGroupColumn,
   addSortColumn,
   setSortColumn,
-  columns: gridModel => flattenColumnGroup(gridModel.columnGroups.flatMap(columnGroup => columnGroup.columns)),
+  columns: gridModel => flattenColumnGroup(gridModel.columnGroups.flatMap(columnGroup => columnGroup.columns.filter(omitSystemColumns))),
   columnNames: gridModel => GridModel.columns(gridModel).map(column => column.name),
   groupBy: gridModel => gridModel.groupColumns && mapSortColumns(gridModel.groupColumns),
   pivotBy: gridModel => gridModel.pivotColumns && mapSortColumns(gridModel.pivotColumns),

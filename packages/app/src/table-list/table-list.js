@@ -14,7 +14,7 @@ const FilteredGrid = ({dataSource, schema}) => {
   return (
   <>
     <QueryFilter onChange={q => dataSource.filterQuery(q)}/>
-    <Grid dataSource={dataSource} columns={schema.columns} columnSizing="fill" renderBufferSize={20} />
+    <Grid dataSource={dataSource} columns={schema.columns} columnSizing="fill" renderBufferSize={20} showLineNumbers/>
   </>
   )
 }

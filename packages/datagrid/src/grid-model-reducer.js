@@ -21,6 +21,7 @@ const CHECKBOX_COLUMN = {
   key: metadataKeys.SELECTED,
   width: 25,
   sortable: false,
+  isSystemColumn: true,
   type: {
     name: 'checkbox',
     renderer: {
@@ -28,6 +29,16 @@ const CHECKBOX_COLUMN = {
     }
   }
 };
+
+const LINE_NUMBER_COLUMN = {
+  className: 'vuLineNumber',
+  flex: 0,
+  isSystemColumn: true,
+  label: ' ',
+  name: 'line',
+  key: metadataKeys.IDX,
+  width: 50
+}
 
 const RESIZING = { resizing: true };
 const NOT_RESIZING = { resizing: false };
@@ -86,6 +97,7 @@ export const initModel = ([gridProps, size, custom]) => {
     renderBufferSize = 0,
     rowHeight = 24,
     selectionModel, // default should be none
+    showLineNumbers = false
   } = gridProps;
 
   const {
@@ -117,7 +129,6 @@ export const initModel = ([gridProps, size, custom]) => {
     customInlineHeaderHeight,
     defaultColumnWidth,
     groupColumns,
-    // groupState: null,
     headerHeight: noColumnHeaders ? 0 : headerHeight,
     headingDepth: undefined,
     height,
@@ -127,6 +138,7 @@ export const initModel = ([gridProps, size, custom]) => {
     renderBufferSize,
     rowHeight,
     selectionModel,
+    showLineNumbers,
     sortColumns: null,
     viewportHeight: undefined,
     viewportRowCount: undefined,
@@ -412,7 +424,6 @@ function resizeGrid(state, { height, width }) {
   if (widthDiff === 0) {
     columnGroups = state.columnGroups;
   } else if (columnSizing === 'fill') {
-
     ({ columnGroups } = buildColumnGroups({ ...state, width }, GridModel.columns(state)));
 
   } else {
@@ -449,7 +460,7 @@ function buildColumnGroups(state, columns, groupBy) {
   if (!columns) {
     return NO_COLUMN_GROUPS;
   }
-  const { columnSizing, defaultColumnWidth, minColumnWidth, selectionModel, width: gridWidth } = state;
+  const { columnSizing, defaultColumnWidth, minColumnWidth, selectionModel, showLineNumbers, width: gridWidth } = state;
   let column = null;
   let columnGroup = null;
   let columnGroups = [];
@@ -457,21 +468,24 @@ function buildColumnGroups(state, columns, groupBy) {
   let gridContentWidth = gridWidth - 15;// how do we know about vertical scrollbar
   let availableWidth = gridContentWidth;
 
-  const preCols = selectionModel === 'checkbox' ? [CHECKBOX_COLUMN] : [];
-
-  //const _columns = preCols.concat(keyedColumns.map(addLabel));
+  const preCols = selectionModel === 'checkbox'
+    ? [CHECKBOX_COLUMN]
+    : showLineNumbers
+      ? [LINE_NUMBER_COLUMN]
+      :[];
 
 
   const headingDepth = getMaxHeadingDepth(columns);
   // TODO separate keys from columns
-  const keyedColumns = assignKeysToColumns(columns, defaultColumnWidth)
+  const keyedColumns = assignKeysToColumns(columns, defaultColumnWidth, showLineNumbers)
   const columnNames = keyedColumns.map(col => col.name);
 
   const [groupColumn, nonGroupedColumns] = extractGroupColumn(keyedColumns, groupBy);
   if (groupColumn) {
     const headings = headingDepth > 1 ? [] : undefined;
-    columnGroups.push(columnGroup = { locked: false, columns: [groupColumn], headings, width: 0, contentWidth: 0 });
+    columnGroups.push(columnGroup = { locked: false, columns: preCols.concat(groupColumn), headings, width: 0, contentWidth: 0 });
     addColumnToHeadings(headingDepth, groupColumn, headings);
+    preCols.length = 0;
   }
 
   // TODO we need a min Width on the group column as well
@@ -482,10 +496,13 @@ function buildColumnGroups(state, columns, groupBy) {
   const initialFlex = { $count: 0, $total: 0 };
 
   for (let {
+    className,
     flex = undefined,
+    isSystemColumn,
     key,
     name,
     heading = [name],
+    label,
     locked = false,
     minWidth = minColumnWidth,
     type, // normalize this here
@@ -509,8 +526,11 @@ function buildColumnGroups(state, columns, groupBy) {
 
     // TODO we are losing a lot of column information here
     columnGroup.columns.push(column = {
+      className,
       flex,
       heading,
+      isSystemColumn,
+      label,
       locked,
       name,
       key,

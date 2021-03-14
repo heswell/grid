@@ -1,15 +1,16 @@
-import {createElement, useRef} from 'react';
-import {roundDecimal} from './grid-cell-number-utils';
+import { createElement, useRef } from 'react';
+import { roundDecimal } from './grid-cell-number-utils';
 
 const defaultFormatter = value => value == null ? '' : value;
 
 const getFormatter = column => {
-  const {name, format} = column.type;
-  if (name === 'number'){
-    return numericFormatter(format);
-  } else {
-    return defaultFormatter;
+  if (column.type) {
+    const { name, format } = column.type;
+    if (name === 'number') {
+      return numericFormatter(format);
+    }
   }
+  return defaultFormatter;
 }
 
 const useFormatter = column => {
@@ -22,15 +23,15 @@ export default useFormatter;
 
 const DEFAULT_NUMERIC_FORMATTING = {};
 
-function numericFormatter({align='right', alignOnDecimals=false, decimals=4, zeroPad=false} = DEFAULT_NUMERIC_FORMATTING){
-  const props = {className:'num'};
+function numericFormatter({ align = 'right', alignOnDecimals = false, decimals = 4, zeroPad = false } = DEFAULT_NUMERIC_FORMATTING) {
+  const props = { className: 'num' };
   return value => {
-      const number = typeof value === 'number'
-        ? value
-        : typeof value === 'string'
-          ? parseFloat(value)
-          : null;
-      return createElement('div', props, roundDecimal(number, align, decimals, zeroPad, alignOnDecimals));
+    const number = typeof value === 'number'
+      ? value
+      : typeof value === 'string'
+        ? parseFloat(value)
+        : null;
+    return createElement('div', props, roundDecimal(number, align, decimals, zeroPad, alignOnDecimals));
   }
 }
 

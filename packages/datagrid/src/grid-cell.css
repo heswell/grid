@@ -30,3 +30,9 @@
   text-align: right;
   width: 100%;
 }
+
+.vuLineNumber {
+  background-color: var(--line-number-bg);
+  border-bottom-color: var(--line-number-border-color);
+  color: #555;
+}
