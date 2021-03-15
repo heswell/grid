@@ -371,7 +371,7 @@ function addColumn(state, { insertIdx: absInsertIdx, targetColumnGroup, column }
     }
   });
 
-  const { columnGroups } = buildColumnGroups(state, columns, null);
+  const { columnGroups } = buildColumnGroups(state, columns.filter(col => !col.isSystemColumn), null);
 
   return {
     ...state,
