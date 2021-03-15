@@ -37,7 +37,7 @@ const LINE_NUMBER_COLUMN = {
   label: ' ',
   name: 'line',
   key: metadataKeys.IDX,
-  width: 50
+  width: 30
 }
 
 const RESIZING = { resizing: true };
@@ -90,12 +90,12 @@ export const initModel = ([gridProps, size, custom]) => {
     columnSizing = 'static',
     defaultColumnWidth = DEFAULT_COLUMN_WIDTH,
     groupBy: groupByProp,
-    headerHeight = 32,
+    headerHeight = 24,
     minColumnWidth = MIN_COLUMN_WIDTH,
     noColumnHeaders = false,
     pivotBy: pivotByProp,
     renderBufferSize = 0,
-    rowHeight = 24,
+    rowHeight = 20,
     selectionModel, // default should be none
     showLineNumbers = false
   } = gridProps;

@@ -8,13 +8,12 @@ import {List, ListItem} from "@heswell/ui-controls";
 import useTables from "../useTables";
 import {createDataSource} from "../utils"
 
-
 const FilteredGrid = ({dataSource, schema}) => {
 
   return (
   <>
     <QueryFilter onChange={q => dataSource.filterQuery(q)}/>
-    <Grid dataSource={dataSource} columns={schema.columns} columnSizing="fill" renderBufferSize={20} showLineNumbers/>
+    <Grid dataSource={dataSource} columns={schema.columns} renderBufferSize={20} showLineNumbers/>
   </>
   )
 }

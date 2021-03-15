@@ -1,14 +1,18 @@
-.SortIndicator {
-  position: absolute;
-  top: 2px;
+.vuSortIndicator {
+  position: relative;
+  top: 0px;
   left: -5px;
-  bottom: 0;
   width: 18px;
 }
 
-.SortPosition {
+.vuSortIndicator.multi-col {
+  top: -4px;
+}
+
+.vuSortPosition {
   font-size: 10px;
   position: absolute;
   left: 9px;
-  top: 15px;
+  top: 13px;
 }
+

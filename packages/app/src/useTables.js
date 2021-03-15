@@ -4,15 +4,6 @@ import ConnectionManager from '@vuu-ui/data-remote/src/connection-manager-worker
 import {serverUrl} from "./utils"
 
 const columnConfig = {
-  bid: {
-    name: 'bid',
-    type: {
-      name: 'number',
-      renderer: { name: 'background', flashStyle: 'arrow-bg' },
-      formatting: { decimals: 2, zeroPad: true }
-    },
-    aggregate: 'avg'
-  },
   ask: {
     name: 'ask',
     type: {
@@ -22,6 +13,34 @@ const columnConfig = {
     },
     aggregate: 'avg'
   },
+  bid: {
+    name: 'bid',
+    type: {
+      name: 'number',
+      renderer: { name: 'background', flashStyle: 'arrow-bg' },
+      formatting: { decimals: 2, zeroPad: true }
+    },
+    aggregate: 'avg'
+  },
+  currency: {
+    name: "currency",
+    label: 'ccy',
+    width: 60
+  },
+  lotSize : {
+    name: "lotSize",
+    width: 80,
+    type: {
+      name: "number"
+    }
+  },
+  quantity: {
+    name: 'quantity',
+    width: 80,
+    type : {
+      name: 'number'
+    }
+  }
 }
 
 const extendSchema = schema => {

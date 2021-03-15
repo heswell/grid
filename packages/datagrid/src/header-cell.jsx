@@ -78,10 +78,15 @@ const HeaderCell = function HeaderCell({
   };
 
   // TODO could we just wrap the whole header in a draggable ?
-  const { name, label = name, resizing, width, marginLeft = null } = column;
+  const { name, label = name, resizing, width, marginLeft = null, type } = column;
+
   return (
     <div
-      className={cx(classBase, classNameProp, column.className, { [`$classBase}-resizing`]: resizing })}
+      className={cx(classBase, classNameProp, column.className, {
+        [`${classBase}-resizing`]: resizing,
+        [`${classBase}-${type.name}`]: type?.name
+
+      })}
       onContextMenu={handleContextMenu}
       onMouseDown={handleMouseDown}
       onClick={handleClick}
@@ -89,10 +94,10 @@ const HeaderCell = function HeaderCell({
       role="columnheader"
       style={{ marginLeft, width }}
     >
-      <SortIndicator sorted={sorted} />
       <div className="innerHeaderCell">
         <div className="cellWrapper">{label}</div>
       </div>
+      <SortIndicator sorted={sorted} />
       {column.resizeable !== false && (
         <Draggable
           className="resizeHandle"

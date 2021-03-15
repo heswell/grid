@@ -5,9 +5,10 @@ import { Provider, defaultTheme } from '@adobe/react-spectrum';
 import { Chest, DraggableLayout, Drawer, Flexbox, Stack, View } from "@heswell/layout";
 
 import { ordersSchema, OrdersGrid } from "./orders-grid";
-import { pricesSchema, PricesGrid } from "./prices-grid";
+import { PricesGrid } from "./prices-grid";
 import { createDataSource } from "./utils"
 import { TableList } from "./table-list";
+import {pricesSchema} from "./table-schemas";
 
 import './App.css';
 
@@ -45,9 +46,9 @@ function App() {
     <Provider theme={defaultTheme}>
       <DraggableLayout style={{width: '100vw', height: "100vh"}}>
         <Flexbox className="App" style={{ flexDirection: 'column', height: '100%' }}>
-          <div style={{ height: 60, borderBottom: 'solid 1px #ccc' }} />
+          <div style={{ height: 40, borderBottom: 'solid 1px #ccc' }} />
           <Chest style={{ flex: 1 }}>
-            <Drawer position="left" inline peekaboo clickToOpen sizeOpen={150}>
+            <Drawer position="left" inline peekaboo clickToOpen sizeOpen={150} toggleButton="end">
               <View title="Tables" header style={{ height: '100%' }}>
                 <TableList style={{ width: 120 }} />
               </View>
@@ -55,17 +56,16 @@ function App() {
             <Stack style={{ width: '100%', height: '100%' }} showTabs enableAddTab createNewChild={newPage} preserve>
               <Flexbox title="Page 1" style={{ flexDirection: 'column' }}>
                 <Flexbox style={{ flexDirection: 'row', flex: 1 }}>
-                  <View resizeable header style={{ flex: 1 }} resize="defer">
-                    <PricesGrid dataSource={data.prices} onFilterChange={handleFilterChange} showLineNumbers/>
+                  <View resizeable style={{ flex: 1 }} resize="defer">
+                    <PricesGrid dataSource={data.prices} onFilterChange={handleFilterChange} />
                   </View>
-                  <View resizeable header style={{ flex: 1 }} resize="defer">
+                  <View resizeable style={{ flex: 1 }} resize="defer">
                     <OrdersGrid dataSource={data.orders} onFilterChange={handleFilterChange} />
                   </View>
                 </Flexbox>
               </Flexbox>
             </Stack>
           </Chest>
-          <div style={{ height: 60, borderTop: 'solid 1px #ccc' }} onClick={toggleDrawer} />
         </Flexbox>
       </DraggableLayout>
     </Provider>

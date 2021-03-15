@@ -14,7 +14,8 @@ body {
   --spectrum-global-dimension-size-85: 3px;
   --spectrum-global-dimension-size-225: 16px;
 
-  --app-font-family: var(--uitk-font-family);
+  --app-font-family: 'Roboto Condensed', Roboto;
+
   font-family: var(--app-font-family);
 }
 
@@ -43,4 +44,8 @@ body {
 
 .hwView-main {
   overflow: hidden;
+}
+
+.vuHeaderCell {
+  text-transform: uppercase;
 }

@@ -10,7 +10,7 @@
   display: inline-flex;
   height: 100%;
   overflow: hidden;
-  padding: 0 12px;
+  padding: var(--cell-padding);
   position: relative;
   text-overflow: ellipsis;
   user-select: none;

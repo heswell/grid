@@ -1,5 +1,6 @@
 .vuHeaderCell {
   --header-cell-highlight-bg: yellow;
+  --justify-text: flex-start;
   align-items: stretch;
   background: var(--grid-header-cell-background);
   border-bottom: solid 1px var(--heading-border-color);
@@ -13,6 +14,11 @@
   vertical-align: top;
 }
 
+.vuHeaderCell-number {
+  --justify-text: flex-end;
+  --cell-padding: 0 1px 0 9px;
+}
+
 .vuHeaderCell.noBottomBorder {
   border-bottom: solid 1px transparent;
 }
@@ -22,10 +28,10 @@
 }
 
 .innerHeaderCell {
-  flex: 1 1 auto;
+  flex: 1 1 100%;
   font-weight: bold;
   overflow: hidden;
-  padding: 0 12px 0 14px;
+  padding: var(--cell-padding);
   position: relative;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -33,6 +39,7 @@
 
 .cellWrapper {
   align-items: center;
+  justify-content: var(--justify-text);
   display: flex;
   height: 100%;
   vertical-align: top;
