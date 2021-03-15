@@ -84,7 +84,7 @@ const HeaderCell = function HeaderCell({
     <div
       className={cx(classBase, classNameProp, column.className, {
         [`${classBase}-resizing`]: resizing,
-        [`${classBase}-${type.name}`]: type?.name
+        [`${classBase}-${type?.name}`]: type?.name
 
       })}
       onContextMenu={handleContextMenu}

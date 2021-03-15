@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { Provider, defaultTheme } from '@adobe/react-spectrum';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Provider, defaultTheme, ToggleButton } from '@adobe/react-spectrum';
 
 // import { LocalDataSource } from "@vuu-ui/data-source";
 import { Chest, DraggableLayout, Drawer, Flexbox, Stack, View } from "@heswell/layout";
@@ -16,11 +16,10 @@ const newPage = (index) => (
   <View title="New Page" style={{flexGrow: 1, flexShrink: 0, flexBasis: 0}} closeable >
     <div style={{ backgroundColor: "#ccc" }}></div>
   </View>
-
 )
 
 function App() {
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [colorScheme, setColorScheme] = useState('light')
   const data = useMemo(() => ({
     orders: createDataSource('orders', ordersSchema),
     prices: createDataSource('prices', pricesSchema)
@@ -31,22 +30,21 @@ function App() {
     data[table].filterQuery(filterQuery);
   }
 
-
-
-
-  const toggleDrawer = () => {
-
-    setDrawerOpen(!drawerOpen)
-  }
-
+  const toggleColorScheme = useCallback(() => {
+    setColorScheme(color => color === 'light' ? 'dark' : 'light')
+  },[]);
 
   console.log({ defaultTheme })
 
   return (
-    <Provider theme={defaultTheme}>
+    <Provider theme={defaultTheme} colorScheme={colorScheme}>
       <DraggableLayout style={{width: '100vw', height: "100vh"}}>
         <Flexbox className="App" style={{ flexDirection: 'column', height: '100%' }}>
-          <div style={{ height: 40, borderBottom: 'solid 1px #ccc' }} />
+          <div style={{ height: 40, borderBottom: 'solid 1px #ccc' }}>
+              {/* <ToggleButton onChange={toggleColorScheme}>
+                theme
+              </ToggleButton> */}
+            </div>
           <Chest style={{ flex: 1 }}>
             <Drawer position="left" inline peekaboo clickToOpen sizeOpen={150} toggleButton="end">
               <View title="Tables" header style={{ height: '100%' }}>
