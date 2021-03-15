@@ -23,8 +23,8 @@ const BackgroundCell = React.memo(function BackgroundCell({column, columnMap, ro
       style={{ marginLeft: column.marginLeft, width }}>
       <div className='hwProgressCell-progress-container'>
         <div className='hwProgressCell-progress-bar' style={{width: `${percentage}%`}}/>
-        {format(row[column.key])}
         </div>
+        {format(row[column.key])}
     </div>
   );
 })
