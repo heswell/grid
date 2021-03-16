@@ -1495,10 +1495,10 @@
   dependencies:
     "@hapi/hoek" "^8.3.0"
 
-"@heswell/layout@3.0.50":
-  version "3.0.50"
-  resolved "https://registry.yarnpkg.com/@heswell/layout/-/layout-3.0.50.tgz#1f6419ff4e06c90b67d175728f369e7793972fb9"
-  integrity sha512-ZILjpapauYeH3StOJhn2foPSarzGQlFjtVzLmXELPBDR9yEx294udqfcFaDx3WvVokBY7eGXFXBUEd8Mbh9jWg==
+"@heswell/layout@3.0.51":
+  version "3.0.51"
+  resolved "https://registry.yarnpkg.com/@heswell/layout/-/layout-3.0.51.tgz#62050cc4f3c019fe871985a2d350a4ea7c2e6089"
+  integrity sha512-I/i2Gqd6BwAl0aYXOjvuzgjOH7dakQTdypZaWrmlneht1oLBnl5K7d/JlGg7q8j9h6hNKDa/8OJw7tCWAGRTSw==
   dependencies:
     "@adobe/react-spectrum" "^3.8.0"
     "@spectrum-icons/workflow" "^3.2.0"

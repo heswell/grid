@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import cx from 'classnames';
 import { ActionButton, TextField, ToggleButton } from '@adobe/react-spectrum';
 import CloseCircle from "@spectrum-icons/workflow/CloseCircle";
 import FilterIcon from "@spectrum-icons/workflow/Filter";
-import { Toolbar, Tooltray } from "@heswell/layout";
+import { Toolbar, Tooltray, useLayoutContext } from "@heswell/layout";
 
 import "./query-filter.css";
 
@@ -23,8 +23,10 @@ const buildFilterQuery = (filters, joinOp = 'or') =>
 
 
 const QueryFilter = ({ onChange }) => {
+  const {loadState, saveState} = useLayoutContext();
 
-  const [filters, setFilters] = useState({});
+  const filterRef = useRef(loadState() ?? {})
+  const [filters, setFilters] = useState(filterRef.current);
   const [joinOp, setJoinOp] = useState('or');
 
   const [filterValue, setFilterValue] = useState('');
@@ -53,7 +55,7 @@ const QueryFilter = ({ onChange }) => {
 
     onChange(buildFilterQuery(newState));
 
-    setFilters(newState);
+    setFilters(filterRef.current = newState);
   }
 
   const removeFilter = filterName => {
@@ -65,9 +67,11 @@ const QueryFilter = ({ onChange }) => {
 
     onChange(buildFilterQuery(newState));
 
-    setFilters(newState);
+    setFilters(filterRef.current = newState);
 
   }
+
+  useEffect(() => () => saveState(filterRef.current) ,[saveState])
 
   const handleKeyDown = ({ key }) => {
     if (key === "Enter") {
