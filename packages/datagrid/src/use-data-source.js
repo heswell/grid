@@ -89,7 +89,7 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
   }
 
   useEffect(() => {
-    console.log(`subscribe with `, subscriptionDetails)
+    console.log(`subscribe (suspended = ${dataSource.suspended}) with `, subscriptionDetails)
     dataSource.subscribe(subscriptionDetails,
       function datasourceMessageHandler({ type: messageType, ...msg }) {
         if (messageType === 'subscribed') {
@@ -133,16 +133,20 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
     // dataSource.on('group', clearBuffer)
 
     return () => {
-      console.log(`%cUNSUBSCRIBE`,'color: green;font-weight: bold;')
-      dataSource.unsubscribe();
-      dataSource.removeListener('group', clearBuffer);
-      const {bufferSize, range, renderBufferSize} = latestState.current;
-      dispatchData({
-        type:'clear',
-        range: resetRange(range),
-        bufferSize,
-        renderBufferSize
-      });
+      // if (!subscriptionDetails.keepAlive){
+        console.log(`%cUNSUBSCRIBE`,'color: green;font-weight: bold;')
+        dataSource.unsubscribe();
+        dataSource.removeListener('group', clearBuffer);
+        const {bufferSize, range, renderBufferSize} = latestState.current;
+        dispatchData({
+          type:'clear',
+          range: resetRange(range),
+          bufferSize,
+          renderBufferSize
+        });
+      // } else {
+      //   console.log(`unload grid but keep dataSource alive`)
+      // }
     }
 
   }, [dataSource]);

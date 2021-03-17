@@ -41,6 +41,7 @@ export default class RemoteDataSource  extends EventEmitter {
     this.filterDataMessage = null;
     this.status = 'initialising'
     this.remoteId = null;
+    this.suspended = false;
 
     if (!serverUrl){
       throw Error('RemoteDataSource expects serverUrl')
@@ -59,6 +60,12 @@ export default class RemoteDataSource  extends EventEmitter {
 
     if (!tableName) throw Error("RemoteDataSource subscribe called without table name");
 
+    this.clientCallback = callback;
+
+    if (this.subscribed){
+      return;
+    }
+
     this.viewport = viewport;
     this.tableName = tableName;
     this.columns = columns;
@@ -71,26 +78,54 @@ export default class RemoteDataSource  extends EventEmitter {
         tablename: tableName,
         columns,
         range: getFullRange({bufferSize, ...range})
-      }, message => {
-          if (message.dataType === DataTypes.FILTER_DATA) {
-            this.filterDataCallback(message);
-          } else if (message.type === "subscribed"){
-            this.serverViewportId = message.serverViewportId;
-            this.emit("subscribed", message);
-            const {viewportId, ...rest} = message
-            callback(rest);
-          } else if (message.type ==='VP_VISUAL_LINKS_RESP' ){
-            this.emit("visual-links", message.links)
-          } else {
-            callback(message)
-          }
-      });
+      },this.handleMessageFromServer);
+  }
+
+  handleMessageFromServer = (message) => {
+    if (message.dataType === DataTypes.FILTER_DATA) {
+      this.filterDataCallback(message);
+    } else if (message.type === "subscribed"){
+      this.status = 'subscribed';
+      this.serverViewportId = message.serverViewportId;
+      this.emit("subscribed", message);
+      const {viewportId, ...rest} = message
+      this.clientCallback(rest);
+    } else if (message.type ==='VP_VISUAL_LINKS_RESP' ){
+      this.emit("visual-links", message.links)
+    } else {
+      this.clientCallback(message);
+    }
   }
 
   unsubscribe() {
-    logger.log(`unsubscribe from ${this?.tableName ?? 'no table'} (viewport ${this?.viewport})`);
-    this.server?.unsubscribe(this.viewport);
-    this.server?.destroy();
+    if (this.suspended){
+      logger.log(`unsubscribe whilst suspended, ignore - ${this?.tableName ?? 'no table'} (viewport ${this?.viewport})`);
+    } else {
+      logger.log(`unsubscribe from ${this?.tableName ?? 'no table'} (viewport ${this?.viewport})`);
+      this.server?.unsubscribe(this.viewport);
+      this.server?.destroy();
+
+    }
+  }
+
+  disable(){
+    console.log('disabling data source')
+    this.suspended = true;
+    this.server.handleMessageFromClient({
+      viewport: this.viewport,
+      type: Msg.disable,
+    });
+    return this;
+  }
+
+  enable(){
+    // should we await this ?s
+    this.server.handleMessageFromClient({
+      viewport: this.viewport,
+      type: Msg.enable,
+    });
+    this.suspended = false;
+    return this;
   }
 
   setColumns(columns){

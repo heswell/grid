@@ -21,7 +21,12 @@ export const OPEN_TREE_REJECT = "OPEN_TREE_REJECT";
 export const CLOSE_TREE_NODE = "CLOSE_TREE_NODE";
 export const CLOSE_TREE_SUCCESS = "CLOSE_TREE_SUCCESS";
 export const CLOSE_TREE_REJECT = "CLOSE_TREE_REJECT";
-
+export const ENABLE_VP = "ENABLE_VP";
+export const ENABLE_VP_SUCCESS = "ENABLE_VP_SUCCESS";
+export const ENABLE_VP_REJECT = "ENABLE_VP_REJECT";
+export const DISABLE_VP = "DISABLE_VP";
+export const DISABLE_VP_SUCCESS = "DISABLE_VP_SUCCESS";
+export const DISABLE_VP_REJECT = "DISABLE_VP_REJECT";
 
 export const SIZE = 'SIZE'
 export const UPDATE = 'U'

@@ -186,7 +186,12 @@ const OPEN_TREE_REJECT = "OPEN_TREE_REJECT";
 const CLOSE_TREE_NODE = "CLOSE_TREE_NODE";
 const CLOSE_TREE_SUCCESS = "CLOSE_TREE_SUCCESS";
 const CLOSE_TREE_REJECT = "CLOSE_TREE_REJECT";
-
+const ENABLE_VP = "ENABLE_VP";
+const ENABLE_VP_SUCCESS = "ENABLE_VP_SUCCESS";
+const ENABLE_VP_REJECT = "ENABLE_VP_REJECT";
+const DISABLE_VP = "DISABLE_VP";
+const DISABLE_VP_SUCCESS = "DISABLE_VP_SUCCESS";
+const DISABLE_VP_REJECT = "DISABLE_VP_REJECT";
 
 const SIZE$1 = 'SIZE';
 const UPDATE$1 = 'U';
@@ -216,6 +221,12 @@ var Message = /*#__PURE__*/Object.freeze({
   CLOSE_TREE_NODE: CLOSE_TREE_NODE,
   CLOSE_TREE_SUCCESS: CLOSE_TREE_SUCCESS,
   CLOSE_TREE_REJECT: CLOSE_TREE_REJECT,
+  ENABLE_VP: ENABLE_VP,
+  ENABLE_VP_SUCCESS: ENABLE_VP_SUCCESS,
+  ENABLE_VP_REJECT: ENABLE_VP_REJECT,
+  DISABLE_VP: DISABLE_VP,
+  DISABLE_VP_SUCCESS: DISABLE_VP_SUCCESS,
+  DISABLE_VP_REJECT: DISABLE_VP_REJECT,
   SIZE: SIZE$1,
   UPDATE: UPDATE$1
 });
@@ -236,18 +247,18 @@ const metadataKeys = {
     count: 8
 };
 
-const {IDX, SELECTED} = metadataKeys;
+const { IDX, SELECTED } = metadataKeys;
 const EMPTY_ARRAY = [];
 const SORT = { asc: 'D', dsc: 'A' };
 
 class Viewport {
 
-  constructor(clientViewportId, request, status = 'subscribing'){
+  constructor(clientViewportId, request, status = 'subscribing') {
     this.clientViewportId = clientViewportId;
     this.request = request;
     this.status = status;
     this.serverViewportId = null;
-    this.pendingOperations= [];
+    this.pendingOperations = [];
     this.columns = null;
     this.table = null;
     this.range = null;
@@ -259,7 +270,7 @@ class Viewport {
     this.selection = [];
   }
 
-  subscribe({viewPortId, columns, table, range, sort, groupBy, filterSpec}){
+  subscribe({ viewPortId, columns, table, range, sort, groupBy, filterSpec }) {
     this.serverViewportId = viewPortId;
     this.status = 'subscribed';
     this.columns = columns;
@@ -278,61 +289,83 @@ class Viewport {
       sort: ${JSON.stringify(sort)}
       groupBy: ${JSON.stringify(groupBy)}
       filterSpec: ${JSON.stringify(filterSpec)}
-    `,'color: blue');
+    `, 'color: blue');
   }
 
-  awaitOperation(requestId, type){
+  awaitOperation(requestId, type) {
     console.log(`await ${type} operation ${requestId}`);
     //TODO set uip a timeout mechanism here
     this.pendingOperations.set(requestId, type);
   }
 
   // Return a message if we need to communicate this to client UI
-  completeOperation(requestId){
-    const {clientViewportId, pendingOperations} = this;
-    const {type, data} = pendingOperations.get(requestId);
+  completeOperation(requestId) {
+    const { clientViewportId, pendingOperations } = this;
+    const { type, data } = pendingOperations.get(requestId);
     pendingOperations.delete(requestId);
-    if (type === 'groupBy'){
+    if (type === 'groupBy') {
       this.isTree = true;
       this.groupBy = data;
-      return {clientViewportId, type, groupBy: data};
-    } else if (type === "groupByClear"){
+      return { clientViewportId, type, groupBy: data };
+    } else if (type === "groupByClear") {
       this.isTree = false;
       this.groupBy = [];
       return { clientViewportId, type: "groupBy", groupBy: null };
-    } else if (type === 'filter'){
+    } else if (type === 'filter') {
       this.filterSpec = {
         filter: data
       };
-    } else if (type === 'sort'){
+    } else if (type === 'sort') {
       this.sort = {
         sortDefs: data
       };
-    } else if (type === "selection"){
+    } else if (type === "selection") {
       this.selection = data;
+    } else if (type === "disable") {
+      this.suspended = true; // assuming its _SUCCESS, of cource
+    } else if (type === "enable") {
+      this.suspended = false;
     }
   }
 
-  filterRequest(requestId, filter ){
-    this.awaitOperation(requestId, {type: "filter", data: filter});
-    return this.createRequest({filterSpec: { filter }});
+
+  enable(requestId) {
+    this.awaitOperation(requestId, { type: "enable" });
+    return {
+      type: ENABLE_VP,
+      viewPortId: this.serverViewportId,
+    }
   }
 
-  sortRequest(requestId, requestedSort ){
+  disable(requestId) {
+    this.awaitOperation(requestId, { type: "disable" });
+    return {
+      type: DISABLE_VP,
+      viewPortId: this.serverViewportId,
+    }
+  }
+
+
+  filterRequest(requestId, filter) {
+    this.awaitOperation(requestId, { type: "filter", data: filter });
+    return this.createRequest({ filterSpec: { filter } });
+  }
+
+  sortRequest(requestId, requestedSort) {
     const sortDefs = requestedSort.map(([column, dir = 'asc']) => ({ column, sortType: SORT[dir] }));
-    this.awaitOperation(requestId, {type: "sort", data: sortDefs});
-    return this.createRequest({sort: { sortDefs }})
+    this.awaitOperation(requestId, { type: "sort", data: sortDefs });
+    return this.createRequest({ sort: { sortDefs } })
   }
 
-  groupByRequest(requestId, requestedGroupBy ){
+  groupByRequest(requestId, requestedGroupBy) {
     const groupBy = requestedGroupBy?.map(([columnName]) => columnName) ?? EMPTY_ARRAY;
     const type = groupBy === EMPTY_ARRAY ? "groupByClear" : "groupBy";
-    this.awaitOperation(requestId, {type, data: groupBy});
-    return this.createRequest({groupBy})
+    this.awaitOperation(requestId, { type, data: groupBy });
+    return this.createRequest({ groupBy })
   }
 
-  selectRequest(requestId, row, rangeSelect, keepExistingSelection){
-    const singleSelect =  !rangeSelect && !keepExistingSelection;
+  selectRequest(requestId, row, rangeSelect, keepExistingSelection) {
+    const singleSelect = !rangeSelect && !keepExistingSelection;
     const selection = row[SELECTED]
       ? singleSelect
         ? []
@@ -341,15 +374,15 @@ class Viewport {
         ? this.selection.concat(row[IDX])
         : [row[IDX]];
 
-    this.awaitOperation(requestId, {type: "selection", data: selection});
+    this.awaitOperation(requestId, { type: "selection", data: selection });
     return {
-        type: SET_SELECTION,
-        vpId: this.serverViewportId,
-        selection
+      type: SET_SELECTION,
+      vpId: this.serverViewportId,
+      selection
     }
   }
 
-  createRequest( params){
+  createRequest(params) {
     return {
       type: CHANGE_VP,
       viewPortId: this.serverViewportId,
@@ -444,6 +477,20 @@ class ServerProxy {
         this.sendIfReady(request, requestId, isReady);
       }
         break;
+
+      case 'disable': {
+        const requestId = nextRequestId();
+        const request = viewport.disable(requestId);
+        this.sendIfReady(request, requestId, isReady);
+      }
+      break;
+
+      case 'enable': {
+        const requestId = nextRequestId();
+        const request = viewport.enable(requestId);
+        this.sendIfReady(request, requestId, isReady);
+      }
+      break;
 
       case 'openTreeNode':
         this.sendIfReady({

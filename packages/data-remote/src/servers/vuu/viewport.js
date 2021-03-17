@@ -1,18 +1,18 @@
 import { metadataKeys } from "@heswell/utils/src/column-utils";
 import * as Message from './messages';
 
-const {IDX, SELECTED} = metadataKeys;
+const { IDX, SELECTED } = metadataKeys;
 const EMPTY_ARRAY = [];
 const SORT = { asc: 'D', dsc: 'A' };
 
 export default class Viewport {
 
-  constructor(clientViewportId, request, status = 'subscribing'){
+  constructor(clientViewportId, request, status = 'subscribing') {
     this.clientViewportId = clientViewportId;
     this.request = request;
     this.status = status;
     this.serverViewportId = null;
-    this.pendingOperations= []
+    this.pendingOperations = []
     this.columns = null;
     this.table = null;
     this.range = null;
@@ -24,7 +24,7 @@ export default class Viewport {
     this.selection = [];
   }
 
-  subscribe({viewPortId, columns, table, range, sort, groupBy, filterSpec}){
+  subscribe({ viewPortId, columns, table, range, sort, groupBy, filterSpec }) {
     this.serverViewportId = viewPortId;
     this.status = 'subscribed';
     this.columns = columns;
@@ -43,61 +43,83 @@ export default class Viewport {
       sort: ${JSON.stringify(sort)}
       groupBy: ${JSON.stringify(groupBy)}
       filterSpec: ${JSON.stringify(filterSpec)}
-    `,'color: blue')
+    `, 'color: blue')
   }
 
-  awaitOperation(requestId, type){
+  awaitOperation(requestId, type) {
     console.log(`await ${type} operation ${requestId}`)
     //TODO set uip a timeout mechanism here
     this.pendingOperations.set(requestId, type);
   }
 
   // Return a message if we need to communicate this to client UI
-  completeOperation(requestId){
-    const {clientViewportId, pendingOperations} = this;
-    const {type, data} = pendingOperations.get(requestId);
+  completeOperation(requestId) {
+    const { clientViewportId, pendingOperations } = this;
+    const { type, data } = pendingOperations.get(requestId);
     pendingOperations.delete(requestId);
-    if (type === 'groupBy'){
+    if (type === 'groupBy') {
       this.isTree = true;
       this.groupBy = data;
-      return {clientViewportId, type, groupBy: data};
-    } else if (type === "groupByClear"){
+      return { clientViewportId, type, groupBy: data };
+    } else if (type === "groupByClear") {
       this.isTree = false;
       this.groupBy = [];
       return { clientViewportId, type: "groupBy", groupBy: null };
-    } else if (type === 'filter'){
+    } else if (type === 'filter') {
       this.filterSpec = {
         filter: data
       };
-    } else if (type === 'sort'){
+    } else if (type === 'sort') {
       this.sort = {
         sortDefs: data
       }
-    } else if (type === "selection"){
+    } else if (type === "selection") {
       this.selection = data;
+    } else if (type === "disable") {
+      this.suspended = true; // assuming its _SUCCESS, of cource
+    } else if (type === "enable") {
+      this.suspended = false;
     }
   }
 
-  filterRequest(requestId, filter ){
-    this.awaitOperation(requestId, {type: "filter", data: filter});
-    return this.createRequest({filterSpec: { filter }});
+
+  enable(requestId) {
+    this.awaitOperation(requestId, { type: "enable" });
+    return {
+      type: Message.ENABLE_VP,
+      viewPortId: this.serverViewportId,
+    }
   }
 
-  sortRequest(requestId, requestedSort ){
+  disable(requestId) {
+    this.awaitOperation(requestId, { type: "disable" });
+    return {
+      type: Message.DISABLE_VP,
+      viewPortId: this.serverViewportId,
+    }
+  }
+
+
+  filterRequest(requestId, filter) {
+    this.awaitOperation(requestId, { type: "filter", data: filter });
+    return this.createRequest({ filterSpec: { filter } });
+  }
+
+  sortRequest(requestId, requestedSort) {
     const sortDefs = requestedSort.map(([column, dir = 'asc']) => ({ column, sortType: SORT[dir] }));
-    this.awaitOperation(requestId, {type: "sort", data: sortDefs});
-    return this.createRequest({sort: { sortDefs }})
+    this.awaitOperation(requestId, { type: "sort", data: sortDefs });
+    return this.createRequest({ sort: { sortDefs } })
   }
 
-  groupByRequest(requestId, requestedGroupBy ){
+  groupByRequest(requestId, requestedGroupBy) {
     const groupBy = requestedGroupBy?.map(([columnName]) => columnName) ?? EMPTY_ARRAY;
     const type = groupBy === EMPTY_ARRAY ? "groupByClear" : "groupBy";
-    this.awaitOperation(requestId, {type, data: groupBy});
-    return this.createRequest({groupBy})
+    this.awaitOperation(requestId, { type, data: groupBy });
+    return this.createRequest({ groupBy })
   }
 
-  selectRequest(requestId, row, rangeSelect, keepExistingSelection){
-    const singleSelect =  !rangeSelect && !keepExistingSelection;
+  selectRequest(requestId, row, rangeSelect, keepExistingSelection) {
+    const singleSelect = !rangeSelect && !keepExistingSelection;
     const selection = row[SELECTED]
       ? singleSelect
         ? []
@@ -106,15 +128,15 @@ export default class Viewport {
         ? this.selection.concat(row[IDX])
         : [row[IDX]];
 
-    this.awaitOperation(requestId, {type: "selection", data: selection});
+    this.awaitOperation(requestId, { type: "selection", data: selection });
     return {
-        type: Message.SET_SELECTION,
-        vpId: this.serverViewportId,
-        selection
+      type: Message.SET_SELECTION,
+      vpId: this.serverViewportId,
+      selection
     }
   }
 
-  createRequest( params){
+  createRequest(params) {
     return {
       type: Message.CHANGE_VP,
       viewPortId: this.serverViewportId,

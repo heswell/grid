@@ -96,6 +96,20 @@ export class ServerProxy {
       }
         break;
 
+      case 'disable': {
+        const requestId = nextRequestId();
+        const request = viewport.disable(requestId)
+        this.sendIfReady(request, requestId, isReady)
+      }
+      break;
+
+      case 'enable': {
+        const requestId = nextRequestId();
+        const request = viewport.enable(requestId)
+        this.sendIfReady(request, requestId, isReady)
+      }
+      break;
+
       case 'openTreeNode':
         this.sendIfReady({
           type: Message.OPEN_TREE_NODE,

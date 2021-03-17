@@ -1,6 +1,6 @@
-import React, {useMemo} from 'react';
+import React, {useEffect, useRef} from 'react';
 import cx from "classnames";
-import {useLayoutDispatch, Action, View, registerComponent, DragIcon} from "@heswell/layout";
+import {useLayoutDispatch, Action, View, registerComponent, DragIcon, useLayoutContext, SESSION} from "@heswell/layout";
 import { uuid } from "@heswell/utils";
 import { Grid } from "@vuu-ui/datagrid";
 import {QueryFilter} from "@vuu-ui/filter";
@@ -8,21 +8,26 @@ import {List, ListItem} from "@heswell/ui-controls";
 import useTables from "../useTables";
 import {createDataSource} from "../utils"
 
-const FilteredGrid = ({dataSource, schema}) => {
+const FilteredGrid = ({schema}) => {
+  const {loadState, saveState} = useLayoutContext();
+  const dataSource = useRef(
+    loadState('data-source', SESSION)?.enable() ??
+    createDataSource(schema.table, schema))
+
+  useEffect(() => () => saveState(dataSource.current.disable(), "data-source", SESSION) ,[saveState])
 
   return (
   <>
-    <QueryFilter onChange={q => dataSource.filterQuery(q)}/>
-    <Grid dataSource={dataSource} columns={schema.columns} renderBufferSize={20} showLineNumbers/>
+    <QueryFilter onChange={q => dataSource.current.filterQuery(q)}/>
+    <Grid dataSource={dataSource.current} columns={schema.columns} renderBufferSize={20} showLineNumbers/>
   </>
   )
 }
 
 const DataGrid = ({schema, ...props}) => {
-  const dataSource = useMemo(() => createDataSource(schema.table, schema), [schema]);
   return (
     <View header closeable resizeable title={schema.table} {...props} resize="defer">
-      <FilteredGrid dataSource={dataSource} schema={schema}  />
+      <FilteredGrid schema={schema}  />
     </View>
   )
 }

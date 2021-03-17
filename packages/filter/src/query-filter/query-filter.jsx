@@ -25,7 +25,7 @@ const buildFilterQuery = (filters, joinOp = 'or') =>
 const QueryFilter = ({ onChange }) => {
   const {loadState, saveState} = useLayoutContext();
 
-  const filterRef = useRef(loadState() ?? {})
+  const filterRef = useRef(loadState("query-filter") ?? {})
   const [filters, setFilters] = useState(filterRef.current);
   const [joinOp, setJoinOp] = useState('or');
 
@@ -71,7 +71,7 @@ const QueryFilter = ({ onChange }) => {
 
   }
 
-  useEffect(() => () => saveState(filterRef.current) ,[saveState])
+  useEffect(() => () => saveState(filterRef.current, "query-filter") ,[saveState])
 
   const handleKeyDown = ({ key }) => {
     if (key === "Enter") {

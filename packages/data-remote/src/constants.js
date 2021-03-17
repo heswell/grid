@@ -19,6 +19,8 @@ export const msgType = {
   snapshot : 'snapshot',
   update: 'update',
   createLink: 'createLink',
+  disable: 'disable',
+  enable: 'enable',
 
   addSubscription: 'AddSubscription',
   closeTreeNode : 'closeTreeNode',
