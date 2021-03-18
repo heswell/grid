@@ -4,6 +4,12 @@ import {getWebsocketData} from '@vuu-ui/data-remote/src/remote-websocket-connect
 import { ServerProxy } from '@vuu-ui/data-remote/src/servers/vuu/server-proxy';
 import { createLogger, logColor } from '@heswell/utils/src/logging';
 
+/* eslint-disable no-restricted-globals */
+const url = new URL(self.location);
+const urlParams = url.hash.slice(2);
+console.log(`urlParams: ${urlParams}`)
+
+
 const logger = createLogger('Worker', logColor.brown);
 
 let server;

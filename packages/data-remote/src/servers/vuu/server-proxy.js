@@ -322,6 +322,8 @@ export class ServerProxy {
       return;
     }
 
+    // storeMessage(message);
+
     const { requestId, sessionId, token, body } = message;
 
     switch (body.type) {

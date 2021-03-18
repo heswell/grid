@@ -13,7 +13,7 @@ const pendingRequests = {};
 const getWorker = async (url, server) => {
 
   return pendingWorker || (pendingWorker = new Promise((resolve, reject) => {
-    const worker = new Worker('/worker.js', { type: 'module' })
+    const worker = new Worker('/worker.js?debug=all-messages', { type: 'module' });
     worker.onmessage = ({ data: message }) => {
       if (message.type === 'ready') {
         worker.postMessage({ type: 'connect', url });

@@ -10,9 +10,7 @@ export function storeAction(action) {
 
 
 const getTestText = (actions) => {
-
   const tests = [];
-
   actions.forEach(action => {
     tests.push(`
     state = GridDataReducer(state, ${JSON.stringify(action)});
@@ -26,7 +24,6 @@ import GridDataReducer from '../../src/grid-data-reducer';
 describe('grid-data-reducer-generated-test', () => {
     test('init, default bufferSize', () => {
       let state = undefined;
-
 
 
       ${tests.join('\n\n')}
@@ -58,6 +55,14 @@ async function writeFile(fileHandle, contents) {
   await writable.close();
 }
 
+
+async function createTestServerData(){
+  const testText = getServerTestText(data);
+  const fileHandle = await getNewFileHandle();
+  writeFile(fileHandle, testText)
+
+}
+
 async function createTest() {
 
   const testText = getTestText(data);
@@ -77,6 +82,7 @@ document.body.appendChild(div);
 ReactDOM.render(
   <>
     <button onClick={createTest}>Create Test</button>
+    <button onClick={createTestServerData}>Create Server Data Test</button>
     <button onClick={clearData}>Clear Data</button>
   </>,
   div
