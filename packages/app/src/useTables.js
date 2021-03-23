@@ -2,6 +2,9 @@
 import {useCallback, useEffect, useState} from 'react';
 import ConnectionManager from '@vuu-ui/data-remote/src/connection-manager-worker';
 import {serverUrl} from "./utils"
+import TableAdd from '@spectrum-icons/workflow/TableAdd';
+
+const _tables = {};
 
 const columnConfig = {
   ask: {
@@ -26,6 +29,16 @@ const columnConfig = {
     name: "currency",
     label: 'ccy',
     width: 60
+  },
+  filledQuantity : {
+    name: 'filledQuantity',
+    label: 'filled qty',
+    width: 80,
+    type: {
+      name: 'number',
+      renderer: { name: 'progress', associatedField: 'quantity' },
+      format: { decimals: 0 }
+    }
   },
   lotSize : {
     name: "lotSize",
@@ -52,11 +65,16 @@ const extendSchema = schema => {
 
 const useTables = () => {
 
-  const [tables, _setTables] = useState([])
+  const [, forceUpdate] = useState();
 
-  const setTables = useCallback(tables =>
-    _setTables(tables.map(table => extendSchema(table)))
-  ,[_setTables])
+  const setTables = useCallback(schemas => {
+    schemas.forEach(schema => {
+      _tables[schema.table] = extendSchema(schema);
+    });
+    console.log(JSON.stringify(_tables))
+    forceUpdate({});
+  }
+  ,[forceUpdate])
 
   useEffect(() => {
 
@@ -70,7 +88,7 @@ const useTables = () => {
 
   },[setTables])
 
-  return tables;
+  return _tables;
 }
 
 export default useTables;

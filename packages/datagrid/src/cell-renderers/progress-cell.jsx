@@ -5,7 +5,7 @@ import useFormatter from "../use-cell-formatter";
 import './progress-cell.css';
 
 
-const BackgroundCell = React.memo(function BackgroundCell({column, columnMap, row}){
+const ProgressCell = React.memo(function ProgressCell({column, columnMap, row}){
 
   const { width, type } = column;
   const [format] = useFormatter(column);
@@ -30,4 +30,4 @@ const BackgroundCell = React.memo(function BackgroundCell({column, columnMap, ro
 })
 
 
-export default BackgroundCell;
+export default ProgressCell;

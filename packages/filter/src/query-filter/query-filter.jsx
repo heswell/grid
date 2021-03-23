@@ -23,9 +23,9 @@ const buildFilterQuery = (filters, joinOp = 'or') =>
 
 
 const QueryFilter = ({ onChange }) => {
-  const {loadState, saveState} = useLayoutContext();
+  const {load, save} = useLayoutContext();
 
-  const filterRef = useRef(loadState("query-filter") ?? {})
+  const filterRef = useRef(load("query-filter") ?? {})
   const [filters, setFilters] = useState(filterRef.current);
   const [joinOp, setJoinOp] = useState('or');
 
@@ -71,7 +71,7 @@ const QueryFilter = ({ onChange }) => {
 
   }
 
-  useEffect(() => () => saveState(filterRef.current, "query-filter") ,[saveState])
+  useEffect(() => () => save(filterRef.current, "query-filter") ,[save])
 
   const handleKeyDown = ({ key }) => {
     if (key === "Enter") {
@@ -133,6 +133,7 @@ const QueryFilter = ({ onChange }) => {
     <Toolbar className={cx(classBase)}>
       <FilterIcon />
       <TextField
+        aria-label="filter text"
         labelPosition="side"
         onChange={handleFilterValueChange}
         onKeyDown={handleKeyDown}

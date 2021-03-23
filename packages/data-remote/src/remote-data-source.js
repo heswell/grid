@@ -62,7 +62,9 @@ export default class RemoteDataSource  extends EventEmitter {
 
     this.clientCallback = callback;
 
-    if (this.subscribed){
+    if (this.status === 'subscribed'){
+      //TODO check if subscription details are still the same
+      console.log(`RemoteDataSource.subscribe - already subscribed, early return `)
       return;
     }
 

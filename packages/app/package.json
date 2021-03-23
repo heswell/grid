@@ -5,7 +5,7 @@
   "dependencies": {
     "@adobe/react-spectrum": "^3.8.0",
     "@spectrum-icons/workflow": "^3.2.0",
-    "@heswell/layout": "3.0.54",
+    "@heswell/layout": "3.0.66",
     "@heswell/ui-controls": "2.0.18"
   },
   "browserslist": {

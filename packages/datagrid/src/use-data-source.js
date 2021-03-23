@@ -89,7 +89,7 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
   }
 
   useEffect(() => {
-    console.log(`subscribe (suspended = ${dataSource.suspended}) with `, subscriptionDetails)
+    console.log(`subscribe datasource ststus ${dataSource.status} (suspended = ${dataSource.suspended}) with `, subscriptionDetails)
     dataSource.subscribe(subscriptionDetails,
       function datasourceMessageHandler({ type: messageType, ...msg }) {
         if (messageType === 'subscribed') {
