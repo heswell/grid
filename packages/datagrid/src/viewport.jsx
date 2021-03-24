@@ -184,7 +184,7 @@ const Viewport = forwardRef(function Viewport(
        }
         break;
         case 'groupBy': {
-          const action = { type: "group", options, group: options };
+          const action = { type: "group", options, columns: options };
           dispatchGridModelAction(action);
           onConfigChange(action);
         }
