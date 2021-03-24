@@ -172,7 +172,7 @@ const Viewport = forwardRef(function Viewport(
           });
           break;
         case "sort": {
-          const action = { type, options };
+          const action = { type, options, sort: options };
           dispatchGridModelAction(action);
           onConfigChange(action);
         }
@@ -184,7 +184,7 @@ const Viewport = forwardRef(function Viewport(
        }
         break;
         case 'groupBy': {
-          const action = { type: "group", options };
+          const action = { type: "group", options, group: options };
           dispatchGridModelAction(action);
           onConfigChange(action);
         }
