@@ -85,6 +85,7 @@ const reducerActionHandlers = {
 };
 
 export const initModel = ([gridProps, size, custom]) => {
+  console.log(`initModel size= ${JSON.stringify(size)}`)
   const {
     columns,
     columnSizing = 'static',
@@ -385,7 +386,7 @@ function addColumn(state, { insertIdx: absInsertIdx, targetColumnGroup, column }
 /** @type {GridModelReducer<'resize-col'>} */
 function resizeColumn(state, { phase, column, width }) {
   if (phase === 'resize') {
-    console.log(`resize width = ${width}`)
+    console.log(`resizeColumn resize width = ${width}`)
     const columnGroups = GridModel.updateGroupColumnWidth(state, column, width);
     return { ...state, columnGroups };
 
@@ -416,6 +417,7 @@ function setRowHeight(state, { rowHeight }) {
 
 /** @type {GridModelReducer<GridModelResizeAction>} */
 function resizeGrid(state, { height, width }) {
+  console.log(`reducer resize Grid ${width} * ${height}`)
   const { columnSizing, headerHeight, headingDepth, rowHeight, viewportHeight } = state;
   const heightDiff = height - state.height;
   const widthDiff = width - state.width;
@@ -466,7 +468,7 @@ function buildColumnGroups(state, columns, groupBy) {
   let column = null;
   let columnGroup = null;
   let columnGroups = [];
-
+console.log(`buildGridColumns grid width ${gridWidth}`)
   let gridContentWidth = gridWidth - 15;// how do we know about vertical scrollbar
   let availableWidth = gridContentWidth;
 

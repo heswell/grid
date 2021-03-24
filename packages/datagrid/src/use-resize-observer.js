@@ -9,23 +9,28 @@ const isScrollAttribute = {
   scrollWidth: true,
 };
 
+const HEIGHT = 'blockSize';
+const WIDTH = 'inlineSize';
+
 // TODO should we make this create-on-demand
 const resizeObserver = new ResizeObserver((entries) => {
   for (let entry of entries) {
-    const { target, contentRect } = entry;
-    if (observedMap.has(target)) {
-      const { onResize, measurements } = observedMap.get(target);
+    if (observedMap.has(entry.target)) {
+      const {borderBoxSize: [{blockSize: height, inlineSize: width}] } = entry;
+      const rect = {height, width};
+      const { onResize, measurements } = observedMap.get(entry.target);
       let sizeChanged = false;
       for (let [dimension, size] of Object.entries(measurements)) {
         const newSize = isScrollAttribute[dimension]
-          ? target[dimension]
-          : contentRect[dimension];
+          ? entry.target[dimension]
+          : rect[dimension];
         if (newSize !== size) {
           sizeChanged = true;
           measurements[dimension] = newSize;
         }
       }
       if (sizeChanged) {
+        console.log({resized: target.className, measurements})
         // TODO only return measured sizes
         // const { height, width } = contentRect;
         onResize && onResize(measurements);
@@ -71,6 +76,7 @@ export default function useResizeObserver(ref, dimensions, onResize, reportIniti
       resizeObserver.observe(target);
 
       if (reportInitialSize){
+        console.log('report initial size ',measurements)
         onResize(measurements);
       }
     }

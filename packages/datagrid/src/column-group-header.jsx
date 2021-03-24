@@ -83,15 +83,15 @@ const ColumnGroupHeader = React.memo(
     );
 
     const handleDrag = useCallback(
-      (phase, column, columnPosition, mousePosition) =>
+      (phase, column, columnPosition, mousePosition) => {
         onColumnDragStart(
           phase,
           columnGroupIdx,
           column,
           columnPosition,
           mousePosition
-        ),
-      [columnGroup, columnGroupIdx]
+        )},
+      [columnGroupIdx, onColumnDragStart]
     );
 
     const handleRemoveGroup = useCallback(

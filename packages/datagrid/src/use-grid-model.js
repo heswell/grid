@@ -10,12 +10,17 @@ import {useEffectSkipFirst} from "@heswell/utils"
 import useAdornments from "./use-adornments";
 import modelReducer, { initModel } from "./grid-model-reducer";
 import { ROW_HEIGHT } from "./grid-model-actions";
-import { useMeasure } from "./measure";
 import useResizeObserver, {WidthHeight } from "./use-resize-observer"/*from "@heswell/layout";*/
 
+const sizeOr100Percent = value => (value === null || value === undefined || value === 'auto') ? '100%' : value;
 
 const useSize = (props) => {
-  const [size, _setSize] = useMeasure(props);
+  const [size, _setSize] = useState({
+    height: sizeOr100Percent(props.style?.height ?? props.height),
+    measuredHeight: null,
+    width: sizeOr100Percent(props.style?.width ?? props.width),
+    measuredWidth: null,
+  });
 
   const setSize = useCallback(({height, width}) => {
     _setSize(state => ({
@@ -52,6 +57,7 @@ export const useGridModel = (props) => {
   );
 
   useEffectSkipFirst(() => {
+    console.log(`useEffect triggered by measiuredSize or totalHeaderHeight ${JSON.stringify(size)} totalHeaderHeight ${gridModel.totalHeaderHeight}`)
       dispatchGridModel({
         type: "resize",
         // The totalHeaderHeight will be set as top padding, which will not be included
@@ -60,6 +66,10 @@ export const useGridModel = (props) => {
         width: size.measuredWidth,
       });
   }, [size.measuredHeight, size.measuredWidth, gridModel.totalHeaderHeight]);
+
+  useEffect(() => {
+    // console.log(`%cchange to columnGroups ${JSON.stringify(gridModel.columnGroups,null,2)}`,'color:brown;font-weight: bold;')
+  },[gridModel.columnGroups])
 
   useEffect(() => {
     if (firstRender.current){

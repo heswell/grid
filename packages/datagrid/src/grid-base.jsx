@@ -22,7 +22,6 @@ const noop = () => undefined;
 
 /** @type {GridBase} */
 const GridBase = forwardRef(function GridBase(props, ref){
-  // TODO height needs to default to auto
   const viewportRef = useRef(null);
   // const scrollableHeader = useRef(null);
   const [columnDragData, setColumnDragData] = useState(null);
@@ -125,6 +124,7 @@ const GridBase = forwardRef(function GridBase(props, ref){
   const handleColumnDrop = useCallback(
     (phase, ...args) => {
       const [column, insertIdx] = args;
+      debugger;
       setColumnDragData(null);
       draggingColumn.current = false;
       // TODO we need the final scrollLeft here
@@ -136,6 +136,8 @@ const GridBase = forwardRef(function GridBase(props, ref){
 
 
   const { assignedWidth, assignedHeight, width, height, totalHeaderHeight } = gridModel;
+
+  console.log(`%crender Grid assignedWidth=${assignedWidth} height=${assignedHeight} totalHeaderHeight=${totalHeaderHeight}`,'color:white;background-color: blue')
   return (
     // Question, how much overhead are we introducing be adding gridModel to GridContext ? Perhaps it belongs in it's own context
     <GridContext.Provider
@@ -154,7 +156,7 @@ const GridBase = forwardRef(function GridBase(props, ref){
             ref={useForkRef(ref, rootRef)}
             style={{ width: assignedWidth, height: assignedHeight, paddingTop: totalHeaderHeight}}
           >
-            <RowHeightCanary/>
+            {/* <RowHeightCanary/> */}
             {
                 height == null || width === null ? null : (
                   <>
