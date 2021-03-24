@@ -1,19 +1,7 @@
 import * as Message from './messages';
 import Viewport from "./viewport";
-import { ServerApiMessageTypes as API } from '../../messages.js';
 
 const { SIZE, UPDATE } = Message;
-
-function partition(array, test, pass = [], fail = []) {
-
-  for (let i = 0, len = array.length; i < len; i++) {
-    (test(array[i], i) ? pass : fail).push(array[i]);
-  }
-
-  return [pass, fail];
-}
-
-const SORT = { asc: 'D', dsc: 'A' };
 
 const byRowIndex = (row1, row2) => row1[0] - row2[0];
 

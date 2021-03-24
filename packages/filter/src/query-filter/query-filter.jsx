@@ -56,6 +56,8 @@ const QueryFilter = ({ onChange }) => {
     onChange(buildFilterQuery(newState));
 
     setFilters(filterRef.current = newState);
+
+    save(filterRef.current, "query-filter")
   }
 
   const removeFilter = filterName => {
@@ -69,9 +71,11 @@ const QueryFilter = ({ onChange }) => {
 
     setFilters(filterRef.current = newState);
 
+    save(filterRef.current, "query-filter")
+
   }
 
-  useEffect(() => () => save(filterRef.current, "query-filter") ,[save])
+  // useEffect(() => () => save(filterRef.current, "query-filter") ,[save])
 
   const handleKeyDown = ({ key }) => {
     if (key === "Enter") {

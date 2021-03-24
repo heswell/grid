@@ -156,8 +156,8 @@ const Viewport = forwardRef(function Viewport(
 
   const dataSourceCallback = useCallback(
     (type, options) => {
-      // We apply visual effects to the UI only when we receive
-      // server confirmation that
+      // We apply visual effects to the UI and save config only when we receive
+      // server confirmation that operation has bene acknowledged
       switch (type) {
         case "subscribed":
           dispatchGridModelAction({
@@ -172,16 +172,19 @@ const Viewport = forwardRef(function Viewport(
           });
           break;
         case "sort": {
-          const action = { type: "sort", sort: options };
+          const action = { type, options };
           dispatchGridModelAction(action);
           onConfigChange(action);
         }
           break;
-       case "filter":
-           console.log(`mors shit finoished on the server`, options)
+       case "filter": {
+         // We don't currently show filter ops innthe Grid UI, but we might at some point
+          const action = { type, options };
+          onConfigChange(action);
+       }
         break;
         case 'groupBy': {
-          const action = { type: "group", columns: options };
+          const action = { type: "group", options };
           dispatchGridModelAction(action);
           onConfigChange(action);
         }

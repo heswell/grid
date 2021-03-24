@@ -13,13 +13,18 @@ export const FilteredGrid = ({schema}) => {
   useEffect(() => () => saveSession(dataSource.current.disable(), "data-source") ,[saveSession])
 
   const handleConfigChange = useCallback(op => {
+    // TODO consolidate these messages
     switch(op.type){
       case "group":
-        save(op.columns, op.type);
+        save(op.options, op.type);
         dispatch({type: 'save'});
         break;
       case"sort":
-        save(op.sort, op.type);
+        save(op.options, op.type);
+        dispatch({type: 'save'});
+      break;
+      case"filter":
+        save(op.options, op.type);
         dispatch({type: 'save'});
       break;
       default:

@@ -55,7 +55,7 @@ export default class RemoteDataSource  extends EventEmitter {
 
     this.initialGroup = group;
     this.initialSort = sort;
-    this.initialFIlter = filter;
+    this.initialFilter = filter;
 
     if (!serverUrl){
       throw Error('RemoteDataSource expects serverUrl')
