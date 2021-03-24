@@ -249,7 +249,6 @@ const metadataKeys = {
 
 const { IDX, SELECTED } = metadataKeys;
 const EMPTY_ARRAY = [];
-const SORT = { asc: 'D', dsc: 'A' };
 
 class Viewport {
 
@@ -279,6 +278,7 @@ class Viewport {
     this.sort = sort;
     this.groupBy = groupBy;
     this.filterSpec = filterSpec;
+    this.isTree = groupBy && groupBy.length > 0;
 
     console.log(`%cViewport subscribed
       clientVpId: ${this.clientViewportId}
@@ -312,13 +312,11 @@ class Viewport {
       this.groupBy = [];
       return { clientViewportId, type: "groupBy", groupBy: null };
     } else if (type === 'filter') {
-      this.filterSpec = {
-        filter: data
-      };
+      this.filterSpec = { filter: data };
+      return { clientViewportId, type, filter: data };
     } else if (type === 'sort') {
-      this.sort = {
-        sortDefs: data
-      };
+      this.sort = { sortDefs: data };
+      return { clientViewportId, type, sort: data };
     } else if (type === "selection") {
       this.selection = data;
     } else if (type === "disable") {
@@ -351,8 +349,7 @@ class Viewport {
     return this.createRequest({ filterSpec: { filter } });
   }
 
-  sortRequest(requestId, requestedSort) {
-    const sortDefs = requestedSort.map(([column, dir = 'asc']) => ({ column, sortType: SORT[dir] }));
+  sortRequest(requestId, sortDefs) {
     this.awaitOperation(requestId, { type: "sort", data: sortDefs });
     return this.createRequest({ sort: { sortDefs } })
   }
@@ -610,7 +607,7 @@ class ServerProxy {
     // the session should live at the connection level
     const isReady = this.sessionId !== "";
     // TODO we need to explicitly store all the viewport attributes here
-    const { viewport, tablename, columns, range: { lo, hi } } = message;
+    const { viewport, tablename, columns, range: { lo, hi }, sort=[], groupBy=[], filter="" } = message;
     this.viewportStatus[viewport] = new Viewport(viewport, message);
 
     // use client side viewport as request id, so that when we process the response,
@@ -624,11 +621,11 @@ class ServerProxy {
       },
       columns,
       sort: {
-        sortDefs: []
+        sortDefs: sort
       },
-      groupBy: [],
+      groupBy,
       filterSpec: {
-        filter: ""
+        filter
       }
     }, viewport, isReady);
 

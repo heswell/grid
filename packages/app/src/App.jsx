@@ -23,7 +23,7 @@ registerComponent("DataGridView",DataGridView);
 // )
 
 function App() {
-  const [colorScheme, setColorScheme] = useState('light')
+  const [colorScheme/*, setColorScheme*/] = useState('light')
   const [layoutConfig, setLayoutConfig] = useLayoutConfig("https://localhost:8443/api/vui/steve")
 
   // const toggleColorScheme = useCallback(() => {

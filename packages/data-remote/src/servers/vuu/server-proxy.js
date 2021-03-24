@@ -228,7 +228,7 @@ export class ServerProxy {
     // the session should live at the connection level
     const isReady = this.sessionId !== "";
     // TODO we need to explicitly store all the viewport attributes here
-    const { viewport, tablename, columns, range: { lo, hi } } = message;
+    const { viewport, tablename, columns, range: { lo, hi }, sort=[], groupBy=[], filter="" } = message;
     this.viewportStatus[viewport] = new Viewport(viewport, message);
 
     // use client side viewport as request id, so that when we process the response,
@@ -242,11 +242,11 @@ export class ServerProxy {
       },
       columns,
       sort: {
-        sortDefs: []
+        sortDefs: sort
       },
-      groupBy: [],
+      groupBy,
       filterSpec: {
-        filter: ""
+        filter
       }
     }, viewport, isReady)
 

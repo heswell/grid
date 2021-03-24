@@ -36,17 +36,17 @@ const ColumnGroupHeader = React.memo(
       gridModel,
     } = useContext(GridContext);
 
-    const sortIndicator = (sortColumns, column) => {
-      if (!sortColumns) {
+    const sortIndicator = (sort, column) => {
+      if (!sort) {
         return undefined;
       } else {
-        const multiColumnSort = Object.keys(sortColumns).length > 1;
-        const sorted = sortColumns[column.name];
-        return sorted === undefined
+        const multiColumnSort = sort.length > 1;
+        const sortEntry = sort.find(item => item.column === column.name);
+        return sortEntry === undefined
           ? undefined
           : multiColumnSort
-          ? sorted
-          : sorted > 0
+          ? sort.indexOf(sortEntry) + 1
+          : sortEntry.sortType === 'A'
           ? "asc"
           : "dsc";
       }
@@ -109,7 +109,7 @@ const ColumnGroupHeader = React.memo(
       customInlineHeaderHeight,
       headerHeight,
       headingDepth,
-      sortColumns,
+      sort,
     } = gridModel;
     const height = headerHeight * headingDepth;
 
@@ -159,7 +159,7 @@ const ColumnGroupHeader = React.memo(
                   key={column.key}
                   onDrag={handleDrag}
                   onResize={handleColumnResize}
-                  sorted={sortIndicator(sortColumns, column)}
+                  sorted={sortIndicator(sort, column)}
                 />
               )
             )}

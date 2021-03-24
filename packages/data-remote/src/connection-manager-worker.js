@@ -29,7 +29,9 @@ const getWorker = async (url, server) => {
 const messagesToRelayToClient = {
   'table-row': true,
   VP_VISUAL_LINKS_RESP: true,
-  groupBy: true
+  sort: true,
+  groupBy: true,
+  filter: true
 }
 
 function handleMessageFromWorker({ data: message }) {

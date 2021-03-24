@@ -27,8 +27,18 @@ const defaultRange = { lo: 0, hi: 0 };
   ----------------------------------------------------------------*/
 export default class RemoteDataSource  extends EventEmitter {
 
-  constructor({bufferSize=100, columns, tableName, serverName = AvailableProxies.Viewserver, serverUrl}) {
+  constructor({
+    bufferSize=100,
+    columns,
+    filter,
+    group,
+    sort,
+    tableName,
+    serverName = AvailableProxies.Viewserver,
+    serverUrl
+  }) {
     super();
+
     this.bufferSize = bufferSize;
     this.url = serverUrl;
     this.serverName = serverName;
@@ -43,6 +53,10 @@ export default class RemoteDataSource  extends EventEmitter {
     this.remoteId = null;
     this.suspended = false;
 
+    this.initialGroup = group;
+    this.initialSort = sort;
+    this.initialFIlter = filter;
+
     if (!serverUrl){
       throw Error('RemoteDataSource expects serverUrl')
     }
@@ -55,7 +69,10 @@ export default class RemoteDataSource  extends EventEmitter {
     viewport = uuid(),
     tableName = this.tableName,
     columns=this.columns || [],
-    range = defaultRange
+    range = defaultRange,
+    sort = this.initialSort,
+    groupBy=this.initialGroup,
+    filter=this.initialFilter
   }, callback) {
 
     if (!tableName) throw Error("RemoteDataSource subscribe called without table name");
@@ -79,7 +96,10 @@ export default class RemoteDataSource  extends EventEmitter {
         viewport,
         tablename: tableName,
         columns,
-        range: getFullRange({bufferSize, ...range})
+        range: getFullRange({bufferSize, ...range}),
+        sort,
+        groupBy,
+        filter
       },this.handleMessageFromServer);
   }
 
@@ -217,6 +237,7 @@ export default class RemoteDataSource  extends EventEmitter {
   }
 
   group(columns) {
+    // TODO so we still need this - I don't think so
     this.emit('group', columns);
     this.server?.handleMessageFromClient({
       viewport: this.viewport,
@@ -234,7 +255,6 @@ export default class RemoteDataSource  extends EventEmitter {
   }
 
   sort(columns) {
-    this.emit('sort', columns);
     this.server?.handleMessageFromClient({
       viewport: this.viewport,
       type: Msg.sort,

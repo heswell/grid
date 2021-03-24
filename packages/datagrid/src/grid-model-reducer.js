@@ -97,7 +97,8 @@ export const initModel = ([gridProps, size, custom]) => {
     renderBufferSize = 0,
     rowHeight = 20,
     selectionModel, // default should be none
-    showLineNumbers = false
+    showLineNumbers = false,
+    sort
   } = gridProps;
 
   const {
@@ -107,7 +108,8 @@ export const initModel = ([gridProps, size, custom]) => {
     measuredWidth: width = assignedWidth
   } = size;
 
-  const groupColumns = sortMap(groupByProp) || undefined;
+  const groupColumns = groupByProp ? groupByProp.reduce((map, columnName) => (map[columnName] = "asc", map), {}) : undefined;
+  // const sortColumns = sortByToMap(sortProp) || undefined;
   // We won't be able to build the column headers for pivot columns until we start to get data
   const pivotColumns = sortMap(pivotByProp) || undefined;
 
@@ -139,15 +141,15 @@ export const initModel = ([gridProps, size, custom]) => {
     rowHeight,
     selectionModel,
     showLineNumbers,
-    sortColumns: null,
+    sort,
     viewportHeight: undefined,
     viewportRowCount: undefined,
     visualLinks: null,
     width
   };
 
-  const groupBy = GridModel.groupBy({ groupColumns });
-  const { columnNames, columnGroups, headingDepth } = buildColumnGroups(state, columns, groupBy);
+  // const groupBy = GridModel.groupBy({ groupColumns });
+  const { columnNames, columnGroups, headingDepth } = buildColumnGroups(state, columns, groupByProp);
   const totalHeaderHeight = noColumnHeaders
     ? customHeaderHeight
     : headerHeight * headingDepth + customHeaderHeight;
@@ -238,12 +240,12 @@ function addVisualLinks(state, { links }) {
 }
 
 /** @type {GridModelReducer<GridModelSortAction>} */
-function sortRows(state, { columns }) {
-  const sortColumns = columns && sortByToMap(columns);
+function sortRows(state, { sort }) {
+  // const sortColumns = columns && sortByToMap(columns);
 
   return {
     ...state,
-    sortColumns
+    sort
   };
 }
 

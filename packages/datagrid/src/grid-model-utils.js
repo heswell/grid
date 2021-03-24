@@ -304,24 +304,25 @@ function addGroupColumn({ groupColumns }, column, direction = 'asc') {
   }
 }
 
-function addSortColumn({ sortColumns }, column, direction = 'asc') {
+function addSortColumn({ sortColumns }, {name: columnName}, sortType='A') {
+  const sortEntry = {column: columnName, sortType};
   if (sortColumns) {
-    return mapSortColumns(sortColumns).concat([[column.name, direction]]);
+    return mapSortColumns(sortColumns).concat(sortEntry);
   } else {
-    return [[column.name, direction]];
+    return [sortEntry];
   }
 }
 
-function setSortColumn({ sortColumns }, column, direction) {
-  if (sortColumns && Object.keys(sortColumns).length === 1 && sortColumns[column.name]) {
-    const dir = sortColumns[column.name];
+function setSortColumn({ sort }, {name: columnName}) {
+  const byColumn = item => item.column = columnName;
+  if (sort && sort.length === 1 && sort.some(byColumn)) {
+    const {sortType} = sort.find(byColumn);
     return [
-      [column.name, (dir === 'asc' || (typeof dir === 'number' && dir > 0)) ? 'dsc' : 'asc']
+      {column: columnName, sortType: sortType === 'A' ? 'D' : 'A'}
     ];
   } else {
-    return [[column.name, direction || 'asc']];
+    return [{column: columnName, sortType: 'A'}];
   }
-
 }
 
 function removeGroupColumn({ groupColumns }, column) {

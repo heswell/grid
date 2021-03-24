@@ -33,6 +33,7 @@ export default class Viewport {
     this.sort = sort;
     this.groupBy = groupBy;
     this.filterSpec = filterSpec;
+    this.isTree = groupBy && groupBy.length > 0;
 
     console.log(`%cViewport subscribed
       clientVpId: ${this.clientViewportId}
@@ -66,13 +67,11 @@ export default class Viewport {
       this.groupBy = [];
       return { clientViewportId, type: "groupBy", groupBy: null };
     } else if (type === 'filter') {
-      this.filterSpec = {
-        filter: data
-      };
+      this.filterSpec = { filter: data };
+      return { clientViewportId, type, filter: data };
     } else if (type === 'sort') {
-      this.sort = {
-        sortDefs: data
-      }
+      this.sort = { sortDefs: data };
+      return { clientViewportId, type, sort: data };
     } else if (type === "selection") {
       this.selection = data;
     } else if (type === "disable") {
@@ -105,8 +104,7 @@ export default class Viewport {
     return this.createRequest({ filterSpec: { filter } });
   }
 
-  sortRequest(requestId, requestedSort) {
-    const sortDefs = requestedSort.map(([column, dir = 'asc']) => ({ column, sortType: SORT[dir] }));
+  sortRequest(requestId, sortDefs) {
     this.awaitOperation(requestId, { type: "sort", data: sortDefs });
     return this.createRequest({ sort: { sortDefs } })
   }

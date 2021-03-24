@@ -99,13 +99,18 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
         } else if (msg.type === 'pivot') {
           // Callback is for data oriented operations, should this be emitted ?
           callbackRef.current('pivot', msg.columns);
+        } else if (messageType === 'sort'){
+          callbackRef.current(messageType, msg.sort);
         } else if (messageType === 'groupBy'){
           callbackRef.current(messageType, msg.groupBy);
-        }
-
-        if (msg.filter !== undefined) {
+        } else if (messageType === 'filter'){
+          callbackRef.current(messageType, msg.filter);
           dataSource.emit('filter', msg.filter);
         }
+
+        // if (msg.filter !== undefined) {
+        //   dataSource.emit('filter', msg.filter);
+        // }
 
         if (msg.rows) {
 

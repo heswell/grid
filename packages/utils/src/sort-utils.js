@@ -6,9 +6,14 @@ export function sortByToMap(sortCriteria=null){
       : sortCriteria.reduce((map, col, i) => {
           if (typeof col === 'string') {
               map[col] = i + 1;
+          } else if (Array.isArray(col)){
+            // heswell style
+            const [colName, sortDir] = col;
+            map[colName] = sortDir === 'asc' ? (i + 1) : -1 * (i + 1);
           } else {
-              const [colName, sortDir] = col;
-              map[colName] = sortDir === 'asc' ? (i + 1) : -1 * (i + 1);
+            // vuu style
+              const {column, sortType} = col;
+              map[column] = sortType === 'A' ? (i + 1) : -1 * (i + 1);
           }
           return map;
       }, {});
@@ -44,7 +49,7 @@ export function addSortColumn(sortColumns, column, direction='asc'){
               [firstSortCol]: sortColumns[firstSortCol] === 'asc' ? 1 : -1,
               [column.name]: direction === 'asc' ? 2 : -2
             };
-  
+
         } else {
             // Add this column to existing multi-column sort
             return {
@@ -53,7 +58,7 @@ export function addSortColumn(sortColumns, column, direction='asc'){
             };
         }
     }
-    
+
 }
 
 export function removeSortColumn(sortColumns, column, direction='asc'){
@@ -65,7 +70,7 @@ export function removeSortColumn(sortColumns, column, direction='asc'){
         ? sortPos > 0 ? 'asc' : 'dsc'
         : Math.abs(sortPos) < Math.abs(sortColumns[column.name])
             ? sortPos
-            : (Math.abs(sortPos) - 1) * (sortPos < 1 ? -1 : 1)  
+            : (Math.abs(sortPos) - 1) * (sortPos < 1 ? -1 : 1)
         return map;
         },{})
 }

@@ -36,7 +36,7 @@ const getToggleStrategy = (dataSource) => {
 
 /** @type {Viewport} */
 const Viewport = forwardRef(function Viewport(
-  { columnDragData, gridModel, onColumnDragStart, onColumnDrop, onRowClick },
+  { columnDragData, gridModel, onColumnDragStart, onColumnDrop, onConfigChange, onRowClick },
   ref
 ) {
   const viewportEl = useRef(null);
@@ -156,6 +156,8 @@ const Viewport = forwardRef(function Viewport(
 
   const dataSourceCallback = useCallback(
     (type, options) => {
+      // We apply visual effects to the UI only when we receive
+      // server confirmation that
       switch (type) {
         case "subscribed":
           dispatchGridModelAction({
@@ -169,8 +171,20 @@ const Viewport = forwardRef(function Viewport(
             columns: options,
           });
           break;
-        case 'groupBy':
-          dispatchGridModelAction({ type: "group", columns: options });
+        case "sort": {
+          const action = { type: "sort", sort: options };
+          dispatchGridModelAction(action);
+          onConfigChange(action);
+        }
+          break;
+       case "filter":
+           console.log(`mors shit finoished on the server`, options)
+        break;
+        case 'groupBy': {
+          const action = { type: "group", columns: options };
+          dispatchGridModelAction(action);
+          onConfigChange(action);
+        }
           break;
         case "size":
           // How do we handle this withoput having this dependency on gridModel ?

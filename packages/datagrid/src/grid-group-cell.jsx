@@ -43,7 +43,7 @@ const GroupCell = React.memo(function GroupCell({
       {offset !== null ? (
         <div
           className={"GridGroupCell"}
-          style={{ paddingLeft: offset * 20 }}
+          style={{ paddingLeft: (offset - 1) * 20 }}
           tabIndex={0}
         >
           {allowToggle ? (

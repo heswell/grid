@@ -71,7 +71,6 @@ const useTables = () => {
     schemas.forEach(schema => {
       _tables[schema.table] = extendSchema(schema);
     });
-    console.log(JSON.stringify(_tables))
     forceUpdate({});
   }
   ,[forceUpdate])

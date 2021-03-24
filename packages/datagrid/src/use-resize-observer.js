@@ -61,7 +61,6 @@ export default function useResizeObserver(ref, dimensions, onResize, reportIniti
   // initiate new observation when ref changes.
   useEffect(() => {
     const target = ref.current;
-    console.log(`resizeObserver useEffect ref=`, ref.current)
     async function registerObserver() {
       // Create the map entry immediately. useEffect may fire below
       // before fonts are ready and attempt to update entry

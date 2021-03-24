@@ -18,6 +18,8 @@ import components from "./standard-renderers";
 
 import "./grid-base.css";
 
+const noop = () => undefined;
+
 /** @type {GridBase} */
 const GridBase = forwardRef(function GridBase(props, ref){
   // TODO height needs to default to auto
@@ -25,9 +27,9 @@ const GridBase = forwardRef(function GridBase(props, ref){
   // const scrollableHeader = useRef(null);
   const [columnDragData, setColumnDragData] = useState(null);
   const draggingColumn = useRef(false);
-
-
+  const {className, onConfigChange=noop, onRowClick} = props;
   const [rootRef, gridModel, dataSource, dispatchGridModel, custom] = useGridModel(props);
+
 
 
   const handleSelectionChange = useCallback(
@@ -66,7 +68,8 @@ const GridBase = forwardRef(function GridBase(props, ref){
   const invokeDataSourceOperation = (operation) => {
     switch (operation.type) {
       case "group":
-        return dataSource.group(operation.columns);
+        dataSource.group(operation.columns);
+        break;
       case "openTreeNode":
         return dataSource.openTreeNode(operation.key);
       case "closeTreeNode":
@@ -147,7 +150,7 @@ const GridBase = forwardRef(function GridBase(props, ref){
       <MenuProvider>
         <ComponentProvider components={components}>
           <div
-            className={cx("Grid", props.className)}
+            className={cx("Grid", className)}
             ref={useForkRef(ref, rootRef)}
             style={{ width: assignedWidth, height: assignedHeight, paddingTop: totalHeaderHeight}}
           >
@@ -163,7 +166,8 @@ const GridBase = forwardRef(function GridBase(props, ref){
                     columnDragData={columnDragData}
                     onColumnDragStart={handleColumnDragStart}
                     onColumnDrop={handleColumnDrop}
-                    onRowClick={props.onRowClick}
+                    onConfigChange={onConfigChange}
+                    onRowClick={onRowClick}
                     ref={viewportRef}
                   />
                   {custom.footer.component}
