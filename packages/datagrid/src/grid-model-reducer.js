@@ -74,10 +74,8 @@ const reducerActionHandlers = {
   'initialize': initialize,
   'sort': sortRows,
   'group': groupRows,
-  // 'pivot': pivotRows,
   // 'toggle': toggleRow,
   'set-available-columns': setAvailableColumns,
-  'set-pivot-columns': setPivotColumns,
   'column-hide': hideColumn,
   'column-show': showColumn,
   'visual-links': addVisualLinks,
@@ -85,16 +83,14 @@ const reducerActionHandlers = {
 };
 
 export const initModel = ([gridProps, size, custom]) => {
-  console.log(`initModel size= ${JSON.stringify(size)}`)
   const {
     columns,
     columnSizing = 'static',
     defaultColumnWidth = DEFAULT_COLUMN_WIDTH,
-    groupBy: groupByProp,
+    groupBy,
     headerHeight = 24,
     minColumnWidth = MIN_COLUMN_WIDTH,
     noColumnHeaders = false,
-    pivotBy: pivotByProp,
     renderBufferSize = 0,
     rowHeight = 20,
     selectionModel, // default should be none
@@ -109,10 +105,7 @@ export const initModel = ([gridProps, size, custom]) => {
     measuredWidth: width = assignedWidth
   } = size;
 
-  const groupColumns = groupByProp ? groupByProp.reduce((map, columnName) => (map[columnName] = "asc", map), {}) : undefined;
-  // const sortColumns = sortByToMap(sortProp) || undefined;
-  // We won't be able to build the column headers for pivot columns until we start to get data
-  const pivotColumns = sortMap(pivotByProp) || undefined;
+  const isDefaultInitialSize = size.width === '100%' && size.height === '100%' && size.measuredHeight === null && size.measuredWidth === null;
 
   // The custom support is all new ... still under review
   const {
@@ -126,31 +119,42 @@ export const initModel = ([gridProps, size, custom]) => {
     assignedWidth,
     columnNames: null,
     columnGroups: undefined,
+    columns,
     columnSizing,
     customFooterHeight,
     customHeaderHeight,
     customInlineHeaderHeight,
     defaultColumnWidth,
-    groupColumns,
+    groupBy,
     headerHeight: noColumnHeaders ? 0 : headerHeight,
     headingDepth: undefined,
     height,
     horizontalScrollbarHeight: undefined,
     minColumnWidth,
-    pivotColumns,
+    noColumnHeaders,
     renderBufferSize,
     rowHeight,
     selectionModel,
     showLineNumbers,
     sort,
-    viewportHeight: undefined,
-    viewportRowCount: undefined,
+    totalHeaderHeight: 0,
+    viewportHeight: 0,
+    viewportRowCount: 0,
     visualLinks: null,
     width
   };
 
-  // const groupBy = GridModel.groupBy({ groupColumns });
-  const { columnNames, columnGroups, headingDepth } = buildColumnGroups(state, columns, groupByProp);
+  if (isDefaultInitialSize){
+    return state;
+  } else {
+    return buildColumnsAndApplyMeasurements(state, height);
+  }
+
+};
+
+function buildColumnsAndApplyMeasurements(state){
+  const {columns, customFooterHeight, customInlineHeaderHeight, customHeaderHeight, headerHeight, height, noColumnHeaders, rowHeight} = state;
+  const { columnNames, columnGroups, headingDepth } = buildColumnGroups(state, columns);
   const totalHeaderHeight = noColumnHeaders
     ? customHeaderHeight
     : headerHeight * headingDepth + customHeaderHeight;
@@ -158,13 +162,14 @@ export const initModel = ([gridProps, size, custom]) => {
   state.columnNames = columnNames;
   state.columnGroups = columnGroups;
   state.headingDepth = headingDepth;
+
   state.horizontalScrollbarHeight = getHorizontalScrollbarHeight(columnGroups);
   state.totalHeaderHeight = totalHeaderHeight;
   state.viewportHeight = height - totalHeaderHeight - customFooterHeight - customInlineHeaderHeight;
   state.viewportRowCount = Math.ceil((height - totalHeaderHeight) / rowHeight) + 1;
 
   return state;
-};
+}
 
 /** @type {GridModelReducer<GridModelInitializeAction>} */
 function initialize(state, { props }) {
@@ -191,23 +196,46 @@ function initialize(state, { props }) {
   return initModel([props, size, custom]);
 }
 
-/** @type {GridModelReducer<GridModelPivotColumnsAction>} */
-function setPivotColumns(state, action) {
+/** @type {GridModelReducer<GridModelResizeAction>} */
+function resizeGrid(state, { height, width }) {
+  console.log(`reducer resize Grid ${width} * ${height}`)
 
-  const groupBy = GridModel.groupBy(state);
-  const { columnNames, columnGroups, headingDepth } = buildColumnGroups(state, action.columns, groupBy);
-  const totalHeaderHeight = state.headerHeight * headingDepth;
+  let {columnGroups} = state;
 
-  return {
-    ...state,
-    columnGroups,
-    columnNames,
-    headingDepth,
-    horizontalScrollbarHeight: getHorizontalScrollbarHeight(columnGroups),
-    viewportHeight: state.height - totalHeaderHeight,
-    viewportRowCount: Math.ceil((state.height - totalHeaderHeight) / state.rowHeight) + 1
-  };
+  if (state.width === null || state.height === null){
+    return buildColumnsAndApplyMeasurements({...state, height, width})
+  } else {
+    const { columnSizing, customFooterHeight, customInlineHeaderHeight, rowHeight, totalHeaderHeight } = state;
+    const viewportHeight = height - totalHeaderHeight - customFooterHeight - customInlineHeaderHeight;
+      const widthDiff = width - state.width;
 
+    if (widthDiff === 0) {
+      columnGroups = state.columnGroups;
+    } else if (columnSizing === 'fill') {
+      ({ columnGroups } = buildColumnGroups({ ...state, width }, GridModel.columns(state)));
+
+    } else {
+      columnGroups = state.columnGroups.map(columnGroup => {
+        if (columnGroup.locked) {
+          return columnGroup;
+        } else {
+          return {
+            ...columnGroup,
+            width: columnGroup.width + widthDiff
+          }
+        }
+      });
+    }
+    return {
+      ...state,
+      columnGroups,
+      height,
+      width,
+      viewportHeight,
+      viewportRowCount: Math.ceil((height - totalHeaderHeight) / rowHeight) + 1
+    }
+
+  }
 }
 
 /** @type {GridModelReducer<GridModelSetColumnsAction>} */
@@ -251,39 +279,13 @@ function sortRows(state, { sort }) {
 }
 
 /** @type {GridModelReducer<GridModelGroupAction>} */
-function groupRows(state, { columns = null }) {
-  const groupColumns = columns && columns.reduce((map, columnName) => (map[columnName] = "asc", map), {});
-  const { columnGroups } = buildColumnGroups(state, GridModel.columns(state), columns);
+function groupRows(state, { groupBy = null }) {
+  const { columnGroups } = buildColumnGroups({...state, groupBy}, GridModel.columns(state));
 
   return {
     ...state,
-    groupColumns,
+    groupBy,
     columnGroups
-  };
-}
-
-/** @type {GridModelReducer<'pivot'>} */
-function pivotRows(state, { column, direction, add, remove }) {
-
-  let pivotColumns;
-
-  if (!state.pivotColumns) {
-    pivotColumns = { [column.name]: direction || 'asc' };
-  } else if (add) {
-    pivotColumns = addSortColumn(state.pivotColumns, column)
-  } else if (remove) {
-    if (Object.keys(state.pivotColumns).length === 1) {
-      pivotColumns = null;
-    } else {
-      pivotColumns = removeSortColumn(state.pivotColumns, column);
-    }
-  } else {
-    return state;
-  }
-
-  return {
-    ...state,
-    pivotColumns,
   };
 }
 
@@ -413,58 +415,13 @@ function setRowHeight(state, { rowHeight }) {
 
 }
 
-// TODO how i this affected by the assigned height/width ?
-
-/** @type {GridModelReducer<GridModelResizeAction>} */
-function resizeGrid(state, { height, width }) {
-  console.log(`reducer resize Grid ${width} * ${height}`)
-  const { columnSizing, headerHeight, headingDepth, rowHeight, viewportHeight } = state;
-  const heightDiff = height - state.height;
-  const widthDiff = width - state.width;
-  const totalHeaderHeight = headerHeight * headingDepth;
-
-  let columnGroups;
-
-  if (widthDiff === 0) {
-    columnGroups = state.columnGroups;
-  } else if (columnSizing === 'fill') {
-    ({ columnGroups } = buildColumnGroups({ ...state, width }, GridModel.columns(state)));
-
-  } else {
-    columnGroups = state.columnGroups.map(columnGroup => {
-      if (columnGroup.locked) {
-        return columnGroup;
-      } else {
-        return {
-          ...columnGroup,
-          width: columnGroup.width + widthDiff
-        }
-      }
-    });
-  }
-
-  // console.log(`%cgridModel resizeGrid new Height = ${height} width ${width}
-  //   current viewPortHeight ${viewportHeight}
-  //   heightDiff = ${heightDiff}
-  // `, 'color:green;font-weight: bold;')
-
-  return {
-    ...state,
-    columnGroups,
-    height,
-    width,
-    viewportHeight: viewportHeight + heightDiff,
-    viewportRowCount: Math.ceil((height - totalHeaderHeight) / rowHeight) + 1
-  }
-}
-
 const NO_COLUMN_GROUPS = { headingDepth: 0 }
 
-function buildColumnGroups(state, columns, groupBy) {
+function buildColumnGroups(state, columns) {
   if (!columns) {
     return NO_COLUMN_GROUPS;
   }
-  const { columnSizing, defaultColumnWidth, minColumnWidth, selectionModel, showLineNumbers, width: gridWidth } = state;
+  const { columnSizing, defaultColumnWidth, groupBy, minColumnWidth, selectionModel, showLineNumbers, width: gridWidth } = state;
   let column = null;
   let columnGroup = null;
   let columnGroups = [];

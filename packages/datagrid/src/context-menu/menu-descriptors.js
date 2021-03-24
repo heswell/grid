@@ -4,8 +4,7 @@ export function buildMenuDescriptors(gridModel, location, options){
   const menuItems = [];
   if (location === 'header') {
     menuItems.push(...buildSortMenuItems(gridModel.sortColumns, options));
-    menuItems.push(...buildGroupMenuItems(gridModel.groupColumns, options));
-    menuItems.push(...buildPivotMenuItems(gridModel.pivotColumns, options));
+    menuItems.push(...buildGroupMenuItems(gridModel.groupBy, options));
     menuItems.push({label: 'Hide Column', action: Action.ColumnHide, options})
   }
 
@@ -72,27 +71,14 @@ function buildSortMenuItems(sortColumns, options){
 
 }
 
-function buildGroupMenuItems(groupColumns, options){
+function buildGroupMenuItems(groupBy, options){
     const menuItems = [];
     const {column} = options;
 
-    if (!groupColumns){
+    if (!groupBy){
         menuItems.push({label: `Group by ${column.name}`, action: Action.Group, options})
     } else {
         menuItems.push({label: `Add ${column.name} to group by`, action: Action.GroupAdd, options})
-    }
-
-    return menuItems;
-}
-
-function buildPivotMenuItems(groupColumns, options){
-    const menuItems = [];
-    const {column} = options;
-
-    if (!groupColumns){
-        menuItems.push({label: `Pivot by ${column.name}`, action: Action.Pivot, options})
-    } else {
-        menuItems.push({label: `Add ${column.name} to pivot by`, action: Action.PivotAdd, options})
     }
 
     return menuItems;

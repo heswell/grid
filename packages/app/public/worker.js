@@ -354,8 +354,7 @@ class Viewport {
     return this.createRequest({ sort: { sortDefs } })
   }
 
-  groupByRequest(requestId, requestedGroupBy) {
-    const groupBy = requestedGroupBy?.map(([columnName]) => columnName) ?? EMPTY_ARRAY;
+  groupByRequest(requestId, groupBy=EMPTY_ARRAY) {
     const type = groupBy === EMPTY_ARRAY ? "groupByClear" : "groupBy";
     this.awaitOperation(requestId, { type, data: groupBy });
     return this.createRequest({ groupBy })

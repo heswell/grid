@@ -172,19 +172,19 @@ const Viewport = forwardRef(function Viewport(
           });
           break;
         case "sort": {
-          const action = { type, options, sort: options };
+          const action = { type, sort: options };
           dispatchGridModelAction(action);
           onConfigChange(action);
         }
           break;
        case "filter": {
          // We don't currently show filter ops innthe Grid UI, but we might at some point
-          const action = { type, options };
+          const action = { type, filter: options };
           onConfigChange(action);
        }
         break;
         case 'groupBy': {
-          const action = { type: "group", options, columns: options };
+          const action = { type: "group", groupBy: options };
           dispatchGridModelAction(action);
           onConfigChange(action);
         }

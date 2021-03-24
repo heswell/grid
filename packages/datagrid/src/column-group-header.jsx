@@ -98,7 +98,7 @@ const ColumnGroupHeader = React.memo(
       (column) => {
         dispatchGridAction({
           type: "group",
-          columns: GridModel.removeGroupColumn(gridModel, column),
+          groupBy: GridModel.removeGroupColumn(gridModel, column),
         });
       },
       [gridModel]

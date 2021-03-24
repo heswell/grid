@@ -16,15 +16,15 @@ export const FilteredGrid = ({schema}) => {
     // TODO consolidate these messages
     switch(op.type){
       case "group":
-        save(op.options, op.type);
+        save(op.groupBy, op.type);
         dispatch({type: 'save'});
         break;
       case"sort":
-        save(op.options, op.type);
+        save(op.sort, op.type);
         dispatch({type: 'save'});
       break;
       case"filter":
-        save(op.options, op.type);
+        save(op.filter, op.type);
         dispatch({type: 'save'});
       break;
       default:

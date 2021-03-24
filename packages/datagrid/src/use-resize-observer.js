@@ -9,9 +9,6 @@ const isScrollAttribute = {
   scrollWidth: true,
 };
 
-const HEIGHT = 'blockSize';
-const WIDTH = 'inlineSize';
-
 // TODO should we make this create-on-demand
 const resizeObserver = new ResizeObserver((entries) => {
   for (let entry of entries) {
@@ -30,9 +27,6 @@ const resizeObserver = new ResizeObserver((entries) => {
         }
       }
       if (sizeChanged) {
-        console.log({resized: target.className, measurements})
-        // TODO only return measured sizes
-        // const { height, width } = contentRect;
         onResize && onResize(measurements);
       }
     }
@@ -76,7 +70,6 @@ export default function useResizeObserver(ref, dimensions, onResize, reportIniti
       resizeObserver.observe(target);
 
       if (reportInitialSize){
-        console.log('report initial size ',measurements)
         onResize(measurements);
       }
     }

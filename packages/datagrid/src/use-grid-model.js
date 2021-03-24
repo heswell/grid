@@ -43,8 +43,7 @@ export const useGridModel = (props) => {
   const [size, setSize] = useSize(props);
 
   const onResize = useCallback(({width, height}) => {
-    console.log(`%conReresize width=${width} height=${height}`,'color:green;font-weight:bold;')
-    setSize({width, height});
+    setSize({width: Math.floor(width), height: Math.floor(height)});
   },[setSize])
 
   useResizeObserver(rootRef, WidthHeight, onResize, /* reportInitialSize = */ true);
@@ -57,19 +56,18 @@ export const useGridModel = (props) => {
   );
 
   useEffectSkipFirst(() => {
-    console.log(`useEffect triggered by measiuredSize or totalHeaderHeight ${JSON.stringify(size)} totalHeaderHeight ${gridModel.totalHeaderHeight}`)
       dispatchGridModel({
         type: "resize",
         // The totalHeaderHeight will be set as top padding, which will not be included
         // in contentHeight measured by Observer
-        height: size.measuredHeight + gridModel.totalHeaderHeight,
+        height: size.measuredHeight,
         width: size.measuredWidth,
       });
-  }, [size.measuredHeight, size.measuredWidth, gridModel.totalHeaderHeight]);
+  }, [size.measuredHeight, size.measuredWidth]);
 
-  useEffect(() => {
-    // console.log(`%cchange to columnGroups ${JSON.stringify(gridModel.columnGroups,null,2)}`,'color:brown;font-weight: bold;')
-  },[gridModel.columnGroups])
+  // useEffect(() => {
+  //   console.log(`%cchange to columnGroups ${JSON.stringify(gridModel.columnGroups,null,2)}`,'color:brown;font-weight: bold;')
+  // },[gridModel.columnGroups])
 
   useEffect(() => {
     if (firstRender.current){

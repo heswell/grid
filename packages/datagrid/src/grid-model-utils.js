@@ -295,12 +295,12 @@ function updateGroupColumn({ columnGroups: groups }, column, updates) {
 export const columnKeysToIndices = (keys, columns) =>
   keys.map(key => columns.findIndex(c => c.key === key));
 
-function addGroupColumn({ groupColumns }, column, direction = 'asc') {
-  if (groupColumns) {
-    return mapSortColumns(groupColumns).concat([[column.name, direction]]);
+function addGroupColumn({ groupBy }, column) {
+  if (groupBy) {
+    return groupBy.concat(column.name);
 
   } else {
-    return [[column.name, direction]];
+    return [column.name];
   }
 }
 
@@ -325,13 +325,13 @@ function setSortColumn({ sort }, {name: columnName}) {
   }
 }
 
-function removeGroupColumn({ groupColumns }, column) {
-  if (!groupColumns) {
+function removeGroupColumn({ groupBy }, column) {
+  if (!groupBy) {
     throw Error(`GridModel.removeColumnGroups: cannot remove column ${column.name}, no grouping in place`)
-  } else if (Object.keys(groupColumns).length === 1) {
+  } else if (groupBy.length === 1) {
     return null;
   } else {
-    return mapSortColumns(groupColumns).filter(([columnName]) => columnName !== column.name)
+    return groupBy.filter(columnName => columnName !== column.name)
   }
 }
 
@@ -343,10 +343,7 @@ export const GridModel = {
   setSortColumn,
   columns: gridModel => flattenColumnGroup(gridModel.columnGroups.flatMap(columnGroup => columnGroup.columns.filter(omitSystemColumns))),
   columnNames: gridModel => GridModel.columns(gridModel).map(column => column.name),
-  groupBy: gridModel => gridModel.groupColumns && mapSortColumns(gridModel.groupColumns),
-  pivotBy: gridModel => gridModel.pivotColumns && mapSortColumns(gridModel.pivotColumns),
   removeGroupColumn,
-  sortBy: gridModel => gridModel.sortColumns && mapSortColumns(gridModel.sortColumns),
   toggleGroupState,
   updateGroupColumn,
   updateGroupColumnWidth

@@ -237,8 +237,6 @@ export default class RemoteDataSource  extends EventEmitter {
   }
 
   group(columns) {
-    // TODO so we still need this - I don't think so
-    this.emit('group', columns);
     this.server?.handleMessageFromClient({
       viewport: this.viewport,
       type: Msg.groupBy,
