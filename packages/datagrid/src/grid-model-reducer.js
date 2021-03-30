@@ -1,4 +1,4 @@
-import { addSortColumn, metadataKeys, removeSortColumn, sortByToMap } from '@heswell/utils'
+import { metadataKeys } from '@heswell/utils'
 import {
   assignKeysToColumns,
   columnKeysToIndices,
@@ -43,19 +43,6 @@ const LINE_NUMBER_COLUMN = {
 const RESIZING = { resizing: true };
 const NOT_RESIZING = { resizing: false };
 
-function sortMap(sortBy) {
-  if (!sortBy) {
-    return null;
-  }
-  return sortBy.reduce((map, group) => {
-    if (typeof group === 'string') {
-      map[group] = 'asc';
-    } else {
-      map[group[0]] = group[1] || 'asc';
-    }
-    return map;
-  }, {})
-}
 
 /** @type {GridModelReducer} */
 const GridModelReducer = (state, action) => {
@@ -198,7 +185,6 @@ function initialize(state, { props }) {
 
 /** @type {GridModelReducer<GridModelResizeAction>} */
 function resizeGrid(state, { height, width }) {
-  console.log(`reducer resize Grid ${width} * ${height}`)
 
   let {columnGroups} = state;
 
@@ -261,7 +247,6 @@ function setAvailableColumns(state, action) {
 
 
 function addVisualLinks(state, { links }) {
-  console.log({links})
   return {
     ...state,
     visualLinks: links
@@ -388,7 +373,6 @@ function addColumn(state, { insertIdx: absInsertIdx, targetColumnGroup, column }
 /** @type {GridModelReducer<'resize-col'>} */
 function resizeColumn(state, { phase, column, width }) {
   if (phase === 'resize') {
-    console.log(`resizeColumn resize width = ${width}`)
     const columnGroups = GridModel.updateGroupColumnWidth(state, column, width);
     return { ...state, columnGroups };
 
@@ -425,7 +409,6 @@ function buildColumnGroups(state, columns) {
   let column = null;
   let columnGroup = null;
   let columnGroups = [];
-console.log(`buildGridColumns grid width ${gridWidth}`)
   let gridContentWidth = gridWidth - 15;// how do we know about vertical scrollbar
   let availableWidth = gridContentWidth;
 

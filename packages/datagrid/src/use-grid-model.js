@@ -91,28 +91,6 @@ export const useGridModel = (props) => {
     }
   }, [props.columns, props.columnSizing, props.dataSource, props.groupBy]);
 
-  // Should these go in a separate useDataSource hook ?
-  const datasourceHandler = useCallback((eventName, ...args) => {
-    switch (eventName) {
-      // case "group":
-      //   return dispatchGridModel({ type: "group", columns: args[0] });
-      // case "sort":
-      //   return dispatchGridModel({ type: "sort", columns: args[0] });
-      case "visual-links":
-        return dispatchGridModel({ type: "visual-links", links: args[0] });
-      default:
-    }
-  }, []);
-
-  // New
-  useEffect(() => {
-    dataSource.on("*", datasourceHandler);
-    return () => {
-      dataSource.removeListener("*", datasourceHandler);
-    };
-  }, [dataSource, datasourceHandler]);
-
-
   return [rootRef, gridModel, dataSource, dispatchGridModel, custom]
 
 }

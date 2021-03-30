@@ -10,6 +10,6 @@
     "classnames": "^2.2.6"
   },
   "dependencies": {
-    "@heswell/popup": "latest"
+    "@heswell/popup": "2.1.15"
   }
 }

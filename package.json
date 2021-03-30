@@ -32,8 +32,8 @@
     "proseWrap": "always"
   },
   "dependencies": {
-    "@heswell/layout": "3.0.69",
-    "@heswell/popup": "2.1.14",
+    "@heswell/layout": "3.2.8",
+    "@heswell/popup": "2.1.15",
     "@heswell/ui-controls": "2.0.18",
     "@testing-library/dom": "^7.29.4",
     "@testing-library/jest-dom": "^5.11.9",

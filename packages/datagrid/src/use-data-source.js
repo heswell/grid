@@ -106,6 +106,8 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
         } else if (messageType === 'filter'){
           callbackRef.current(messageType, msg.filter);
           dataSource.emit('filter', msg.filter);
+        } else if (messageType === 'VP_VISUAL_LINKS_RESP'){
+          callbackRef.current(messageType, msg.links);
         }
 
         // if (msg.filter !== undefined) {

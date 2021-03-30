@@ -207,10 +207,15 @@ const Viewport = forwardRef(function Viewport(
           }
           break;
 
+          case "VP_VISUAL_LINKS_RESP":
+            dispatchGridModelAction({ type: "visual-links", links: options });
+
+          break;
+
         default:
       }
     },
-    [dispatchGridModelAction, gridModel.viewportRowCount, gridModel.rowHeight]
+    [dispatchGridModelAction, gridModel.viewportRowCount, gridModel.rowHeight, onConfigChange]
   );
 
   const [data, setRange] = useDataSource(

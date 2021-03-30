@@ -1,4 +1,4 @@
-import {createLogger, DataTypes, EventEmitter, getFullRange, logColor, uuid} from '@heswell/utils';
+import { createLogger, DataTypes, EventEmitter, getFullRange, logColor, uuid } from '@heswell/utils';
 import {
   msgType as Msg,
   connectionId as _connectionId,
@@ -7,7 +7,7 @@ import {
 // TODO make this dynamic
 import ConnectionManager from './connection-manager-worker';
 
-const {ROW_DATA} = DataTypes;
+const { ROW_DATA } = DataTypes;
 
 const logger = createLogger('RemoteDataView', logColor.blue);
 
@@ -17,7 +17,7 @@ export const AvailableProxies = {
 }
 
 const NullServer = {
-  handleMessageFromClient: message => console.log(`%cNullServer.handleMessageFromClient ${JSON.stringify(message)}`,'color:red')
+  handleMessageFromClient: message => console.log(`%cNullServer.handleMessageFromClient ${JSON.stringify(message)}`, 'color:red')
 }
 
 const defaultRange = { lo: 0, hi: 0 };
@@ -25,10 +25,10 @@ const defaultRange = { lo: 0, hi: 0 };
 /*-----------------------------------------------------------------
  A RemoteDataView manages a single subscription via the ServerProxy
   ----------------------------------------------------------------*/
-export default class RemoteDataSource  extends EventEmitter {
+export default class RemoteDataSource extends EventEmitter {
 
   constructor({
-    bufferSize=100,
+    bufferSize = 100,
     columns,
     filter,
     group,
@@ -57,7 +57,7 @@ export default class RemoteDataSource  extends EventEmitter {
     this.initialSort = sort;
     this.initialFilter = filter;
 
-    if (!serverUrl){
+    if (!serverUrl) {
       throw Error('RemoteDataSource expects serverUrl')
     }
 
@@ -68,18 +68,18 @@ export default class RemoteDataSource  extends EventEmitter {
   async subscribe({
     viewport = uuid(),
     tableName = this.tableName,
-    columns=this.columns || [],
+    columns = this.columns || [],
     range = defaultRange,
     sort = this.initialSort,
-    groupBy=this.initialGroup,
-    filter=this.initialFilter
+    groupBy = this.initialGroup,
+    filter = this.initialFilter
   }, callback) {
 
     if (!tableName) throw Error("RemoteDataSource subscribe called without table name");
 
     this.clientCallback = callback;
 
-    if (this.status === 'subscribed'){
+    if (this.status === 'subscribed') {
       //TODO check if subscription details are still the same
       console.log(`RemoteDataSource.subscribe - already subscribed, early return `)
       return;
@@ -91,36 +91,34 @@ export default class RemoteDataSource  extends EventEmitter {
 
     this.server = await this.pendingServer;
 
-    const {bufferSize} = this;
+    const { bufferSize } = this;
     this.server.subscribe({
-        viewport,
-        tablename: tableName,
-        columns,
-        range: getFullRange({bufferSize, ...range}),
-        sort,
-        groupBy,
-        filter
-      },this.handleMessageFromServer);
+      viewport,
+      tablename: tableName,
+      columns,
+      range: getFullRange({ bufferSize, ...range }),
+      sort,
+      groupBy,
+      filter
+    }, this.handleMessageFromServer);
   }
 
   handleMessageFromServer = (message) => {
     if (message.dataType === DataTypes.FILTER_DATA) {
       this.filterDataCallback(message);
-    } else if (message.type === "subscribed"){
+    } else if (message.type === "subscribed") {
       this.status = 'subscribed';
       this.serverViewportId = message.serverViewportId;
       this.emit("subscribed", message);
-      const {viewportId, ...rest} = message
+      const { viewportId, ...rest } = message
       this.clientCallback(rest);
-    } else if (message.type ==='VP_VISUAL_LINKS_RESP' ){
-      this.emit("visual-links", message.links)
     } else {
       this.clientCallback(message);
     }
   }
 
   unsubscribe() {
-    if (this.suspended){
+    if (this.suspended) {
       logger.log(`unsubscribe whilst suspended, ignore - ${this?.tableName ?? 'no table'} (viewport ${this?.viewport})`);
     } else {
       logger.log(`unsubscribe from ${this?.tableName ?? 'no table'} (viewport ${this?.viewport})`);
@@ -130,8 +128,8 @@ export default class RemoteDataSource  extends EventEmitter {
     }
   }
 
-  disable(){
-    console.log('disabling data source')
+  disable() {
+    console.log(`disable VP`)
     this.suspended = true;
     this.server.handleMessageFromClient({
       viewport: this.viewport,
@@ -140,31 +138,35 @@ export default class RemoteDataSource  extends EventEmitter {
     return this;
   }
 
-  enable(){
-    // should we await this ?s
-    this.server.handleMessageFromClient({
-      viewport: this.viewport,
-      type: Msg.enable,
-    });
-    this.suspended = false;
+  enable() {
+    console.log(`enable suspended ? ${this.suspended}`)
+    if (this.suspended) {
+      // should we await this ?s
+      this.server.handleMessageFromClient({
+        viewport: this.viewport,
+        type: Msg.enable,
+      });
+      this.suspended = false;
+
+    }
     return this;
   }
 
-  setColumns(columns){
+  setColumns(columns) {
     this.columns = columns;
     return this;
   }
 
-  setSubscribedColumns(columns){
-    if (columns.length !== this.columns.length || !columns.every(columnName => this.columns.includes(columnName))){
+  setSubscribedColumns(columns) {
+    if (columns.length !== this.columns.length || !columns.every(columnName => this.columns.includes(columnName))) {
       this.columns = columns;
       // ???
     }
   }
 
 
-  setRange(lo, hi, dataType=ROW_DATA) {
-    const {bufferSize} = this;
+  setRange(lo, hi, dataType = ROW_DATA) {
+    const { bufferSize } = this;
     this.server?.handleMessageFromClient({
       viewport: this.viewport,
       type: Msg.setViewRange,
@@ -173,7 +175,7 @@ export default class RemoteDataSource  extends EventEmitter {
     });
   }
 
-  select(row, rangeSelect, keepExistingSelection, dataType=ROW_DATA){
+  select(row, rangeSelect, keepExistingSelection, dataType = ROW_DATA) {
     this.server?.handleMessageFromClient({
       viewport: this.viewport,
       type: Msg.select,
@@ -184,7 +186,7 @@ export default class RemoteDataSource  extends EventEmitter {
     });
   }
 
-  selectAll(dataType=ROW_DATA){
+  selectAll(dataType = ROW_DATA) {
     this.server?.handleMessageFromClient({
       viewport: this.viewport,
       type: Msg.selectAll,
@@ -192,7 +194,7 @@ export default class RemoteDataSource  extends EventEmitter {
     });
   }
 
-  selectNone(dataType=ROW_DATA){
+  selectNone(dataType = ROW_DATA) {
     this.server?.handleMessageFromClient({
       viewport: this.viewport,
       type: Msg.selectNone,
@@ -201,7 +203,7 @@ export default class RemoteDataSource  extends EventEmitter {
 
   }
 
-  filter(filter, dataType = ROW_DATA, incremental=false) {
+  filter(filter, dataType = ROW_DATA, incremental = false) {
     this.server?.handleMessageFromClient({
       viewport: this.viewport,
       type: Msg.filter,
@@ -219,7 +221,7 @@ export default class RemoteDataSource  extends EventEmitter {
     })
   }
 
-  openTreeNode(key){
+  openTreeNode(key) {
     this.server?.handleMessageFromClient({
       viewport: this.viewport,
       type: Msg.openTreeNode,
@@ -228,7 +230,7 @@ export default class RemoteDataSource  extends EventEmitter {
 
   }
 
-  closeTreeNode(key){
+  closeTreeNode(key) {
     this.server?.handleMessageFromClient({
       viewport: this.viewport,
       type: Msg.closeTreeNode,
@@ -270,7 +272,7 @@ export default class RemoteDataSource  extends EventEmitter {
     });
   }
 
-  createLink({parentVpId, link: {fromColumn, toColumn, toTable}}){
+  createLink({ parentVpId, link: { fromColumn, toColumn, toTable } }) {
     this.server?.handleMessageFromClient({
       viewport: this.viewport,
       type: Msg.createLink,

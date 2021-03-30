@@ -21,6 +21,7 @@ export default class Viewport {
     this.filterSpec = null;
     this.pendingOperations = new Map();
     this.isTree = false;
+    this.suspended = false;
     this.selection = [];
   }
 
@@ -48,7 +49,6 @@ export default class Viewport {
   }
 
   awaitOperation(requestId, type) {
-    console.log(`await ${type} operation ${requestId}`)
     //TODO set uip a timeout mechanism here
     this.pendingOperations.set(requestId, type);
   }

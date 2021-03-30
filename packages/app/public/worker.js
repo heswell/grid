@@ -89,6 +89,13 @@ const createWebsocket = connectionString => new Promise((resolve, reject) => {
     ws.onerror = evt => reject(evt);
 });
 
+// TEST DATA COLLECTION
+const websocket_messages = [];
+const getWebsocketData = () => {
+  const messages = websocket_messages.slice();
+  websocket_messages.length = 0;
+  return messages;
+};
 
 class Connection {
 
@@ -110,13 +117,13 @@ class Connection {
     const callback = this[connectionCallback];
 
     ws.onmessage = evt => {
+      // TEST DATA COLLECTION
+      if (!/"type":"HB"/.test(evt.data)){
+        websocket_messages.push(evt.data);
+      }
       const message = JSON.parse(evt.data);
       // console.log(`%c<<< [${new Date().toISOString().slice(11,23)}]  (WebSocket) ${message.type || JSON.stringify(message)}`,'color:white;background-color:blue;font-weight:bold;');
-      if (Array.isArray(message)){
-        message.map(callback);
-      } else {
-        callback(message);
-      }
+      callback(message);
     };
 
     ws.onerror = evt => {
@@ -266,6 +273,7 @@ class Viewport {
     this.filterSpec = null;
     this.pendingOperations = new Map();
     this.isTree = false;
+    this.suspended = false;
     this.selection = [];
   }
 
@@ -293,7 +301,6 @@ class Viewport {
   }
 
   awaitOperation(requestId, type) {
-    console.log(`await ${type} operation ${requestId}`);
     //TODO set uip a timeout mechanism here
     this.pendingOperations.set(requestId, type);
   }
@@ -479,14 +486,14 @@ class ServerProxy {
         const request = viewport.disable(requestId);
         this.sendIfReady(request, requestId, isReady);
       }
-      break;
+        break;
 
       case 'enable': {
         const requestId = nextRequestId();
         const request = viewport.enable(requestId);
         this.sendIfReady(request, requestId, isReady);
       }
-      break;
+        break;
 
       case 'openTreeNode':
         this.sendIfReady({
@@ -546,7 +553,6 @@ class ServerProxy {
   sendIfReady(message, requestId, isReady = true) {
     // TODO implement the message queuing in remote data view
     if (isReady) {
-      console.log(`sendMessageToServer ${message.type} reqId: ${requestId}`);
       this.sendMessageToServer(message, requestId);
     } else {
       // TODO need to make sure we keep the requestId
@@ -606,7 +612,7 @@ class ServerProxy {
     // the session should live at the connection level
     const isReady = this.sessionId !== "";
     // TODO we need to explicitly store all the viewport attributes here
-    const { viewport, tablename, columns, range: { lo, hi }, sort=[], groupBy=[], filter="" } = message;
+    const { viewport, tablename, columns, range: { lo, hi }, sort = [], groupBy = [], filter = "" } = message;
     this.viewportStatus[viewport] = new Viewport(viewport, message);
 
     // use client side viewport as request id, so that when we process the response,
@@ -723,6 +729,8 @@ class ServerProxy {
       case CHANGE_VP_RANGE_SUCCESS:
         break;
       case CHANGE_VP_SUCCESS:
+      case DISABLE_VP_SUCCESS:
+      case ENABLE_VP_SUCCESS:
       case SET_SELECTION_SUCCESS: {
         const response = this.viewportStatus[body.viewPortId || body.vpId].completeOperation(requestId);
         if (response) {
@@ -760,7 +768,6 @@ class ServerProxy {
         delete this.viewportStatus[body.viewPortId];
         delete this.viewportStatus[clientViewportId];
       }
-        console.log(`REMOVE_VP_SUCCESS ${JSON.stringify(body)}`);
         break;
       case "TABLE_LIST_RESP":
         this.postMessageToClient({ type: "TABLE_LIST_RESP", tables: body.tables, requestId });
@@ -768,47 +775,46 @@ class ServerProxy {
       case "TABLE_META_RESP":
         this.postMessageToClient({ type: "TABLE_META_RESP", table: body.table, columns: body.columns, requestId });
         break;
-      case "VP_VISUAL_LINKS_RESP":
-        if (body.links.length) {
+      case "VP_VISUAL_LINKS_RESP": {
+        const links = this.getActiveLinks(body.links);
+        if (links.length) {
+          console.log(`${links.length} active links identified`);
           const { clientViewportId } = this.viewportStatus[body.vpId];
-          // console.group(`links for (${this.viewportStatus[body.vpId].spec.table})`);
+          // console.log({links: body.links})
+          // //-------------------
+          // console.group(`links for (${this.viewportStatus[body.vpId].table})`);
           // body.links.forEach(({parentVpId, link}) => {
           //   console.log(`link parentVpId = ${parentVpId}`);
           //   const vp = this.viewportStatus[parentVpId];
           //   if (vp){
-          //     console.log(`   parent table = ${vp.spec.table}`)
+          //     console.log(`   parent table = ${vp.table}`)
           //     console.log(JSON.stringify(link,null,2))
           //   }
-
           // })
           // console.groupEnd();
-          this.postMessageToClient({ type: "VP_VISUAL_LINKS_RESP", links: body.links, clientViewportId });
+          //--------------------
+          this.postMessageToClient({ type: "VP_VISUAL_LINKS_RESP", links, clientViewportId });
         }
+      }
         break;
 
       case "ERROR":
         console.error(body.msg);
         break;
-      // case Message.FILTER_DATA:
-      // case Message.SEARCH_DATA:
-      //     const { data: filterData } = message;
-      //     // const { rowset: data } = subscription.putData(type, filterData);
-
-      //     // if (data.length || filterData.size === 0) {
-      //     this.postMessageToClient({
-      //         type,
-      //         viewport,
-      //         [type]: filterData
-      //     });
-      //     // }
-
-      //     break;
 
       default:
         this.postMessageToClient(message.body);
 
     }
 
+  }
+
+  // Eliminate links to suspended viewports
+  getActiveLinks(links) {
+    return links.filter(link => {
+      const viewport = this.viewportStatus[link.parentVpId];
+      return viewport && !viewport.suspended;
+    })
   }
 
 }
@@ -856,6 +862,10 @@ const handleMessageFromClient = async ({ data: message }) => {
       break;
     case 'unsubscribe':
       server.unsubscribe(message.viewport);
+      break;
+    // TEST DATA COLLECTION
+    case 'send-websocket-data':
+      postMessage({type: "websocket-data", data: getWebsocketData()});
       break;
     default:
       server.handleMessageFromClient(message);

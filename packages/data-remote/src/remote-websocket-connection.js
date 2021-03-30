@@ -1,5 +1,4 @@
 import { createLogger, logColor} from '@heswell/utils/src/logging';
-import { ConnectionStatus } from './messages';
 
 const logger = createLogger('WebsocketConnection', logColor.brown);
 
@@ -79,6 +78,13 @@ const createWebsocket = connectionString => new Promise((resolve, reject) => {
     ws.onerror = evt => reject(evt);
 });
 
+// TEST DATA COLLECTION
+const websocket_messages = [];
+export const getWebsocketData = () => {
+  const messages = websocket_messages.slice();
+  websocket_messages.length = 0;
+  return messages;
+}
 
 class Connection {
 
@@ -100,13 +106,13 @@ class Connection {
     const callback = this[connectionCallback];
 
     ws.onmessage = evt => {
+      // TEST DATA COLLECTION
+      if (!/"type":"HB"/.test(evt.data)){
+        websocket_messages.push(evt.data);
+      }
       const message = JSON.parse(evt.data);
       // console.log(`%c<<< [${new Date().toISOString().slice(11,23)}]  (WebSocket) ${message.type || JSON.stringify(message)}`,'color:white;background-color:blue;font-weight:bold;');
-      if (Array.isArray(message)){
-        message.map(callback)
-      } else {
-        callback(message);
-      }
+      callback(message);
     }
 
     ws.onerror = evt => {

@@ -137,7 +137,6 @@ const GridBase = forwardRef(function GridBase(props, ref){
 
   const { assignedWidth, assignedHeight, width, height, totalHeaderHeight } = gridModel;
 
-  console.log(`%crender Grid width=${width} height=${height} assignedWidth=${assignedWidth} height=${assignedHeight} totalHeaderHeight=${totalHeaderHeight}`,'color:white;background-color: blue')
   return (
     // Question, how much overhead are we introducing be adding gridModel to GridContext ? Perhaps it belongs in it's own context
     <GridContext.Provider

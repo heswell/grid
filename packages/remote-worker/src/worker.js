@@ -1,4 +1,6 @@
-import connect from '@vuu-ui/data-remote/src/remote-websocket-connection';
+import connect  from '@vuu-ui/data-remote/src/remote-websocket-connection';
+// TEST DATA COLLECTION
+import {getWebsocketData} from '@vuu-ui/data-remote/src/remote-websocket-connection';
 import { ServerProxy } from '@vuu-ui/data-remote/src/servers/vuu/server-proxy';
 import { createLogger, logColor } from '@heswell/utils/src/logging';
 
@@ -45,6 +47,10 @@ const handleMessageFromClient = async ({ data: message }) => {
       break;
     case 'unsubscribe':
       server.unsubscribe(message.viewport);
+      break;
+    // TEST DATA COLLECTION
+    case 'send-websocket-data':
+      postMessage({type: "websocket-data", data: getWebsocketData()})
       break;
     default:
       server.handleMessageFromClient(message);
