@@ -211,7 +211,7 @@ export class ServerProxy {
     this.pendingLogin.resolve(sessionId);
   }
 
-  subscribe(message, callback) {
+  subscribe(message) {
     // the session should live at the connection level
     const isReady = this.sessionId !== "";
     // TODO we need to explicitly store all the viewport attributes here
@@ -220,6 +220,7 @@ export class ServerProxy {
 
     // use client side viewport as request id, so that when we process the response,
     // with the serverside viewport we can establish a mapping between the two
+    this.sendIdReady(viewport.subscribe())
     this.sendIfReady({
       type: Message.CREATE_VP,
       table: tablename,

@@ -107,9 +107,9 @@ class Connection {
 
     ws.onmessage = evt => {
       // TEST DATA COLLECTION
-      if (!/"type":"HB"/.test(evt.data)){
-        websocket_messages.push(evt.data);
-      }
+      // if (!/"type":"HB"/.test(evt.data)){
+      //   websocket_messages.push(evt.data);
+      // }
       const message = JSON.parse(evt.data);
       // console.log(`%c<<< [${new Date().toISOString().slice(11,23)}]  (WebSocket) ${message.type || JSON.stringify(message)}`,'color:white;background-color:blue;font-weight:bold;');
       callback(message);

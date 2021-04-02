@@ -7,8 +7,8 @@ const logger = createLogger('ConnectionManager', logColor.green);
 let worker;
 let pendingWorker;
 
-const viewportStatus = {};
-const pendingRequests = {};
+const viewports = new Map();;
+const pendingRequests = new Map();
 
 const getWorker = async (url, server) => {
 
@@ -37,27 +37,28 @@ const messagesToRelayToClient = {
 }
 
 function handleMessageFromWorker({ data: message }) {
-  const { type, clientViewportId, requestId } = message
-  const viewport = viewportStatus[clientViewportId];
-  if (viewport) {
+  if (message.type === "viewport-updates"){
+    console.log('updates from the worker', message)
+  } else if (viewports.has(message.clientViewportId)){
+    const viewport = viewports.get(message.clientViewportId);
     const { postMessageToClient } = viewport;
-    if (type === "subscribed") {
+    if (message.type === "subscribed") {
       postMessageToClient(message);
-    } else if (messagesToRelayToClient[type]) {
+    } else if (messagesToRelayToClient[message.type]) {
       postMessageToClient(message);
     } else {
-      logger.log(`message from the worker ${type}`)
+      logger.log(`message from the worker to viewport ${message.clientViewportId} ${message.type}`)
     }
-  } else if (requestId && pendingRequests[requestId]){
-    const {resolve} = pendingRequests[requestId];
-    delete pendingRequests[requestId];
+  } else if (pendingRequests.has(message.requestId)){
+    const {resolve} = pendingRequests.get(message.requestId);
+    pendingRequests.delete(message.requestId);
     const {type:_1, requestId:_2,  ...rest} = message;
     resolve(rest);
   // TEST DATA COLLECTION
-  } else if (type === "websocket-data"){
+  } else if (message.type === "websocket-data"){
     storeData(message.data);
   } else {
-    logger.log(`Unexpected message from the worker ${message.type} requestId ${requestId}`, pendingRequests)
+    logger.log(`Unexpected message from the worker ${message.type} requestId ${message.requestId}`, pendingRequests)
   }
 
 }
@@ -70,7 +71,7 @@ const asyncRequest = (msg) => {
     ...msg
   });
   return new Promise((resolve, reject) => {
-    pendingRequests[requestId] = {resolve, reject};
+    pendingRequests.set(requestId, {resolve, reject});
   });
 
 }
@@ -79,11 +80,11 @@ const asyncRequest = (msg) => {
 const methods = {
   subscribe : (message, callback) => {
     // the session should live at the connection level
-    viewportStatus[message.viewport] = {
+    viewports.set(message.viewport, {
       status: 'subscribing',
       request: message,
       postMessageToClient: callback
-    }
+    });
     worker.postMessage({ type: "subscribe", ...message });
   },
 

@@ -6,7 +6,7 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/modular",
-      "args": ["test", "--runInBand", "--no-cache", "--env=jsdom", "{file}"],
+      "args": ["test", "--runInBand", "--no-cache", "--env=jsdom", "${file}"],
       "cwd": "${workspaceRoot}",
       "protocol": "inspector",
       "console": "integratedTerminal",

@@ -1,7 +1,7 @@
 import connect  from '@vuu-ui/data-remote/src/remote-websocket-connection';
 // TEST DATA COLLECTION
 import {getWebsocketData} from '@vuu-ui/data-remote/src/remote-websocket-connection';
-import { ServerProxy } from '@vuu-ui/data-remote/src/servers/vuu/server-proxy';
+import { ServerProxy } from '@vuu-ui/data-remote/src/servers/vuu/new-server-proxy';
 import { createLogger, logColor } from '@heswell/utils/src/logging';
 
 /* eslint-disable no-restricted-globals */
