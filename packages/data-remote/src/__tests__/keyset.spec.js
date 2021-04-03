@@ -1,4 +1,4 @@
-import {KeySet} from "../servers/vuu/new-server-proxy";
+import {KeySet} from "../servers/vuu/keyset";
 
 describe("KeySet", () => {
 

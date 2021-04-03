@@ -2,7 +2,7 @@ import React, {useCallback, useEffect, useMemo, useRef} from 'react';
 import {useLayoutContext} from "@heswell/layout";
 import { Grid } from "@vuu-ui/datagrid";
 import {QueryFilter} from "@vuu-ui/filter";
-import {createDataSource} from "../utils"
+import {createDataSource} from "../create-data-source"
 
 export const FilteredGrid = ({schema}) => {
   const {id, dispatch, load, save, loadSession, saveSession} = useLayoutContext();

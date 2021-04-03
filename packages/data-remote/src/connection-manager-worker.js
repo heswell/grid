@@ -38,7 +38,12 @@ const messagesToRelayToClient = {
 
 function handleMessageFromWorker({ data: message }) {
   if (message.type === "viewport-updates"){
-    console.log('updates from the worker', message)
+    for (const [clientViewport, {size, rows}] of Object.entries(message.viewports) ){
+      if (viewports.has(clientViewport)){
+        const { postMessageToClient } = viewports.get(clientViewport);
+        postMessageToClient({type: "viewport-update", size, rows})
+      }
+    }
   } else if (viewports.has(message.clientViewportId)){
     const viewport = viewports.get(message.clientViewportId);
     const { postMessageToClient } = viewport;

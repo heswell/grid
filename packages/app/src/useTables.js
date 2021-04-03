@@ -1,8 +1,7 @@
 
 import {useCallback, useEffect, useState} from 'react';
 import ConnectionManager from '@vuu-ui/data-remote/src/connection-manager-worker';
-import {serverUrl} from "./utils"
-import TableAdd from '@spectrum-icons/workflow/TableAdd';
+import {serverUrl} from "./create-data-source"
 
 const _tables = {};
 

@@ -1,8 +1,11 @@
 import * as Message from './messages';
-import { ArrayBackedMovingWindow } from "./array-backed-moving-window";
+import {Viewport} from "./new-viewport";
 
 let _requestId = 1;
+export const TEST_setRequestId = id => _requestId = id;
+
 const nextRequestId = () => `${_requestId++}`;
+// let updateTime = 0;
 
 export class ServerProxy {
 
@@ -39,7 +42,7 @@ export class ServerProxy {
   }
 
   handleMessageFromClient(message) {
-    const {type, viewport: clientViewportId} = message;
+    const { type, viewport: clientViewportId } = message;
     const serverViewportId = this.mapClientToServerViewport.get(clientViewportId);
     const viewport = this.viewports.get(serverViewportId);
     if (!viewport) {
@@ -58,14 +61,18 @@ export class ServerProxy {
 
     switch (message.type) {
       case 'setViewRange':
-        this.sendIfReady({
-          type: Message.CHANGE_VP_RANGE,
-          viewPortId: viewport.serverViewportId,
-          from: message.range.lo,
-          to: message.range.hi
-        },
-          _requestId++,
-          isReady)
+        const requestId = nextRequestId();
+        const [serverRequest, rows] = viewport.rangeRequest(requestId, message.range.lo, message.range.hi);
+        if (serverRequest){
+          this.sendIfReady(serverRequest, requestId, isReady)
+        }
+        if (rows){
+          const clientMessage = {
+            type: "viewport-updates", viewports: {
+              [viewport.clientViewportId]: {rows}
+          }};
+          this.postMessageToClient(clientMessage);
+        }
         break;
 
       case 'sort': {
@@ -179,7 +186,7 @@ export class ServerProxy {
 
 
   handleMessageFromServer(message) {
-    const { requestId, body: {type, ...body} } = message;
+    const { requestId, body: { type, ...body } } = message;
     const { viewports } = this;
     switch (type) {
 
@@ -219,7 +226,7 @@ export class ServerProxy {
 
       case Message.CHANGE_VP_RANGE_SUCCESS: {
         const { viewPortId, from, to } = body;
-        viewports.get(viewPortId).setRange(from, to);
+        viewports.get(viewPortId).completeOperation(requestId, from, to)
       }
         break;
 
@@ -242,12 +249,20 @@ export class ServerProxy {
     this.viewports.forEach((viewport) => {
       if (viewport.shouldUpdateClient) {
         clientMessage = clientMessage || { type: "viewport-updates", viewports: {} };
-        clientMessage.viewports[viewport.clientViewportId] = viewport.getClientRows();
+        clientMessage.viewports[viewport.clientViewportId] = {
+          rows: viewport.getClientRows(),
+          size: viewport.getRowCount()
+        }
+      };
+      if (clientMessage) {
+        // const now = performance.now();
+        // if (updateTime){
+        //   console.log(`time between updates ${now - updateTime}`)
+        // }
+        // updateTime = now;
+        this.postMessageToClient(clientMessage);
       }
-    });
-    if (clientMessage) {
-      this.postMessageToClient(clientMessage);
-    }
+    })
   }
 
 }
@@ -258,150 +273,4 @@ export class ServerProxy {
 //   return `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} ${date.getMilliseconds()}`
 // }
 
-class Viewport {
-  constructor({ viewport, tablename, columns, range }) {
-    this.clientViewportId = viewport;
-    this.table = tablename;
-    this.status = '';
-    this.columns = columns;
-    this.clientRange = range;
-    this.sort = undefined;
-    this.groupBy = undefined;
-    this.filterSpec = {
-      filter: ""
-    };
-    this.isTree = false;
-    this.dataWindow = undefined;
-    this.rowCount = 0;
-    this.keys = new KeySet();
 
-    this.hasUpdates = false;
-    this.requiresKeyAssignment = true;
-
-  }
-
-  get shouldUpdateClient() {
-    return this.hasUpdates && this.dataWindow.hasAllRowsWithinRange;
-  }
-
-  subscribe(){
-    return {
-      type: Message.CREATE_VP,
-      table: this.table,
-      range: {
-        from: this.clientRange.lo,
-        to: this.clientRange.hi
-      },
-      columns: this.columns,
-      sort: {
-        sortDefs: this.sort
-      },
-      groupBy: this.groupBy,
-      filterSpec: this.filterSpec
-    }
-  }
-
-  handleSubscribed({ viewPortId, columns, table, range, sort, groupBy, filterSpec }) {
-    this.serverViewportId = viewPortId;
-    this.status = 'subscribed';
-    this.columns = columns;
-    this.table = table;
-    this.range = range;
-    this.sort = sort;
-    this.groupBy = groupBy;
-    this.filterSpec = filterSpec;
-    this.isTree = groupBy && groupBy.length > 0;
-    this.dataWindow = new ArrayBackedMovingWindow(range.to - range.from);
-
-    console.log(`%cViewport subscribed
-      clientVpId: ${this.clientViewportId}
-      serverVpId: ${this.serverViewportId}
-      table: ${this.table}
-      columns: ${columns.join(',')}
-      range: ${JSON.stringify(range)}
-      sort: ${JSON.stringify(sort)}
-      groupBy: ${JSON.stringify(groupBy)}
-      filterSpec: ${JSON.stringify(filterSpec)}
-    `, 'color: blue')
-  }
-
-  setRange(lo, hi) {
-    this.dataWindow.setRange(lo, hi);
-    this.requiresKeyAssignment = true;
-    this.hasUpdates = true;
-    //onsole.log(`after %csetRange%c ${lo} ${hi}, rowsWithinRange ${this.dataWindow.rowsWithinRange} hasAllRowsWithinRange ? ${this.dataWindow.hasAllRowsWithinRange}`,'color: blue;font-weight: bold;','');
-    //onsole.table(this.dataWindow.internalData)
-
-  }
-
-  handleUpdate(updateType, rowIndex, row) {
-    this.rowCount = row.vpSize;
-    if (updateType === 'U') {
-      if (this.dataWindow.isWithinRange(rowIndex)) {
-        // We need an additional check isWithinClientViewport
-        this.hasUpdates = true;
-        this.dataWindow.setAtIndex(rowIndex, row);
-      }
-    }
-  }
-
-  // TODO do we only return a client rowset when server range matches client range ?
-  getClientRows() {
-    // const { lo, hi } = this.clientRange;
-    const records = this.dataWindow.getData();
-    const clientRows = [];
-
-    if (this.requiresKeyAssignment) {
-      const { from, to } = this.dataWindow.range;
-      const keys = this.keys.reset(from, to);
-      for (let { rowIndex, rowKey, sel: isSelected, data } of records) {
-        clientRows.push([rowIndex, keys.keyFor(rowIndex), true, null, null, 1, rowKey, isSelected].concat(data))
-      }
-      this.requiresKeyAssignment = false;
-
-    } else {
-      for (let { rowIndex, rowKey, sel: isSelected, data } of records) {
-        clientRows.push([rowIndex, 0, true, null, null, 1, rowKey, isSelected].concat(data))
-      }
-    }
-
-    this.hasUpdates = false;
-    return clientRows;
-  }
-}
-
-export class KeySet {
-  constructor() {
-    this.keys = new Map();
-    this.free = [];
-    this.nextKeyValue = 0;
-  }
-
-  next() {
-    if (this.free.length) {
-      return this.free.pop();
-    } else {
-      return this.nextKeyValue++;
-    }
-  }
-
-  reset(lo, hi) {
-    this.keys.forEach((keyValue, rowIndex) => {
-      if (rowIndex < lo || rowIndex >= hi) {
-        this.free.push(keyValue);
-        this.keys.delete(rowIndex);
-      }
-    });
-    for (let rowIndex = lo; rowIndex < hi; rowIndex++) {
-      if (!this.keys.has(rowIndex)) {
-        const nextKeyValue = this.next();
-        this.keys.set(rowIndex, nextKeyValue);
-      }
-    }
-    return this;
-  }
-
-  keyFor(rowIndex) {
-    return this.keys.get(rowIndex)
-  }
-}

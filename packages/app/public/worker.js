@@ -145,7 +145,9 @@ class Connection {
     };
 
     const send = msg => {
-      // console.log(`%c>>>  (WebSocket) ${JSON.stringify(msg)}`,'color:blue;font-weight:bold;');
+      if (msg.body.type !== "HB_RESP"){
+        console.log(`%c>>>  (WebSocket) ${JSON.stringify(msg)}`,'color:blue;font-weight:bold;');
+      }
       ws.send(JSON.stringify(msg));
     };
 
@@ -190,6 +192,41 @@ const TABLE_LIST_RESP = 'TABLE_LIST_RESP';
 
 const TABLE_ROW = 'TABLE_ROW';
 
+class KeySet {
+  constructor() {
+    this.keys = new Map();
+    this.free = [];
+    this.nextKeyValue = 0;
+  }
+
+  next() {
+    if (this.free.length) {
+      return this.free.pop();
+    } else {
+      return this.nextKeyValue++;
+    }
+  }
+
+  reset({from, to}) {
+    this.keys.forEach((keyValue, rowIndex) => {
+      if (rowIndex < from || rowIndex >= to) {
+        this.free.push(keyValue);
+        this.keys.delete(rowIndex);
+      }
+    });
+    for (let rowIndex = from; rowIndex < to; rowIndex++) {
+      if (!this.keys.has(rowIndex)) {
+        const nextKeyValue = this.next();
+        this.keys.set(rowIndex, nextKeyValue);
+      }
+    }
+  }
+
+  keyFor(rowIndex) {
+    return this.keys.get(rowIndex)
+  }
+}
+
 class WindowRange {
   constructor(from, to){
     this.from = from;
@@ -214,22 +251,25 @@ class WindowRange {
 
 class ArrayBackedMovingWindow {
 
-  constructor(bufferSize){
-    this.range = new WindowRange(0, bufferSize);
+  // Note, the buffer is already accounted for in the range passed in here
+  constructor({lo, hi}, {from, to}, bufferSize){
+    this.bufferSize = bufferSize;
+    this.clientRange = new WindowRange(lo, hi);
+    this.range = new WindowRange(from, to);
     //internal data is always 0 based, we add range.from to determine an offset
     this.internalData = new Array(bufferSize);
     this.rowsWithinRange = 0;
   }
 
   get hasAllRowsWithinRange(){
-    return this.rowsWithinRange === this.range.to - this.range.from;
+    return this.rowsWithinRange === this.clientRange.to - this.clientRange.from;
   }
 
   setAtIndex(index, data){
     //onsole.log(`ingest row at rowIndex ${index} [${index - this.range.from}]`)
     if(this.isWithinRange(index)){
       const internalIndex = index - this.range.from;
-      if (!this.internalData[internalIndex]){
+      if (!this.internalData[internalIndex] && this.isWithinClientRange(index)){
         this.rowsWithinRange += 1;
         //onsole.log(`rowsWithinRange is now ${this.rowsWithinRange} out of ${this.range.to - this.range.from}`)
       }
@@ -247,17 +287,49 @@ class ArrayBackedMovingWindow {
     return this.range.isWithin(index);
   }
 
+  isWithinClientRange(index){
+    return this.clientRange.isWithin(index);
+  }
+
+  setClientRange(from, to){
+    this.clientRange.from = from;
+    this.clientRange.to = to;
+    this.rowsWithinRange = 0;
+    for (let i=from;i<to;i++){
+      const internalIndex = i - this.range.from;
+      if (this.internalData[internalIndex]){
+        this.rowsWithinRange += 1;
+      }
+    }
+
+    // Is data required from server ... how close are we to buffer threshold ?
+    const bufferPerimeter = this.bufferSize * .25;
+    if (this.range.to - to < bufferPerimeter){
+      console.log('%cCALL SEREVR FOR MORE DATA','color: blue; font-weight: bold');
+      return true;
+    } else if (this.range.from > 0 && from - this.range.from < bufferPerimeter){
+      console.log('CALL SEREVR FOR MORE DATA');
+      return true;
+    } else {
+      console.log('no server call required');
+      return false;
+    }
+  }
+
   setRange(from, to){
       const [overlapFrom, overlapTo] = this.range.overlap(from, to);
 
-      const newData = new Array(to - from);
+      const newData = new Array(to - from + this.bufferSize);
       this.rowsWithinRange = 0;
 
       for (let i=overlapFrom; i < overlapTo; i++){
         const data = this.getAtIndex(i);
         if (data){
-          newData[i - from] = data;
-          this.rowsWithinRange += 1;
+          const index = i - from;
+          newData[index] = data;
+          if (this.isWithinClientRange(i)){
+            this.rowsWithinRange += 1;
+          }
         }
       }
 
@@ -266,21 +338,203 @@ class ArrayBackedMovingWindow {
       this.range.to = to;
   }
 
-  getData(lo=this.range.from, hi=this.range.to){
+  getData(){
     const {from, to} = this.range;
+    const {from: lo, to: hi} = this.clientRange;
     const startOffset = Math.max(0, lo - from);
     const endOffset = Math.min(to-from, to, hi - from);
     //onsole.log(`MovingWindow getData (${lo}, ${hi}) range = ${from} ${to} , so start=${startOffset}, end=${endOffset}`)
     return this.internalData.slice(startOffset,endOffset);
   }
 
-  getRange(){
-    return this.range.copy();
+}
+
+function getFullRange({lo,hi}, bufferSize=0, rowCount){
+  if (bufferSize === 0){
+    return {from: lo, to: hi};
+  } else if (lo === 0){
+    return {from: lo, to: hi + bufferSize};
+  } else {
+    const buff = Math.round(bufferSize / 2);
+    // temp hack - need to take rowCount into consideration
+    return {from: Math.max(0,lo-buff), to: hi+buff}
+
+  }
+}
+
+class Viewport {
+  constructor({ viewport, tablename, columns, range, bufferSize=0 }) {
+    this.clientViewportId = viewport;
+    this.table = tablename;
+    this.status = '';
+    this.columns = columns;
+    this.clientRange = range;
+    this.bufferSize = bufferSize;
+    this.sort = {
+      sortDefs: []
+    };
+    this.groupBy = undefined;
+    this.filterSpec = {
+      filter: ""
+    };
+    this.isTree = false;
+    this.dataWindow = undefined;
+    this.rowCount = 0;
+    this.rowCountChanged = false;
+    this.keys = new KeySet();
+    this.pendingOperations = new Map();
+    this.hasUpdates = false;
+    this.requiresKeyAssignment = true;
+
+  }
+
+  get shouldUpdateClient() {
+    return this.rowCountChanged || (this.hasUpdates && this.dataWindow.hasAllRowsWithinRange);
+  }
+
+  subscribe() {
+    return {
+      type: CREATE_VP,
+      table: this.table,
+      range: getFullRange(this.clientRange, this.bufferSize),
+      columns: this.columns,
+      sort: this.sort,
+      groupBy: this.groupBy,
+      filterSpec: this.filterSpec
+    }
+  }
+
+  handleSubscribed({ viewPortId, columns, table, range, sort, groupBy, filterSpec }) {
+    this.serverViewportId = viewPortId;
+    this.status = 'subscribed';
+    this.columns = columns;
+    this.table = table;
+    this.range = range;
+    this.sort = sort;
+    this.groupBy = groupBy;
+    this.filterSpec = filterSpec;
+    this.isTree = groupBy && groupBy.length > 0;
+    this.dataWindow = new ArrayBackedMovingWindow(this.clientRange, range, this.bufferSize);
+
+    console.log(`%cViewport subscribed
+      clientVpId: ${this.clientViewportId}
+      serverVpId: ${this.serverViewportId}
+      table: ${this.table}
+      columns: ${columns.join(',')}
+      range: ${JSON.stringify(range)}
+      sort: ${JSON.stringify(sort)}
+      groupBy: ${JSON.stringify(groupBy)}
+      filterSpec: ${JSON.stringify(filterSpec)}
+      bufferSize: ${this.bufferSize}
+    `, 'color: blue');
+  }
+
+  awaitOperation(requestId, type) {
+    //TODO set uip a timeout mechanism here
+    this.pendingOperations.set(requestId, type);
+  }
+
+    // Return a message if we need to communicate this to client UI
+    completeOperation(requestId, ...params) {
+      const { clientViewportId, pendingOperations } = this;
+      const { type, data } = pendingOperations.get(requestId);
+      pendingOperations.delete(requestId);
+      if (type === CHANGE_VP_RANGE){
+        const [from,to] = params;
+        this.dataWindow.setRange(from, to);
+        // this is only true if client range is affected
+        this.requiresKeyAssignment = true;
+        this.hasUpdates = true;
+      } else if (type === 'groupBy') {
+        this.isTree = true;
+        this.groupBy = data;
+        return { clientViewportId, type, groupBy: data };
+      } else if (type === "groupByClear") {
+        this.isTree = false;
+        this.groupBy = [];
+        return { clientViewportId, type: "groupBy", groupBy: null };
+      } else if (type === 'filter') {
+        this.filterSpec = { filter: data };
+        return { clientViewportId, type, filter: data };
+      } else if (type === 'sort') {
+        this.sort = { sortDefs: data };
+        return { clientViewportId, type, sort: data };
+      } else if (type === "selection") {
+        this.selection = data;
+      } else if (type === "disable") {
+        this.suspended = true; // assuming its _SUCCESS, of cource
+      } else if (type === "enable") {
+        this.suspended = false;
+      }
+    }
+
+  rangeRequest(requestId, from, to){
+    // If we can satisfy the range request from the buffer, we will.
+    // May or may not need to make a server request, depending on status of buffer
+    const type = CHANGE_VP_RANGE;
+    const serverDataRequired = this.dataWindow.setClientRange(from, to);
+    const serverRequest = serverDataRequired
+      ? { type, viewPortId: this.serverViewportId, ...getFullRange({lo:from, hi:to}, this.bufferSize)}
+      : undefined;
+    if (serverRequest){
+      this.awaitOperation(requestId,{type});
+    }
+    const clientRows = this.dataWindow.hasAllRowsWithinRange
+      ? this.getClientRows(true)
+      : undefined;
+    return [serverRequest, clientRows];
+  }
+
+  handleUpdate(updateType, rowIndex, row) {
+    if (this.rowCount !== row.vpSize) {
+      this.rowCount = row.vpSize;
+      this.rowCountChanged = true;
+    }
+    if (updateType === 'U') {
+      if (this.dataWindow.isWithinRange(rowIndex)) {
+        // We need an additional check isWithinClientViewport
+        if (this.dataWindow.isWithinClientRange(rowIndex)){
+          this.hasUpdates = true;
+        }
+        this.dataWindow.setAtIndex(rowIndex, row);
+      }
+    }
+  }
+
+
+  getRowCount = () => {
+    if (this.rowCountChanged) {
+      this.rowCountChanged = false;
+      return this.rowCount;
+    }
+  }
+
+  // TODO do we only return a client rowset when server range matches client range ?
+  getClientRows(force) {
+    const readyToSendRows = force || (this.hasUpdates && this.dataWindow.hasAllRowsWithinRange);
+    if (readyToSendRows) {
+      const records = this.dataWindow.getData();
+      const clientRows = [];
+      const { keys } = this;
+
+      if (force || this.requiresKeyAssignment) {
+        keys.reset(this.dataWindow.clientRange);
+        this.requiresKeyAssignment = false;
+      }
+
+      for (let { rowIndex, rowKey, sel: isSelected, data } of records) {
+        clientRows.push([rowIndex, keys.keyFor(rowIndex), true, null, null, 1, rowKey, isSelected].concat(data));
+      }
+      this.hasUpdates = false;
+      return clientRows;
+    }
   }
 }
 
 let _requestId = 1;
+
 const nextRequestId = () => `${_requestId++}`;
+// let updateTime = 0;
 
 class ServerProxy {
 
@@ -317,7 +571,7 @@ class ServerProxy {
   }
 
   handleMessageFromClient(message) {
-    const {type, viewport: clientViewportId} = message;
+    const { type, viewport: clientViewportId } = message;
     const serverViewportId = this.mapClientToServerViewport.get(clientViewportId);
     const viewport = this.viewports.get(serverViewportId);
     if (!viewport) {
@@ -335,14 +589,18 @@ class ServerProxy {
 
     switch (message.type) {
       case 'setViewRange':
-        this.sendIfReady({
-          type: CHANGE_VP_RANGE,
-          viewPortId: viewport.serverViewportId,
-          from: message.range.lo,
-          to: message.range.hi
-        },
-          _requestId++,
-          isReady);
+        const requestId = nextRequestId();
+        const [serverRequest, rows] = viewport.rangeRequest(requestId, message.range.lo, message.range.hi);
+        if (serverRequest){
+          this.sendIfReady(serverRequest, requestId, isReady);
+        }
+        if (rows){
+          const clientMessage = {
+            type: "viewport-updates", viewports: {
+              [viewport.clientViewportId]: {rows}
+          }};
+          this.postMessageToClient(clientMessage);
+        }
         break;
 
       case 'sort': {
@@ -456,7 +714,7 @@ class ServerProxy {
 
 
   handleMessageFromServer(message) {
-    const { requestId, body: {type, ...body} } = message;
+    const { requestId, body: { type, ...body } } = message;
     const { viewports } = this;
     switch (type) {
 
@@ -496,7 +754,7 @@ class ServerProxy {
 
       case CHANGE_VP_RANGE_SUCCESS: {
         const { viewPortId, from, to } = body;
-        viewports.get(viewPortId).setRange(from, to);
+        viewports.get(viewPortId).completeOperation(requestId, from, to);
       }
         break;
 
@@ -519,12 +777,19 @@ class ServerProxy {
     this.viewports.forEach((viewport) => {
       if (viewport.shouldUpdateClient) {
         clientMessage = clientMessage || { type: "viewport-updates", viewports: {} };
-        clientMessage.viewports[viewport.clientViewportId] = viewport.getClientRows();
+        clientMessage.viewports[viewport.clientViewportId] = {
+          rows: viewport.getClientRows(),
+          size: viewport.getRowCount()
+        };
+      }      if (clientMessage) {
+        // const now = performance.now();
+        // if (updateTime){
+        //   console.log(`time between updates ${now - updateTime}`)
+        // }
+        // updateTime = now;
+        this.postMessageToClient(clientMessage);
       }
     });
-    if (clientMessage) {
-      this.postMessageToClient(clientMessage);
-    }
   }
 
 }
@@ -534,154 +799,6 @@ class ServerProxy {
 //   const date = new Date(ts);
 //   return `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} ${date.getMilliseconds()}`
 // }
-
-class Viewport {
-  constructor({ viewport, tablename, columns, range }) {
-    this.clientViewportId = viewport;
-    this.table = tablename;
-    this.status = '';
-    this.columns = columns;
-    this.clientRange = range;
-    this.sort = undefined;
-    this.groupBy = undefined;
-    this.filterSpec = {
-      filter: ""
-    };
-    this.isTree = false;
-    this.dataWindow = undefined;
-    this.rowCount = 0;
-    this.keys = new KeySet();
-
-    this.hasUpdates = false;
-    this.requiresKeyAssignment = true;
-
-  }
-
-  get shouldUpdateClient() {
-    return this.hasUpdates && this.dataWindow.hasAllRowsWithinRange;
-  }
-
-  subscribe(){
-    return {
-      type: CREATE_VP,
-      table: this.table,
-      range: {
-        from: this.clientRange.lo,
-        to: this.clientRange.hi
-      },
-      columns: this.columns,
-      sort: {
-        sortDefs: this.sort
-      },
-      groupBy: this.groupBy,
-      filterSpec: this.filterSpec
-    }
-  }
-
-  handleSubscribed({ viewPortId, columns, table, range, sort, groupBy, filterSpec }) {
-    this.serverViewportId = viewPortId;
-    this.status = 'subscribed';
-    this.columns = columns;
-    this.table = table;
-    this.range = range;
-    this.sort = sort;
-    this.groupBy = groupBy;
-    this.filterSpec = filterSpec;
-    this.isTree = groupBy && groupBy.length > 0;
-    this.dataWindow = new ArrayBackedMovingWindow(range.to - range.from);
-
-    console.log(`%cViewport subscribed
-      clientVpId: ${this.clientViewportId}
-      serverVpId: ${this.serverViewportId}
-      table: ${this.table}
-      columns: ${columns.join(',')}
-      range: ${JSON.stringify(range)}
-      sort: ${JSON.stringify(sort)}
-      groupBy: ${JSON.stringify(groupBy)}
-      filterSpec: ${JSON.stringify(filterSpec)}
-    `, 'color: blue');
-  }
-
-  setRange(lo, hi) {
-    this.dataWindow.setRange(lo, hi);
-    this.requiresKeyAssignment = true;
-    this.hasUpdates = true;
-    //onsole.log(`after %csetRange%c ${lo} ${hi}, rowsWithinRange ${this.dataWindow.rowsWithinRange} hasAllRowsWithinRange ? ${this.dataWindow.hasAllRowsWithinRange}`,'color: blue;font-weight: bold;','');
-    //onsole.table(this.dataWindow.internalData)
-
-  }
-
-  handleUpdate(updateType, rowIndex, row) {
-    this.rowCount = row.vpSize;
-    if (updateType === 'U') {
-      if (this.dataWindow.isWithinRange(rowIndex)) {
-        // We need an additional check isWithinClientViewport
-        this.hasUpdates = true;
-        this.dataWindow.setAtIndex(rowIndex, row);
-      }
-    }
-  }
-
-  // TODO do we only return a client rowset when server range matches client range ?
-  getClientRows() {
-    // const { lo, hi } = this.clientRange;
-    const records = this.dataWindow.getData();
-    const clientRows = [];
-
-    if (this.requiresKeyAssignment) {
-      const { from, to } = this.dataWindow.range;
-      const keys = this.keys.reset(from, to);
-      for (let { rowIndex, rowKey, sel: isSelected, data } of records) {
-        clientRows.push([rowIndex, keys.keyFor(rowIndex), true, null, null, 1, rowKey, isSelected].concat(data));
-      }
-      this.requiresKeyAssignment = false;
-
-    } else {
-      for (let { rowIndex, rowKey, sel: isSelected, data } of records) {
-        clientRows.push([rowIndex, 0, true, null, null, 1, rowKey, isSelected].concat(data));
-      }
-    }
-
-    this.hasUpdates = false;
-    return clientRows;
-  }
-}
-
-class KeySet {
-  constructor() {
-    this.keys = new Map();
-    this.free = [];
-    this.nextKeyValue = 0;
-  }
-
-  next() {
-    if (this.free.length) {
-      return this.free.pop();
-    } else {
-      return this.nextKeyValue++;
-    }
-  }
-
-  reset(lo, hi) {
-    this.keys.forEach((keyValue, rowIndex) => {
-      if (rowIndex < lo || rowIndex >= hi) {
-        this.free.push(keyValue);
-        this.keys.delete(rowIndex);
-      }
-    });
-    for (let rowIndex = lo; rowIndex < hi; rowIndex++) {
-      if (!this.keys.has(rowIndex)) {
-        const nextKeyValue = this.next();
-        this.keys.set(rowIndex, nextKeyValue);
-      }
-    }
-    return this;
-  }
-
-  keyFor(rowIndex) {
-    return this.keys.get(rowIndex)
-  }
-}
 
 /* eslint-disable no-restricted-globals */
 const url = new URL(self.location);

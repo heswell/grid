@@ -1,7 +1,6 @@
-import { createLogger, DataTypes, EventEmitter, getFullRange, logColor, uuid } from '@heswell/utils';
+import { createLogger, DataTypes, EventEmitter, logColor, uuid } from '@heswell/utils';
 import {
-  msgType as Msg,
-  connectionId as _connectionId,
+  msgType as Msg
 } from './constants';
 
 // TODO make this dynamic
@@ -96,10 +95,11 @@ export default class RemoteDataSource extends EventEmitter {
       viewport,
       tablename: tableName,
       columns,
-      range: getFullRange({ bufferSize, ...range }),
+      range,
       sort,
       groupBy,
-      filter
+      filter,
+      bufferSize
     }, this.handleMessageFromServer);
   }
 
@@ -166,11 +166,10 @@ export default class RemoteDataSource extends EventEmitter {
 
 
   setRange(lo, hi, dataType = ROW_DATA) {
-    const { bufferSize } = this;
     this.server?.handleMessageFromClient({
       viewport: this.viewport,
       type: Msg.setViewRange,
-      range: getFullRange({ lo, hi, bufferSize }),
+      range: { lo, hi},
       dataType
     });
   }
