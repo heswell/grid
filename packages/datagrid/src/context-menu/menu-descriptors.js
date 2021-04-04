@@ -3,7 +3,7 @@ import * as Action from './context-menu-actions';
 export function buildMenuDescriptors(gridModel, location, options){
   const menuItems = [];
   if (location === 'header') {
-    menuItems.push(...buildSortMenuItems(gridModel.sortColumns, options));
+    menuItems.push(...buildSortMenuItems(gridModel.sort, options));
     menuItems.push(...buildGroupMenuItems(gridModel.groupBy, options));
     menuItems.push({label: 'Hide Column', action: Action.ColumnHide, options})
   }

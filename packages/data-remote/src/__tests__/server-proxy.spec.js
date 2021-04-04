@@ -834,6 +834,81 @@ describe('ServerProxy', () => {
 
 
     })
+  });
+
+  describe('selection', () => {
+
+    it('single select', () => {
+      const [clientSubscription1, serverSubscriptionAck1] = createSubscription({hi: 20, bufferSize: 100});
+      const callback = jest.fn();
+      const serverProxy = new ServerProxy(mockConnection, callback);
+      serverProxy.subscribe(clientSubscription1);
+      serverProxy.handleMessageFromServer(serverSubscriptionAck1);
+
+      serverProxy.handleMessageFromServer({
+        body: {
+          type: "TABLE_ROW", rows: [
+            { viewPortId: "server-vp-1", vpSize: 10, rowIndex: -1, rowKey: "SIZE", updateType: "SIZE" },
+            ...createTableRows("server-vp-1", 0, 10, 10)
+          ]
+        }
+      });
+
+      TEST_setRequestId(1);
+      callback.mockClear();
+      mockConnection.send.mockClear();
+
+      serverProxy.handleMessageFromClient({
+        viewport: "client-vp-1",
+        type: "select",
+        rangeSelect: false,
+        keepExistingSelection: false,
+        row:  [1, 1, true, null, null, 1, "key-01", 0, "key-01", "name 01", 1001, true]
+      });
+
+      expect(callback).toHaveBeenCalledTimes(0);
+      expect(mockConnection.send).toHaveBeenCalledTimes(1);
+
+      expect(mockConnection.send).toHaveBeenCalledWith({
+        requestId: "1",
+        body: {
+          vpId: "server-vp-1",
+          type: "SET_SELECTION",
+          selection: [1]
+        },
+        user: "user",
+        module: "CORE"
+      })
+
+      TEST_setRequestId(1);
+      callback.mockClear();
+      mockConnection.send.mockClear();
+
+      serverProxy.handleMessageFromClient({
+        viewport: "client-vp-1",
+        type: "select",
+        rangeSelect: false,
+        keepExistingSelection: false,
+        row: [4, 4, true, null, null, 1, "key-04", 0, "key-04", "name 04", 1004, true],
+      });
+
+      expect(callback).toHaveBeenCalledTimes(0);
+      expect(mockConnection.send).toHaveBeenCalledTimes(1);
+
+      expect(mockConnection.send).toHaveBeenCalledWith({
+        requestId: "1",
+        body: {
+          vpId: "server-vp-1",
+          type: "SET_SELECTION",
+          selection: [4]
+        },
+        user: "user",
+        module: "CORE"
+      })
+
+
+    })
+
   })
 
 

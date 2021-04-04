@@ -43,7 +43,7 @@ const MenuContextProvider = ({children, showMenu}) => {
         const {column} = options;
         return dispatchGridAction({
           type: 'sort',
-          columns: GridModel.setSortColumn(gridModel, column, 'dsc')
+          columns: GridModel.setSortColumn(gridModel, column, 'D')
         });
       }
       case Action.SortAddAscending: {
@@ -57,7 +57,7 @@ const MenuContextProvider = ({children, showMenu}) => {
         const {column} = options;
         return dispatchGridAction({
           type: 'sort',
-          columns: GridModel.addSortColumn(gridModel, column, 'dsc')
+          columns: GridModel.addSortColumn(gridModel, column, 'D')
         });
       }
       case Action.SortRemove: {

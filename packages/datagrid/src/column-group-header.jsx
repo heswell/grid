@@ -45,7 +45,7 @@ const ColumnGroupHeader = React.memo(
         return sortEntry === undefined
           ? undefined
           : multiColumnSort
-          ? sort.indexOf(sortEntry) + 1
+          ? (sort.indexOf(sortEntry) + 1) * (sortEntry.sortType === 'D' ? -1 : 1)
           : sortEntry.sortType === 'A'
           ? "asc"
           : "dsc";

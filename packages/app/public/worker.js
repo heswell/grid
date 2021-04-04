@@ -172,12 +172,20 @@ class Connection {
 
 const AUTH = 'AUTH';
 const AUTH_SUCCESS = 'AUTH_SUCCESS';
+const CHANGE_VP = 'CHANGE_VP';
+const CHANGE_VP_SUCCESS = 'CHANGE_VP_SUCCESS';
 const CHANGE_VP_RANGE = 'CHANGE_VP_RANGE';
 const CHANGE_VP_RANGE_SUCCESS = 'CHANGE_VP_RANGE_SUCCESS';
 const CLOSE_TREE_NODE = "CLOSE_TREE_NODE";
+const CLOSE_TREE_SUCCESS = "CLOSE_TREE_SUCCESS";
 const CREATE_VISUAL_LINK = 'CREATE_VISUAL_LINK';
+const CREATE_VISUAL_LINK_SUCCESS = 'CREATE_VISUAL_LINK_SUCCESS';
 const CREATE_VP = 'CREATE_VP';
 const CREATE_VP_SUCCESS = 'CREATE_VP_SUCCESS';
+const DISABLE_VP = "DISABLE_VP";
+const DISABLE_VP_SUCCESS = "DISABLE_VP_SUCCESS";
+const ENABLE_VP = "ENABLE_VP";
+const ENABLE_VP_SUCCESS = "ENABLE_VP_SUCCESS";
 const GET_TABLE_LIST = "GET_TABLE_LIST";
 const GET_TABLE_META = "GET_TABLE_META";
 const HB = "HB";
@@ -185,10 +193,29 @@ const HB_RESP = "HB_RESP";
 const LOGIN = 'LOGIN';
 const LOGIN_SUCCESS = 'LOGIN_SUCCESS';
 const OPEN_TREE_NODE = "OPEN_TREE_NODE";
+const OPEN_TREE_SUCCESS = "OPEN_TREE_SUCCESS";
+const SET_SELECTION = 'SET_SELECTION';
+const SET_SELECTION_SUCCESS = 'SET_SELECTION_SUCCESS';
 const TABLE_META_RESP = 'TABLE_META_RESP';
 const TABLE_LIST_RESP = 'TABLE_LIST_RESP';
 
 const TABLE_ROW = 'TABLE_ROW';
+
+const metadataKeys = {
+    IDX: 0,
+    RENDER_IDX: 1,
+    IS_LEAF: 2,
+    IS_EXPANDED: 3,
+    DEPTH: 4,
+    COUNT: 5,
+    KEY: 6,
+    SELECTED: 7,
+    // PARENT_IDX: 8,
+    // IDX_POINTER: 9,
+    // FILTER_COUNT: 10,
+    // NEXT_FILTER_IDX: 11,
+    count: 8
+};
 
 class KeySet {
   constructor() {
@@ -389,8 +416,11 @@ function getFullRange({lo,hi}, bufferSize=0, rowCount=Number.MAX_SAFE_INTEGER){
   }
 }
 
+const { IDX, SELECTED } = metadataKeys;
+const EMPTY_ARRAY = [];
+
 class Viewport {
-  constructor({ viewport, tablename, columns, range, bufferSize=0 }) {
+  constructor({ viewport, tablename, columns, range, bufferSize = 0 }) {
     this.clientViewportId = viewport;
     this.table = tablename;
     this.status = '';
@@ -442,17 +472,17 @@ class Viewport {
     this.isTree = groupBy && groupBy.length > 0;
     this.dataWindow = new ArrayBackedMovingWindow(this.clientRange, range, this.bufferSize);
 
-    console.log(`%cViewport subscribed
-      clientVpId: ${this.clientViewportId}
-      serverVpId: ${this.serverViewportId}
-      table: ${this.table}
-      columns: ${columns.join(',')}
-      range: ${JSON.stringify(range)}
-      sort: ${JSON.stringify(sort)}
-      groupBy: ${JSON.stringify(groupBy)}
-      filterSpec: ${JSON.stringify(filterSpec)}
-      bufferSize: ${this.bufferSize}
-    `, 'color: blue');
+    //   console.log(`%cViewport subscribed
+    //     clientVpId: ${this.clientViewportId}
+    //     serverVpId: ${this.serverViewportId}
+    //     table: ${this.table}
+    //     columns: ${columns.join(',')}
+    //     range: ${JSON.stringify(range)}
+    //     sort: ${JSON.stringify(sort)}
+    //     groupBy: ${JSON.stringify(groupBy)}
+    //     filterSpec: ${JSON.stringify(filterSpec)}
+    //     bufferSize: ${this.bufferSize}
+    //   `, 'color: blue');
   }
 
   awaitOperation(requestId, type) {
@@ -460,55 +490,105 @@ class Viewport {
     this.pendingOperations.set(requestId, type);
   }
 
-    // Return a message if we need to communicate this to client UI
-    completeOperation(requestId, ...params) {
-      const { clientViewportId, pendingOperations } = this;
-      const { type, data } = pendingOperations.get(requestId);
-      pendingOperations.delete(requestId);
-      if (type === CHANGE_VP_RANGE){
-        const [from,to] = params;
-        this.dataWindow.setRange(from, to);
-        // this is only true if client range is affected
-        this.requiresKeyAssignment = true;
-        this.hasUpdates = true;
-      } else if (type === 'groupBy') {
-        this.isTree = true;
-        this.groupBy = data;
-        return { clientViewportId, type, groupBy: data };
-      } else if (type === "groupByClear") {
-        this.isTree = false;
-        this.groupBy = [];
-        return { clientViewportId, type: "groupBy", groupBy: null };
-      } else if (type === 'filter') {
-        this.filterSpec = { filter: data };
-        return { clientViewportId, type, filter: data };
-      } else if (type === 'sort') {
-        this.sort = { sortDefs: data };
-        return { clientViewportId, type, sort: data };
-      } else if (type === "selection") {
-        this.selection = data;
-      } else if (type === "disable") {
-        this.suspended = true; // assuming its _SUCCESS, of cource
-      } else if (type === "enable") {
-        this.suspended = false;
-      }
+  // Return a message if we need to communicate this to client UI
+  completeOperation(requestId, ...params) {
+    const { clientViewportId, pendingOperations } = this;
+    const { type, data } = pendingOperations.get(requestId);
+    pendingOperations.delete(requestId);
+    if (type === CHANGE_VP_RANGE) {
+      const [from, to] = params;
+      this.dataWindow.setRange(from, to);
+      // this is only true if client range is affected
+      this.requiresKeyAssignment = true;
+      this.hasUpdates = true;
+    } else if (type === 'groupBy') {
+      this.isTree = true;
+      this.groupBy = data;
+      return { clientViewportId, type, groupBy: data };
+    } else if (type === "groupByClear") {
+      this.isTree = false;
+      this.groupBy = [];
+      return { clientViewportId, type: "groupBy", groupBy: null };
+    } else if (type === 'filter') {
+      this.filterSpec = { filter: data };
+      return { clientViewportId, type, filter: data };
+    } else if (type === 'sort') {
+      this.sort = { sortDefs: data };
+      return { clientViewportId, type, sort: data };
+    } else if (type === "selection") {
+      this.selection = data;
+    } else if (type === "disable") {
+      this.suspended = true; // assuming its _SUCCESS, of cource
+    } else if (type === "enable") {
+      this.suspended = false;
     }
+  }
 
-  rangeRequest(requestId, from, to){
+  rangeRequest(requestId, from, to) {
     // If we can satisfy the range request from the buffer, we will.
     // May or may not need to make a server request, depending on status of buffer
     const type = CHANGE_VP_RANGE;
     const serverDataRequired = this.dataWindow.setClientRange(from, to);
     const serverRequest = serverDataRequired
-      ? { type, viewPortId: this.serverViewportId, ...getFullRange({lo:from, hi:to}, this.bufferSize, this.dataWindow.rowCount)}
+      ? { type, viewPortId: this.serverViewportId, ...getFullRange({ lo: from, hi: to }, this.bufferSize, this.dataWindow.rowCount) }
       : undefined;
-    if (serverRequest){
-      this.awaitOperation(requestId,{type});
+    if (serverRequest) {
+      this.awaitOperation(requestId, { type });
     }
     const clientRows = this.dataWindow.hasAllRowsWithinRange
       ? this.getClientRows(true)
       : undefined;
     return [serverRequest, clientRows];
+  }
+
+  enable(requestId) {
+    this.awaitOperation(requestId, { type: "enable" });
+    return {
+      type: ENABLE_VP,
+      viewPortId: this.serverViewportId,
+    }
+  }
+
+  disable(requestId) {
+    this.awaitOperation(requestId, { type: "disable" });
+    return {
+      type: DISABLE_VP,
+      viewPortId: this.serverViewportId,
+    }
+  }
+
+  filterRequest(requestId, filter) {
+    this.awaitOperation(requestId, { type: "filter", data: filter });
+    return this.createRequest({ filterSpec: { filter } });
+  }
+
+  sortRequest(requestId, sortDefs) {
+    this.awaitOperation(requestId, { type: "sort", data: sortDefs });
+    return this.createRequest({ sort: { sortDefs } })
+  }
+
+  groupByRequest(requestId, groupBy = EMPTY_ARRAY) {
+    const type = groupBy === EMPTY_ARRAY ? "groupByClear" : "groupBy";
+    this.awaitOperation(requestId, { type, data: groupBy });
+    return this.createRequest({ groupBy })
+  }
+
+  selectRequest(requestId, row, rangeSelect, keepExistingSelection) {
+    const singleSelect = !rangeSelect && !keepExistingSelection;
+    const selection = row[SELECTED]
+      ? singleSelect
+        ? []
+        : this.selection.filter(idx => idx !== row[IDX])
+      : keepExistingSelection
+        ? this.selection.concat(row[IDX])
+        : [row[IDX]];
+
+    this.awaitOperation(requestId, { type: "selection", data: selection });
+    return {
+      type: SET_SELECTION,
+      vpId: this.serverViewportId,
+      selection
+    }
   }
 
   handleUpdate(updateType, rowIndex, row) {
@@ -518,7 +598,7 @@ class Viewport {
     }
     if (updateType === 'U') {
       // Update will return true if row was within client range
-      if (this.dataWindow.setAtIndex(rowIndex, row)){
+      if (this.dataWindow.setAtIndex(rowIndex, row)) {
         this.hasUpdates = true;
       }
     }
@@ -552,6 +632,19 @@ class Viewport {
       return clientRows;
     }
   }
+
+  createRequest(params) {
+    return {
+      type: CHANGE_VP,
+      viewPortId: this.serverViewportId,
+      columns: this.columns,
+      sort: this.sort,
+      groupBy: this.groupBy,
+      filterSpec: this.filterSpec,
+      ...params
+    }
+  }
+
 }
 
 let _requestId = 1;
@@ -614,14 +707,15 @@ class ServerProxy {
       case 'setViewRange':
         const requestId = nextRequestId();
         const [serverRequest, rows] = viewport.rangeRequest(requestId, message.range.lo, message.range.hi);
-        if (serverRequest){
+        if (serverRequest) {
           this.sendIfReady(serverRequest, requestId, isReady);
         }
-        if (rows){
+        if (rows) {
           const clientMessage = {
             type: "viewport-updates", viewports: {
-              [viewport.clientViewportId]: {rows}
-          }};
+              [viewport.clientViewportId]: { rows }
+            }
+          };
           this.postMessageToClient(clientMessage);
         }
         break;
@@ -766,6 +860,24 @@ class ServerProxy {
           viewport.handleSubscribed(body);
         }
         break;
+      case SET_SELECTION_SUCCESS:
+        if (viewports.has(body.vpId)) {
+          viewports.get(body.vpId).completeOperation(requestId);
+        }
+        break;
+
+      case CHANGE_VP_SUCCESS:
+      case DISABLE_VP_SUCCESS:
+      case ENABLE_VP_SUCCESS:
+        if (viewports.has(body.viewPortId)) {
+          const response = this.viewports.get(body.viewPortId).completeOperation(requestId);
+          if (response) {
+            this.postMessageToClient(response);
+          }
+
+        }
+
+        break;
 
       case TABLE_ROW:
         for (const row of body.rows) {
@@ -779,6 +891,11 @@ class ServerProxy {
         const { viewPortId, from, to } = body;
         viewports.get(viewPortId).completeOperation(requestId, from, to);
       }
+        break;
+
+      case OPEN_TREE_SUCCESS:
+      case CLOSE_TREE_SUCCESS:
+      case CREATE_VISUAL_LINK_SUCCESS:
         break;
 
       case TABLE_LIST_RESP:

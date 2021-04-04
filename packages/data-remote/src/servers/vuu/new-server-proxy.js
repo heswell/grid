@@ -1,5 +1,5 @@
 import * as Message from './messages';
-import {Viewport} from "./new-viewport";
+import { Viewport } from "./new-viewport";
 
 let _requestId = 1;
 export const TEST_setRequestId = id => _requestId = id;
@@ -63,14 +63,15 @@ export class ServerProxy {
       case 'setViewRange':
         const requestId = nextRequestId();
         const [serverRequest, rows] = viewport.rangeRequest(requestId, message.range.lo, message.range.hi);
-        if (serverRequest){
+        if (serverRequest) {
           this.sendIfReady(serverRequest, requestId, isReady)
         }
-        if (rows){
+        if (rows) {
           const clientMessage = {
             type: "viewport-updates", viewports: {
-              [viewport.clientViewportId]: {rows}
-          }};
+              [viewport.clientViewportId]: { rows }
+            }
+          };
           this.postMessageToClient(clientMessage);
         }
         break;
@@ -215,6 +216,24 @@ export class ServerProxy {
           viewport.handleSubscribed(body);
         }
         break;
+      case Message.SET_SELECTION_SUCCESS:
+        if (viewports.has(body.vpId)) {
+          viewports.get(body.vpId).completeOperation(requestId);
+        }
+        break;
+
+      case Message.CHANGE_VP_SUCCESS:
+      case Message.DISABLE_VP_SUCCESS:
+      case Message.ENABLE_VP_SUCCESS:
+        if (viewports.has(body.viewPortId)) {
+          const response = this.viewports.get(body.viewPortId).completeOperation(requestId);
+          if (response) {
+            this.postMessageToClient(response);
+          }
+
+        }
+
+        break;
 
       case Message.TABLE_ROW:
         for (const row of body.rows) {
@@ -228,6 +247,11 @@ export class ServerProxy {
         const { viewPortId, from, to } = body;
         viewports.get(viewPortId).completeOperation(requestId, from, to)
       }
+        break;
+
+      case Message.OPEN_TREE_SUCCESS:
+      case Message.CLOSE_TREE_SUCCESS:
+      case Message.CREATE_VISUAL_LINK_SUCCESS:
         break;
 
       case Message.TABLE_LIST_RESP:

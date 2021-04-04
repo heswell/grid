@@ -9,7 +9,9 @@ const SortIndicator = ({ sorted }) => {
     return null;
   }
 
-  const direction = sorted < 0 ? Direction.DSC : Direction.ASC;
+  const direction = typeof sorted === 'number'
+    ? sorted < 0 ? Direction.DSC : Direction.ASC
+    : sorted;
 
   return typeof sorted === "number" ? (
     <div className={cx("vuSortIndicator", "multi-col", direction)}>
