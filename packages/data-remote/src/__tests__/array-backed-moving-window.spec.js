@@ -16,7 +16,7 @@ describe('ArrayBackedMovingWindow', () => {
   describe('VUU type updates', () => {
     test('setRange before data arrives', () => {
 
-      const movingWindow = new ArrayBackedMovingWindow(19);
+      const movingWindow = new ArrayBackedMovingWindow({lo:0,hi:19}, {from:0, to:19},0);
 
       const data = [
         [0, 0, 0, 0, "AAA.L", 0, null, null, null, null, "AAA.L", "AAA.L London PLC", "USD", "XLON/LSE-SETS", 633, 101, 121, "", "", "", "fastTick"],
@@ -62,7 +62,7 @@ describe('ArrayBackedMovingWindow', () => {
 
     test('simple update', () => {
 
-      const movingWindow = new ArrayBackedMovingWindow(25);
+      const movingWindow = new ArrayBackedMovingWindow({lo:0,hi:25}, {from:0, to:25},0);
 
       const data = [
         [0, 0, 0, 0, "AAA.L", 0, null, null, null, null, "AAA.L", "AAA.L London PLC", "USD", "XLON/LSE-SETS", 633, 101, 121, "", "", "", "fastTick"],
@@ -115,7 +115,7 @@ describe('ArrayBackedMovingWindow', () => {
 
     test('mismatched ranges I', () => {
 
-      const movingWindow = new ArrayBackedMovingWindow(25);
+      const movingWindow = new ArrayBackedMovingWindow({lo:0,hi:25}, {from:0, to:25},0);
       applyUpdates(movingWindow, [
         [0, 0, 0, 0, "AAA.L", 0, null, null, null, null, "AAA.L", "AAA.L London PLC", "USD", "XLON/LSE-SETS", 633, 101, 121, "", "", "", "fastTick"],
         [1, 0, 0, 0, "AAA.N", 0, null, null, null, null, "AAA.N", "AAA.N Corporation", "EUR", "XNGS/NAS-GSM", 220, 914, 943.08, "", "", "", "fastTick"],
@@ -188,7 +188,7 @@ describe('ArrayBackedMovingWindow', () => {
 
     test('mismatched ranges II', () => {
 
-      const movingWindow = new ArrayBackedMovingWindow(25);
+      const movingWindow = new ArrayBackedMovingWindow({lo:0,hi:25}, {from:0, to:25},0);
 
       applyUpdates(movingWindow, [
         [0, 0, 0, 0, "AAA.L", 0, null, null, null, null, "AAA.L", "AAA.L London PLC", "USD", "XLON/LSE-SETS", 633, 101, 121, "", "", "", "fastTick"],
@@ -264,7 +264,7 @@ describe('ArrayBackedMovingWindow', () => {
 
     test('Scrolling FWD from top, then BWD, many scolls before data response', () => {
 
-      const movingWindow = new ArrayBackedMovingWindow(25);
+      const movingWindow = new ArrayBackedMovingWindow({lo:0,hi:25}, {from:0, to:25},0);
       applyUpdates(movingWindow, [
         [0, 0, 0, 0, "AAA.L", 0, null, null, null, null, "AAA.L", "AAA.L London PLC", "USD", "XLON/LSE-SETS", 633],
         [1, 0, 0, 0, "AAA.N", 0, null, null, null, null, "AAA.N", "AAA.N Corporation", "EUR", "XNGS/NAS-GSM", 220],

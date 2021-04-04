@@ -145,9 +145,7 @@ class Connection {
     };
 
     const send = msg => {
-      if (msg.body.type !== "HB_RESP"){
-        console.log(`%c>>>  (WebSocket) ${JSON.stringify(msg)}`,'color:blue;font-weight:bold;');
-      }
+      // console.log(`%c>>>  (WebSocket) ${JSON.stringify(msg)}`,'color:blue;font-weight:bold;');
       ws.send(JSON.stringify(msg));
     };
 
@@ -259,22 +257,40 @@ class ArrayBackedMovingWindow {
     //internal data is always 0 based, we add range.from to determine an offset
     this.internalData = new Array(bufferSize);
     this.rowsWithinRange = 0;
+    this.rowCount = 0;
   }
 
   get hasAllRowsWithinRange(){
-    return this.rowsWithinRange === this.clientRange.to - this.clientRange.from;
+    return (this.rowsWithinRange === this.clientRange.to - this.clientRange.from) ||
+      (this.rowCount > 0 && this.rowsWithinRange === this.rowCount);
+  }
+
+  setRowCount = rowCount => {
+    if (rowCount < this.rowCount){
+      const [overlapFrom, overlapTo] = this.range.overlap(rowCount, this.rowCount);
+      for (let i=overlapFrom;i<overlapTo;i++){
+        const rowIndex = i - this.range.from;
+        this.internalData[rowIndex] = undefined;
+        if (this.isWithinClientRange(rowIndex)){
+          this.rowsWithinRange -= 1;
+        }
+      }
+    }
+    this.rowCount = rowCount;
   }
 
   setAtIndex(index, data){
     //onsole.log(`ingest row at rowIndex ${index} [${index - this.range.from}]`)
-    if(this.isWithinRange(index)){
+    const isWithinClientRange = this.isWithinClientRange(index);
+    if(isWithinClientRange || this.isWithinRange(index)){
       const internalIndex = index - this.range.from;
-      if (!this.internalData[internalIndex] && this.isWithinClientRange(index)){
+      if (!this.internalData[internalIndex] && isWithinClientRange){
         this.rowsWithinRange += 1;
         //onsole.log(`rowsWithinRange is now ${this.rowsWithinRange} out of ${this.range.to - this.range.from}`)
       }
       this.internalData[internalIndex] = data;
     }
+    return isWithinClientRange;
   }
 
   getAtIndex(index){
@@ -342,23 +358,34 @@ class ArrayBackedMovingWindow {
     const {from, to} = this.range;
     const {from: lo, to: hi} = this.clientRange;
     const startOffset = Math.max(0, lo - from);
-    const endOffset = Math.min(to-from, to, hi - from);
+    const endOffset = Math.min(to-from, to, hi - from, this.rowCount);
+    // const endOffset = Math.min(to-from, to, hi - from, this.rowCount);
     //onsole.log(`MovingWindow getData (${lo}, ${hi}) range = ${from} ${to} , so start=${startOffset}, end=${endOffset}`)
     return this.internalData.slice(startOffset,endOffset);
   }
 
 }
 
-function getFullRange({lo,hi}, bufferSize=0, rowCount){
+function getFullRange({lo,hi}, bufferSize=0, rowCount=Number.MAX_SAFE_INTEGER){
   if (bufferSize === 0){
-    return {from: lo, to: hi};
+    return {from: lo, to: Math.min(hi, rowCount)};
   } else if (lo === 0){
-    return {from: lo, to: hi + bufferSize};
+    return {from: lo, to: Math.min(hi + bufferSize, rowCount)};
   } else {
+    const rangeSize = hi - lo;
     const buff = Math.round(bufferSize / 2);
-    // temp hack - need to take rowCount into consideration
-    return {from: Math.max(0,lo-buff), to: hi+buff}
+    const shortfallBefore = lo - buff < 0;
+    const shortFallAfter = rowCount - (hi + buff) < 0;
 
+    if (shortfallBefore && shortFallAfter){
+      return {from: 0, to: rowCount}
+    } else if (shortfallBefore){
+      return {from: 0, to: rangeSize + bufferSize}
+    } else if (shortFallAfter){
+      return {from: Math.max(0,rowCount - (rangeSize + bufferSize)), to: rowCount}
+    } else {
+      return {from: lo-buff, to: hi + buff}
+    }
   }
 }
 
@@ -379,7 +406,6 @@ class Viewport {
     };
     this.isTree = false;
     this.dataWindow = undefined;
-    this.rowCount = 0;
     this.rowCountChanged = false;
     this.keys = new KeySet();
     this.pendingOperations = new Map();
@@ -474,7 +500,7 @@ class Viewport {
     const type = CHANGE_VP_RANGE;
     const serverDataRequired = this.dataWindow.setClientRange(from, to);
     const serverRequest = serverDataRequired
-      ? { type, viewPortId: this.serverViewportId, ...getFullRange({lo:from, hi:to}, this.bufferSize)}
+      ? { type, viewPortId: this.serverViewportId, ...getFullRange({lo:from, hi:to}, this.bufferSize, this.dataWindow.rowCount)}
       : undefined;
     if (serverRequest){
       this.awaitOperation(requestId,{type});
@@ -486,17 +512,14 @@ class Viewport {
   }
 
   handleUpdate(updateType, rowIndex, row) {
-    if (this.rowCount !== row.vpSize) {
-      this.rowCount = row.vpSize;
+    if (this.dataWindow.rowCount !== row.vpSize) {
+      this.dataWindow.setRowCount(row.vpSize);
       this.rowCountChanged = true;
     }
     if (updateType === 'U') {
-      if (this.dataWindow.isWithinRange(rowIndex)) {
-        // We need an additional check isWithinClientViewport
-        if (this.dataWindow.isWithinClientRange(rowIndex)){
-          this.hasUpdates = true;
-        }
-        this.dataWindow.setAtIndex(rowIndex, row);
+      // Update will return true if row was within client range
+      if (this.dataWindow.setAtIndex(rowIndex, row)){
+        this.hasUpdates = true;
       }
     }
   }
@@ -505,7 +528,7 @@ class Viewport {
   getRowCount = () => {
     if (this.rowCountChanged) {
       this.rowCountChanged = false;
-      return this.rowCount;
+      return this.dataWindow.rowCount;
     }
   }
 

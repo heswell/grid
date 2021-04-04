@@ -88,13 +88,12 @@ const Viewport = forwardRef(function Viewport(
         const header =
           gridModel.headerHeight * gridModel.headingDepth +
           gridModel.customInlineHeaderHeight;
-        scrollingEl.current.style.height = `${
-          header +
+        scrollingEl.current.style.height = `${header +
           Math.max(
             contentHeight.current + horizontalScrollbarHeight.current,
             gridModel.viewportHeight
           )
-        }px`;
+          }px`;
         canvasRefs.current.forEach(({ current }) =>
           current.beginHorizontalScroll()
         );
@@ -177,12 +176,12 @@ const Viewport = forwardRef(function Viewport(
           onConfigChange(action);
         }
           break;
-       case "filter": {
-         // We don't currently show filter ops innthe Grid UI, but we might at some point
+        case "filter": {
+          // We don't currently show filter ops innthe Grid UI, but we might at some point
           const action = { type, filter: options };
           onConfigChange(action);
-       }
-        break;
+        }
+          break;
         case 'groupBy': {
           const action = { type: "group", groupBy: options };
           dispatchGridModelAction(action);
@@ -207,8 +206,8 @@ const Viewport = forwardRef(function Viewport(
           }
           break;
 
-          case "VP_VISUAL_LINKS_RESP":
-            dispatchGridModelAction({ type: "visual-links", links: options });
+        case "VP_VISUAL_LINKS_RESP":
+          dispatchGridModelAction({ type: "visual-links", links: options });
 
           break;
 
@@ -229,13 +228,13 @@ const Viewport = forwardRef(function Viewport(
     setRange(
       firstVisibleRow.current,
       firstVisibleRow.current +
-        gridModel.viewportRowCount
+      gridModel.viewportRowCount
     );
   }, [gridModel.viewportRowCount]);
 
   useUpdate(() => {
     contentHeight.current = gridModel.rowHeight * rowCount.current;
-  },[gridModel.rowHeight, rowCount])
+  }, [gridModel.rowHeight, rowCount])
 
   useEffectSkipFirst(() => {
     viewportEl.current.scrollTop = 0;
@@ -258,7 +257,12 @@ const Viewport = forwardRef(function Viewport(
         const firstRow = Math.floor(scrollTop / gridModel.rowHeight);
         if (firstRow !== firstVisibleRow.current) {
           firstVisibleRow.current = firstRow;
-          setRange(firstRow, firstRow + gridModel.viewportRowCount);
+          const lastRow = firstRow + gridModel.viewportRowCount;
+          if (lastRow > rowCount.current){
+            setRange(rowCount.current - gridModel.viewportRowCount, rowCount.current);
+          } else {
+            setRange(firstRow, firstRow + gridModel.viewportRowCount);
+          }
         }
       } else if (scrollEvent === "scroll-start") {
         canvasRefs.current.forEach(({ current }) =>
@@ -273,7 +277,7 @@ const Viewport = forwardRef(function Viewport(
     [gridModel.rowHeight, gridModel.viewportRowCount, setRange]
   );
 
-  const handleVerticalScroll = useScroll("scrollTop", scrollCallback);
+  const [handleVerticalScroll, suspendScrollHandling] = useScroll("scrollTop", scrollCallback);
 
   const toggleStrategy = useMemo(() => getToggleStrategy(dataSource), [
     dataSource,
@@ -281,15 +285,27 @@ const Viewport = forwardRef(function Viewport(
 
   const handleContextMenu = useContextMenu("grid");
 
-  const scrollBy = (rows) => {
+  const scrollBy = useCallback((rows) => {
     const scrollTop = viewportEl.current.scrollTop + rows * gridModel.rowHeight;
     const diff = scrollTop % gridModel.rowHeight;
     viewportEl.current.scrollTop = scrollTop - diff;
-  }
+  }, [gridModel.rowHeight]);
 
-  const handleKeyDown = evt => {
+  const scrollEnd = useCallback((startOrEnd) => {
+    suspendScrollHandling(true);
+    const {rowHeight, viewportHeight} = gridModel;
+
+    const scrollPos = startOrEnd === 'start'
+      ? 0
+      : rowCount.current * rowHeight - viewportHeight;
+    viewportEl.current.scrollTop = scrollPos;
+    suspendScrollHandling(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gridModel.rowHeight,  gridModel.viewportHeight, suspendScrollHandling]);
+
+  const handleKeyDown = useCallback(evt => {
     console.log(`key ${evt.key}`)
-    switch(evt.key){
+    switch (evt.key) {
       case 'ArrowDown':
         evt.preventDefault();
         scrollBy(1);
@@ -298,16 +314,24 @@ const Viewport = forwardRef(function Viewport(
         evt.preventDefault();
         scrollBy(-1);
         break;
+      case 'Home':
+        evt.preventDefault();
+        scrollEnd('start');
+        break;
+      case 'End':
+        evt.preventDefault();
+        scrollEnd('end');
+        break;
       default:
     }
-  }
+  }, [scrollBy, scrollEnd]);
 
   return (
     <>
       <div
         className="Viewport"
         ref={viewportEl}
-        style={{ height: gridModel.viewportHeight}}
+        style={{ height: gridModel.viewportHeight }}
         onContextMenu={handleContextMenu}
         onKeyDown={handleKeyDown}
         onScroll={handleVerticalScroll}
@@ -325,21 +349,21 @@ const Viewport = forwardRef(function Viewport(
         >
           {gridModel.columnGroups
             ? gridModel.columnGroups.map((columnGroup, idx) => (
-                <Canvas
-                  columnGroupIdx={idx}
-                  contentHeight={contentHeight.current}
-                  firstVisibleRow={firstVisibleRow.current}
-                  gridModel={gridModel}
-                  height={gridModel.viewportHeight}
-                  horizontalScrollbarHeight={horizontalScrollbarHeight.current}
-                  key={idx}
-                  onColumnDragStart={onColumnDragStart}
-                  onRowClick={onRowClick}
-                  ref={canvasRefs.current[idx]}
-                  data={data}
-                  toggleStrategy={toggleStrategy} // brand new, not well thought out yet
-                />
-              ))
+              <Canvas
+                columnGroupIdx={idx}
+                contentHeight={contentHeight.current}
+                firstVisibleRow={firstVisibleRow.current}
+                gridModel={gridModel}
+                height={gridModel.viewportHeight}
+                horizontalScrollbarHeight={horizontalScrollbarHeight.current}
+                key={idx}
+                onColumnDragStart={onColumnDragStart}
+                onRowClick={onRowClick}
+                ref={canvasRefs.current[idx]}
+                data={data}
+                toggleStrategy={toggleStrategy} // brand new, not well thought out yet
+              />
+            ))
             : null}
         </div>
       </div>

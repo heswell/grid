@@ -9,7 +9,12 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
     callbackRef.current = callback;
   }
 
-  const [data, setData] = useState([]);
+  const data = useRef([]);
+  const [, forceUpdate] = useState(null);
+  const setData = newData => {
+    data.current = newData;
+    forceUpdate({});
+  }
 
   const expandRange = useCallback((lo,hi) => {
     return {
@@ -31,11 +36,15 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
         if (messageType === 'subscribed') {
           return callbackRef.current(messageType, msg);
         } else if (messageType === "viewport-update"){
-          if (msg.size !== undefined){
+          const sizeChanged = msg.size !== undefined;
+          if (sizeChanged){
             callbackRef.current('size', msg.size);
           }
           if (msg.rows){
             setData(msg.rows);
+          } else if (sizeChanged && data.current.length > msg.size){
+            // force a render to reflect the size change
+            setData(data.current.slice(0,msg.size));
           }
         } else if (messageType === 'sort'){
           callbackRef.current(messageType, msg.sort);
@@ -63,5 +72,5 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
   },[subscriptionDetails])
 
 
-  return [data, setRange];
+  return [data.current, setRange];
 }

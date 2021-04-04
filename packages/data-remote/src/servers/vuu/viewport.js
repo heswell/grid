@@ -3,7 +3,6 @@ import * as Message from './messages';
 
 const { IDX, SELECTED } = metadataKeys;
 const EMPTY_ARRAY = [];
-const SORT = { asc: 'D', dsc: 'A' };
 
 export default class Viewport {
 

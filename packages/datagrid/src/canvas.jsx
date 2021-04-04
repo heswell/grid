@@ -278,7 +278,7 @@ const Canvas = forwardRef(function Canvas(
     [dispatchGridAction, onRowClick]
   );
 
-  const onHorizontalScroll = useScroll(
+  const [onHorizontalScroll] = useScroll(
     "scrollLeft",
     horizontalScrollHandler,
     5

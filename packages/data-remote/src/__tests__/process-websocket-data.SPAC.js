@@ -1,14 +1,25 @@
-import { messages } from './messages/messages_004';
+import { messages } from './messages-001';
 import {ServerProxy} from '../servers/vuu/new-server-proxy';
+console.table(messages.length)
+const {requestId: viewport} = messages.find(msg => msg.body.type === "CREATE_VP_SUCCESS");
+
+const mockConnection = {
+  send: jest.fn()
+}
+
+// const callback = jest.fn();
+const callback = message => {
+  console.log(`message posted to client ${message.type}`,message)
+};
 
 describe('websocket messages', () => {
 
   it('loads messages', () => {
-    const serverProxy = new ServerProxy();
+    const serverProxy = new ServerProxy(mockConnection, callback);
     const tablename = "Instruments";
     const noop = () => undefined;
 
-    serverProxy.subscribe({ viewport: "agFlupLJ4QOulZTMW-7xM", tablename, range: {lo:0, hi: 35}}, noop);
+    serverProxy.subscribe({ viewport, tablename, range: {lo:0, hi: 35}, bufferSize: 100}, noop);
 
     const start = performance.now()
     for (let message of messages){
@@ -20,7 +31,7 @@ describe('websocket messages', () => {
 
     // serverProxy.viewports.forEach(viewport => console.table(viewport.getClientRows()))
 
-    expect(messages).toHaveLength(1081);
+    expect(messages).toHaveLength(571);
   })
 
 

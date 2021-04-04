@@ -20,7 +20,6 @@ export class Viewport {
     };
     this.isTree = false;
     this.dataWindow = undefined;
-    this.rowCount = 0;
     this.rowCountChanged = false;
     this.keys = new KeySet();
     this.pendingOperations = new Map();
@@ -115,7 +114,7 @@ export class Viewport {
     const type = Message.CHANGE_VP_RANGE;
     const serverDataRequired = this.dataWindow.setClientRange(from, to);
     const serverRequest = serverDataRequired
-      ? { type, viewPortId: this.serverViewportId, ...getFullRange({lo:from, hi:to}, this.bufferSize)}
+      ? { type, viewPortId: this.serverViewportId, ...getFullRange({lo:from, hi:to}, this.bufferSize, this.dataWindow.rowCount)}
       : undefined;
     if (serverRequest){
       this.awaitOperation(requestId,{type});
@@ -127,17 +126,14 @@ export class Viewport {
   }
 
   handleUpdate(updateType, rowIndex, row) {
-    if (this.rowCount !== row.vpSize) {
-      this.rowCount = row.vpSize;
+    if (this.dataWindow.rowCount !== row.vpSize) {
+      this.dataWindow.setRowCount(row.vpSize);
       this.rowCountChanged = true;
     }
     if (updateType === 'U') {
-      if (this.dataWindow.isWithinRange(rowIndex)) {
-        // We need an additional check isWithinClientViewport
-        if (this.dataWindow.isWithinClientRange(rowIndex)){
-          this.hasUpdates = true;
-        }
-        this.dataWindow.setAtIndex(rowIndex, row);
+      // Update will return true if row was within client range
+      if (this.dataWindow.setAtIndex(rowIndex, row)){
+        this.hasUpdates = true;
       }
     }
   }
@@ -146,7 +142,7 @@ export class Viewport {
   getRowCount = () => {
     if (this.rowCountChanged) {
       this.rowCountChanged = false;
-      return this.rowCount;
+      return this.dataWindow.rowCount;
     }
   }
 

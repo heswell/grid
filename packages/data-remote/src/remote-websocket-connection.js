@@ -134,9 +134,7 @@ class Connection {
     }
 
     const send = msg => {
-      if (msg.body.type !== "HB_RESP"){
-        console.log(`%c>>>  (WebSocket) ${JSON.stringify(msg)}`,'color:blue;font-weight:bold;');
-      }
+      // console.log(`%c>>>  (WebSocket) ${JSON.stringify(msg)}`,'color:blue;font-weight:bold;');
       ws.send(JSON.stringify(msg));
     }
 
