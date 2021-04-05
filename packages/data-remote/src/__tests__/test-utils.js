@@ -10,13 +10,14 @@ export const createTableRows = (viewPortId, lo, hi, vpSize=100) => {
       rowKey,
       updateType: 'U',
       sel: 0,
+      ts: 1,
       data: [ rowKey, `name ${key}`, 1000 + rowIndex, true]
     });
   }
   return results;
 }
 
-export const updateTableRow = (viewPortId, rowIndex, updatedVal, vpSize=100) => {
+export const updateTableRow = (viewPortId, rowIndex, updatedVal, {vpSize=100,ts=2}={}) => {
     const key = ('0'+rowIndex).slice(-2);
     const rowKey = `key-${key}`;
     return {
@@ -26,6 +27,7 @@ export const updateTableRow = (viewPortId, rowIndex, updatedVal, vpSize=100) => 
       rowKey,
       updateType: 'U',
       sel: 0,
+      ts,
       data: [ rowKey, `name ${key}`, updatedVal, true]
     };
 }

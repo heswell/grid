@@ -5,16 +5,16 @@ let _requestId = 1;
 export const TEST_setRequestId = id => _requestId = id;
 
 const nextRequestId = () => `${_requestId++}`;
-// let updateTime = 0;
-
+const EMPTY_ARRAY = [];
 export class ServerProxy {
 
   constructor(connection, callback) {
     this.connection = connection;
     this.postMessageToClient = callback;
-
     this.viewports = new Map();
     this.mapClientToServerViewport = new Map();
+    this.currentTimestamp = undefined;
+
   }
 
   async authenticate(username, password) {
@@ -187,7 +187,7 @@ export class ServerProxy {
 
 
   handleMessageFromServer(message) {
-    const { requestId, body: { type, ...body } } = message;
+    const { requestId, body: { type,timeStamp,  ...body } } = message;
     const { viewports } = this;
     switch (type) {
 
@@ -236,11 +236,14 @@ export class ServerProxy {
         break;
 
       case Message.TABLE_ROW:
+        const [{ts: firstBatchTimestamp}={ts: timeStamp}] = body.rows || EMPTY_ARRAY;
+        // console.log(`\nbatch timestamp ${time(timeStamp)} first timestamp ${time(firstBatchTimestamp)} ${body.rows.length} rows in batch`)
         for (const row of body.rows) {
           const { viewPortId, rowIndex, updateType } = row;
+          // console.log(`row timestamp ${time(row.ts)}`)
           viewports.get(viewPortId).handleUpdate(updateType, rowIndex, row);
         }
-        this.processUpdates();
+        this.processUpdates(firstBatchTimestamp);
         break;
 
       case Message.CHANGE_VP_RANGE_SUCCESS: {
@@ -268,13 +271,14 @@ export class ServerProxy {
   }
 
 
-  processUpdates() {
+  processUpdates(timeStamp) {
     let clientMessage;
     this.viewports.forEach((viewport) => {
       if (viewport.shouldUpdateClient) {
+        // console.log(`%cviewport will update client`,'color: green;')
         clientMessage = clientMessage || { type: "viewport-updates", viewports: {} };
         clientMessage.viewports[viewport.clientViewportId] = {
-          rows: viewport.getClientRows(),
+          rows: viewport.getClientRows(false, timeStamp),
           size: viewport.getRowCount()
         }
       };
@@ -292,9 +296,9 @@ export class ServerProxy {
 }
 
 
-// const time = ts => {
-//   const date = new Date(ts);
-//   return `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} ${date.getMilliseconds()}`
-// }
+const time = ts => {
+  const date = new Date(ts);
+  return `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} ${date.getMilliseconds()}`
+}
 
 

@@ -1,26 +1,5 @@
 
-class WindowRange {
-  constructor(from, to){
-    this.from = from;
-    this.to = to;
-  }
-
-  isWithin(index) {
-    return index >= this.from && index < this.to;
-  }
-
-  //find the overlap of this range and a new one
-  overlap(from, to){
-    return (from >= this.to || to < this.from)
-      ? [0, 0]
-      : [Math.max(from, this.from), Math.min(to, this.to)]
-  }
-
-  copy(){
-    return new WindowRange(this.from, this.to);
-  }
-}
-
+import { WindowRange } from "@heswell/utils/src/range-utils";
 export class ArrayBackedMovingWindow {
 
   // Note, the buffer is already accounted for in the range passed in here
@@ -82,6 +61,8 @@ export class ArrayBackedMovingWindow {
   }
 
   setClientRange(from, to){
+
+    // const originalRange = this.clientRange.copy();
     this.clientRange.from = from;
     this.clientRange.to = to;
     this.rowsWithinRange = 0;
@@ -92,18 +73,29 @@ export class ArrayBackedMovingWindow {
       }
     }
 
+    // let clientRows = undefined;
+    // if (this.hasAllRowsWithinRange){
+    //   const offset = this.range.from;
+    //   if (to > originalRange.to){
+    //     const start = Math.max(from, originalRange.to);
+    //     clientRows = this.internalData.slice(start-offset, to-offset);
+    //   } else {
+    //     const end = Math.min(originalRange.to, to);
+    //     clientRows = this.internalData.slice(from-offset, end);
+    //   }
+    // }
+
+    let serverDataRequired = false;
+
     // Is data required from server ... how close are we to buffer threshold ?
     const bufferPerimeter = this.bufferSize * .25;
     if (this.range.to - to < bufferPerimeter){
-      console.log('%cCALL SEREVR FOR MORE DATA','color: blue; font-weight: bold')
-      return true;
+      serverDataRequired = true;
     } else if (this.range.from > 0 && from - this.range.from < bufferPerimeter){
-      console.log('CALL SEREVR FOR MORE DATA')
-      return true;
-    } else {
-      console.log('no server call required')
-      return false;
+      serverDataRequired = true;
     }
+
+    return [serverDataRequired]
   }
 
   setRange(from, to){

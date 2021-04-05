@@ -252,6 +252,30 @@ class KeySet {
   }
 }
 
+function getFullRange({lo,hi}, bufferSize=0, rowCount=Number.MAX_SAFE_INTEGER){
+  if (bufferSize === 0){
+    return {from: lo, to: Math.min(hi, rowCount)};
+  } else if (lo === 0){
+    return {from: lo, to: Math.min(hi + bufferSize, rowCount)};
+  } else {
+    const rangeSize = hi - lo;
+    const buff = Math.round(bufferSize / 2);
+    const shortfallBefore = lo - buff < 0;
+    const shortFallAfter = rowCount - (hi + buff) < 0;
+
+    if (shortfallBefore && shortFallAfter){
+      return {from: 0, to: rowCount}
+    } else if (shortfallBefore){
+      return {from: 0, to: rangeSize + bufferSize}
+    } else if (shortFallAfter){
+      return {from: Math.max(0,rowCount - (rangeSize + bufferSize)), to: rowCount}
+    } else {
+      return {from: lo-buff, to: hi + buff}
+    }
+  }
+}
+
+
 class WindowRange {
   constructor(from, to){
     this.from = from;
@@ -335,6 +359,8 @@ class ArrayBackedMovingWindow {
   }
 
   setClientRange(from, to){
+
+    // const originalRange = this.clientRange.copy();
     this.clientRange.from = from;
     this.clientRange.to = to;
     this.rowsWithinRange = 0;
@@ -345,18 +371,29 @@ class ArrayBackedMovingWindow {
       }
     }
 
+    // let clientRows = undefined;
+    // if (this.hasAllRowsWithinRange){
+    //   const offset = this.range.from;
+    //   if (to > originalRange.to){
+    //     const start = Math.max(from, originalRange.to);
+    //     clientRows = this.internalData.slice(start-offset, to-offset);
+    //   } else {
+    //     const end = Math.min(originalRange.to, to);
+    //     clientRows = this.internalData.slice(from-offset, end);
+    //   }
+    // }
+
+    let serverDataRequired = false;
+
     // Is data required from server ... how close are we to buffer threshold ?
     const bufferPerimeter = this.bufferSize * .25;
     if (this.range.to - to < bufferPerimeter){
-      console.log('%cCALL SEREVR FOR MORE DATA','color: blue; font-weight: bold');
-      return true;
+      serverDataRequired = true;
     } else if (this.range.from > 0 && from - this.range.from < bufferPerimeter){
-      console.log('CALL SEREVR FOR MORE DATA');
-      return true;
-    } else {
-      console.log('no server call required');
-      return false;
+      serverDataRequired = true;
     }
+
+    return [serverDataRequired]
   }
 
   setRange(from, to){
@@ -393,31 +430,8 @@ class ArrayBackedMovingWindow {
 
 }
 
-function getFullRange({lo,hi}, bufferSize=0, rowCount=Number.MAX_SAFE_INTEGER){
-  if (bufferSize === 0){
-    return {from: lo, to: Math.min(hi, rowCount)};
-  } else if (lo === 0){
-    return {from: lo, to: Math.min(hi + bufferSize, rowCount)};
-  } else {
-    const rangeSize = hi - lo;
-    const buff = Math.round(bufferSize / 2);
-    const shortfallBefore = lo - buff < 0;
-    const shortFallAfter = rowCount - (hi + buff) < 0;
-
-    if (shortfallBefore && shortFallAfter){
-      return {from: 0, to: rowCount}
-    } else if (shortfallBefore){
-      return {from: 0, to: rangeSize + bufferSize}
-    } else if (shortFallAfter){
-      return {from: Math.max(0,rowCount - (rangeSize + bufferSize)), to: rowCount}
-    } else {
-      return {from: lo-buff, to: hi + buff}
-    }
-  }
-}
-
 const { IDX, SELECTED } = metadataKeys;
-const EMPTY_ARRAY = [];
+const EMPTY_ARRAY$1 = [];
 
 class Viewport {
   constructor({ viewport, tablename, columns, range, bufferSize = 0 }) {
@@ -528,17 +542,25 @@ class Viewport {
     // If we can satisfy the range request from the buffer, we will.
     // May or may not need to make a server request, depending on status of buffer
     const type = CHANGE_VP_RANGE;
-    const serverDataRequired = this.dataWindow.setClientRange(from, to);
+    const [serverDataRequired/*, clientRows*/] = this.dataWindow.setClientRange(from, to);
     const serverRequest = serverDataRequired
       ? { type, viewPortId: this.serverViewportId, ...getFullRange({ lo: from, hi: to }, this.bufferSize, this.dataWindow.rowCount) }
       : undefined;
     if (serverRequest) {
       this.awaitOperation(requestId, { type });
     }
+
     const clientRows = this.dataWindow.hasAllRowsWithinRange
-      ? this.getClientRows(true)
-      : undefined;
-    return [serverRequest, clientRows];
+    ? this.getClientRows(true)
+    : undefined;
+  return [serverRequest, clientRows];
+
+    // if (clientRows){
+    //   this.keys.reset(this.dataWindow.clientRange);
+    //   return [serverRequest, clientRows.map(row => toClientRow(row, this.keys))];
+    // } else {
+    //   return [serverRequest]
+    // }
   }
 
   enable(requestId) {
@@ -567,8 +589,8 @@ class Viewport {
     return this.createRequest({ sort: { sortDefs } })
   }
 
-  groupByRequest(requestId, groupBy = EMPTY_ARRAY) {
-    const type = groupBy === EMPTY_ARRAY ? "groupByClear" : "groupBy";
+  groupByRequest(requestId, groupBy = EMPTY_ARRAY$1) {
+    const type = groupBy === EMPTY_ARRAY$1 ? "groupByClear" : "groupBy";
     this.awaitOperation(requestId, { type, data: groupBy });
     return this.createRequest({ groupBy })
   }
@@ -613,7 +635,7 @@ class Viewport {
   }
 
   // TODO do we only return a client rowset when server range matches client range ?
-  getClientRows(force) {
+  getClientRows(force, timeStamp) {
     const readyToSendRows = force || (this.hasUpdates && this.dataWindow.hasAllRowsWithinRange);
     if (readyToSendRows) {
       const records = this.dataWindow.getData();
@@ -625,8 +647,10 @@ class Viewport {
         this.requiresKeyAssignment = false;
       }
 
-      for (let { rowIndex, rowKey, sel: isSelected, data } of records) {
-        clientRows.push([rowIndex, keys.keyFor(rowIndex), true, null, null, 1, rowKey, isSelected].concat(data));
+      for (let row of records) {
+        if (force || row.ts >= timeStamp){
+          clientRows.push(toClientRow(row, keys));
+        }
       }
       this.hasUpdates = false;
       return clientRows;
@@ -647,19 +671,22 @@ class Viewport {
 
 }
 
+const toClientRow = ({ rowIndex, rowKey, sel: isSelected, data }, keys) =>
+  [rowIndex, keys.keyFor(rowIndex), true, null, null, 1, rowKey, isSelected].concat(data);
+
 let _requestId = 1;
 
 const nextRequestId = () => `${_requestId++}`;
-// let updateTime = 0;
-
+const EMPTY_ARRAY = [];
 class ServerProxy {
 
   constructor(connection, callback) {
     this.connection = connection;
     this.postMessageToClient = callback;
-
     this.viewports = new Map();
     this.mapClientToServerViewport = new Map();
+    this.currentTimestamp = undefined;
+
   }
 
   async authenticate(username, password) {
@@ -831,7 +858,7 @@ class ServerProxy {
 
 
   handleMessageFromServer(message) {
-    const { requestId, body: { type, ...body } } = message;
+    const { requestId, body: { type,timeStamp,  ...body } } = message;
     const { viewports } = this;
     switch (type) {
 
@@ -880,11 +907,14 @@ class ServerProxy {
         break;
 
       case TABLE_ROW:
+        const [{ts: firstBatchTimestamp}={ts: timeStamp}] = body.rows || EMPTY_ARRAY;
+        // console.log(`\nbatch timestamp ${time(timeStamp)} first timestamp ${time(firstBatchTimestamp)} ${body.rows.length} rows in batch`)
         for (const row of body.rows) {
           const { viewPortId, rowIndex, updateType } = row;
+          // console.log(`row timestamp ${time(row.ts)}`)
           viewports.get(viewPortId).handleUpdate(updateType, rowIndex, row);
         }
-        this.processUpdates();
+        this.processUpdates(firstBatchTimestamp);
         break;
 
       case CHANGE_VP_RANGE_SUCCESS: {
@@ -912,13 +942,14 @@ class ServerProxy {
   }
 
 
-  processUpdates() {
+  processUpdates(timeStamp) {
     let clientMessage;
     this.viewports.forEach((viewport) => {
       if (viewport.shouldUpdateClient) {
+        // console.log(`%cviewport will update client`,'color: green;')
         clientMessage = clientMessage || { type: "viewport-updates", viewports: {} };
         clientMessage.viewports[viewport.clientViewportId] = {
-          rows: viewport.getClientRows(),
+          rows: viewport.getClientRows(false, timeStamp),
           size: viewport.getRowCount()
         };
       }      if (clientMessage) {
@@ -933,12 +964,6 @@ class ServerProxy {
   }
 
 }
-
-
-// const time = ts => {
-//   const date = new Date(ts);
-//   return `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} ${date.getMilliseconds()}`
-// }
 
 /* eslint-disable no-restricted-globals */
 const url = new URL(self.location);

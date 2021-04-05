@@ -9,7 +9,7 @@ export * from "./constants";
 export * from "./column-utils";
 export * from "./filter-utils";
 
-export { getFullRange, resetRange } from "./range-utils";
+export { getFullRange, resetRange, WindowRange } from "./range-utils";
 
 export {
   addSortColumn,

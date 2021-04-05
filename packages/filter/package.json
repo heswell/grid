@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@adobe/react-spectrum": "^3.8.0",
-    "@heswell/utils": "3.0.1",
+    "@heswell/utils": "4.1.0",
     "@spectrum-icons/workflow": "^3.2.0",
     "classnames": "^2.2.6"
   }

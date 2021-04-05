@@ -2,7 +2,7 @@ import { metadataKeys } from "@heswell/utils/src/column-utils";
 import { KeySet } from "./keyset";
 import * as Message from './messages';
 import { ArrayBackedMovingWindow } from "./array-backed-moving-window";
-import { getFullRange } from "./range-utils";
+import { getFullRange } from "@heswell/utils/src/range-utils";
 
 const { IDX, SELECTED } = metadataKeys;
 const EMPTY_ARRAY = [];
@@ -116,17 +116,25 @@ export class Viewport {
     // If we can satisfy the range request from the buffer, we will.
     // May or may not need to make a server request, depending on status of buffer
     const type = Message.CHANGE_VP_RANGE;
-    const serverDataRequired = this.dataWindow.setClientRange(from, to);
+    const [serverDataRequired/*, clientRows*/] = this.dataWindow.setClientRange(from, to);
     const serverRequest = serverDataRequired
       ? { type, viewPortId: this.serverViewportId, ...getFullRange({ lo: from, hi: to }, this.bufferSize, this.dataWindow.rowCount) }
       : undefined;
     if (serverRequest) {
       this.awaitOperation(requestId, { type });
     }
+
     const clientRows = this.dataWindow.hasAllRowsWithinRange
-      ? this.getClientRows(true)
-      : undefined;
-    return [serverRequest, clientRows];
+    ? this.getClientRows(true)
+    : undefined;
+  return [serverRequest, clientRows];
+
+    // if (clientRows){
+    //   this.keys.reset(this.dataWindow.clientRange);
+    //   return [serverRequest, clientRows.map(row => toClientRow(row, this.keys))];
+    // } else {
+    //   return [serverRequest]
+    // }
   }
 
   enable(requestId) {
@@ -201,7 +209,7 @@ export class Viewport {
   }
 
   // TODO do we only return a client rowset when server range matches client range ?
-  getClientRows(force) {
+  getClientRows(force, timeStamp) {
     const readyToSendRows = force || (this.hasUpdates && this.dataWindow.hasAllRowsWithinRange);
     if (readyToSendRows) {
       const records = this.dataWindow.getData();
@@ -213,8 +221,10 @@ export class Viewport {
         this.requiresKeyAssignment = false;
       }
 
-      for (let { rowIndex, rowKey, sel: isSelected, data } of records) {
-        clientRows.push([rowIndex, keys.keyFor(rowIndex), true, null, null, 1, rowKey, isSelected].concat(data))
+      for (let row of records) {
+        if (force || row.ts >= timeStamp){
+          clientRows.push(toClientRow(row, keys))
+        }
       }
       this.hasUpdates = false;
       return clientRows;
@@ -234,3 +244,8 @@ export class Viewport {
   }
 
 }
+
+const toClientRow = ({ rowIndex, rowKey, sel: isSelected, data }, keys) =>
+  [rowIndex, keys.keyFor(rowIndex), true, null, null, 1, rowKey, isSelected].concat(data)
+
+
