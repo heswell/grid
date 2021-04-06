@@ -1,5 +1,5 @@
 import { ServerProxy, TEST_setRequestId } from '../servers/vuu/new-server-proxy';
-import { createTableRows, createSubscription, updateTableRow } from "./test-utils";
+import { createTableRows, createTableGroupRows, createSubscription, updateTableRow } from "./test-utils";
 
 const mockConnection = {
   send: jest.fn()
@@ -282,7 +282,7 @@ describe('ServerProxy', () => {
   describe("Buffering data", () => {
 
     it("buffers 10 rows, server sends entire buffer set", () => {
-      const [clientSubscription1, serverSubscriptionAck1] = createSubscription({bufferSize: 10});
+      const [clientSubscription1, serverSubscriptionAck1] = createSubscription({ bufferSize: 10 });
 
       const callback = jest.fn();
       const serverProxy = new ServerProxy(mockConnection, callback);
@@ -295,9 +295,9 @@ describe('ServerProxy', () => {
         body: {
           type: "CREATE_VP",
           table: "test-table",
-          range: {from: 0, to: 20},
-          sort: {sortDefs: []},
-          filterSpec: {filter: ""}
+          range: { from: 0, to: 20 },
+          sort: { sortDefs: [] },
+          filterSpec: { filter: "" }
         },
         module: "CORE"
       })
@@ -334,7 +334,7 @@ describe('ServerProxy', () => {
     });
 
     it("buffers 10 rows, server sends partial buffer set, enough to fulfill client request, followed by rest", () => {
-      const [clientSubscription1, serverSubscriptionAck1] = createSubscription({bufferSize: 10});
+      const [clientSubscription1, serverSubscriptionAck1] = createSubscription({ bufferSize: 10 });
 
       const callback = jest.fn();
       const serverProxy = new ServerProxy(mockConnection, callback);
@@ -388,7 +388,7 @@ describe('ServerProxy', () => {
     });
 
     it("buffers 10 rows, server sends partial buffer set, not enough to fulfill client request, followed by rest", () => {
-      const [clientSubscription1, serverSubscriptionAck1] = createSubscription({bufferSize: 10});
+      const [clientSubscription1, serverSubscriptionAck1] = createSubscription({ bufferSize: 10 });
 
       const callback = jest.fn();
       const serverProxy = new ServerProxy(mockConnection, callback);
@@ -461,7 +461,7 @@ describe('ServerProxy', () => {
     });
 
     it("returns client range requests from buffer, if available. Returns only rows not already sent. Calls server when end of buffer is approached", () => {
-      const [clientSubscription1, serverSubscriptionAck1] = createSubscription({bufferSize: 10});
+      const [clientSubscription1, serverSubscriptionAck1] = createSubscription({ bufferSize: 10 });
 
       const callback = jest.fn();
       const serverProxy = new ServerProxy(mockConnection, callback);
@@ -540,7 +540,7 @@ describe('ServerProxy', () => {
       expect(mockConnection.send).toHaveBeenCalledWith({
         requestId: '1',
         user: "user",
-        body: {viewPortId: "server-vp-1", type: "CHANGE_VP_RANGE", from: 3, to: 23},
+        body: { viewPortId: "server-vp-1", type: "CHANGE_VP_RANGE", from: 3, to: 23 },
         module: "CORE"
       })
 
@@ -553,7 +553,7 @@ describe('ServerProxy', () => {
   describe("scrolling, with buffer", () => {
 
     it("scroll to end", () => {
-      const [clientSubscription1, serverSubscriptionAck1] = createSubscription({hi: 20, bufferSize: 100});
+      const [clientSubscription1, serverSubscriptionAck1] = createSubscription({ hi: 20, bufferSize: 100 });
 
       const callback = jest.fn();
       const serverProxy = new ServerProxy(mockConnection, callback);
@@ -643,7 +643,7 @@ describe('ServerProxy', () => {
   describe("growing and shrinking rowset (Orders)", () => {
 
     it("initializes with rowset that does not fill client viewport", () => {
-      const [clientSubscription1, serverSubscriptionAck1] = createSubscription({hi: 20, bufferSize: 100});
+      const [clientSubscription1, serverSubscriptionAck1] = createSubscription({ hi: 20, bufferSize: 100 });
       const callback = jest.fn();
       const serverProxy = new ServerProxy(mockConnection, callback);
       serverProxy.subscribe(clientSubscription1);
@@ -682,7 +682,7 @@ describe('ServerProxy', () => {
     });
 
     it("gradually reduces, then grows viewport", () => {
-      const [clientSubscription1, serverSubscriptionAck1] = createSubscription({hi: 20, bufferSize: 100});
+      const [clientSubscription1, serverSubscriptionAck1] = createSubscription({ hi: 20, bufferSize: 100 });
       const callback = jest.fn();
       const serverProxy = new ServerProxy(mockConnection, callback);
       serverProxy.subscribe(clientSubscription1);
@@ -710,7 +710,7 @@ describe('ServerProxy', () => {
       // callbacks will be size only
       expect(callback).toHaveBeenCalledTimes(1);
       expect(callback).toHaveBeenCalledWith({
-        type: "viewport-updates", viewports: { "client-vp-1": { size: 9 }}
+        type: "viewport-updates", viewports: { "client-vp-1": { size: 9 } }
       });
 
       callback.mockClear();
@@ -723,7 +723,8 @@ describe('ServerProxy', () => {
       })
       expect(callback).toHaveBeenCalledTimes(1);
       expect(callback).toHaveBeenCalledWith({
-        type: "viewport-updates", viewports: { "client-vp-1": { size: 8 }}});
+        type: "viewport-updates", viewports: { "client-vp-1": { size: 8 } }
+      });
 
       callback.mockClear();
       serverProxy.handleMessageFromServer({
@@ -734,7 +735,7 @@ describe('ServerProxy', () => {
         }
       })
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith({ type: "viewport-updates", viewports: { "client-vp-1": { size: 1 }}});
+      expect(callback).toHaveBeenCalledWith({ type: "viewport-updates", viewports: { "client-vp-1": { size: 1 } } });
 
       callback.mockClear();
       serverProxy.handleMessageFromServer({
@@ -745,7 +746,7 @@ describe('ServerProxy', () => {
         }
       })
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith({ type: "viewport-updates", viewports: { "client-vp-1": { size: 0 }}});
+      expect(callback).toHaveBeenCalledWith({ type: "viewport-updates", viewports: { "client-vp-1": { size: 0 } } });
 
       callback.mockClear();
       serverProxy.handleMessageFromServer({
@@ -757,9 +758,15 @@ describe('ServerProxy', () => {
         }
       })
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith({ type: "viewport-updates", viewports: { "client-vp-1": { size: 1, rows: [
-        [0, 0, true, null, null, 1, "key-00", 0, "key-00", "name 00", 1000, true],
-      ] }}});
+      expect(callback).toHaveBeenCalledWith({
+        type: "viewport-updates", viewports: {
+          "client-vp-1": {
+            size: 1, rows: [
+              [0, 0, true, null, null, 1, "key-00", 0, "key-00", "name 00", 1000, true],
+            ]
+          }
+        }
+      });
 
       callback.mockClear();
       serverProxy.handleMessageFromServer({
@@ -771,13 +778,17 @@ describe('ServerProxy', () => {
         }
       })
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith({ type: "viewport-updates", viewports: { "client-vp-1": {
-        size: 2,
-        rows: [
-          [0, 0, true, null, null, 1, "key-00", 0, "key-00", "name 00", 1000, true],
-          [1, 1, true, null, null, 1, "key-01", 0, "key-01", "name 01", 1001, true],
-        ]
-      }}});
+      expect(callback).toHaveBeenCalledWith({
+        type: "viewport-updates", viewports: {
+          "client-vp-1": {
+            size: 2,
+            rows: [
+              [0, 0, true, null, null, 1, "key-00", 0, "key-00", "name 00", 1000, true],
+              [1, 1, true, null, null, 1, "key-01", 0, "key-01", "name 01", 1001, true],
+            ]
+          }
+        }
+      });
 
       callback.mockClear();
       serverProxy.handleMessageFromServer({
@@ -789,17 +800,21 @@ describe('ServerProxy', () => {
         }
       })
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith({ type: "viewport-updates", viewports: { "client-vp-1": {
-        size: 6,
-        rows: [
-          [0, 0, true, null, null, 1, "key-00", 0, "key-00", "name 00", 1000, true],
-          [1, 1, true, null, null, 1, "key-01", 0, "key-01", "name 01", 1001, true],
-          [2, 2, true, null, null, 1, "key-02", 0, "key-02", "name 02", 1002, true],
-          [3, 3, true, null, null, 1, "key-03", 0, "key-03", "name 03", 1003, true],
-          [4, 4, true, null, null, 1, "key-04", 0, "key-04", "name 04", 1004, true],
-          [5, 5, true, null, null, 1, "key-05", 0, "key-05", "name 05", 1005, true],
-        ]
-      }}});
+      expect(callback).toHaveBeenCalledWith({
+        type: "viewport-updates", viewports: {
+          "client-vp-1": {
+            size: 6,
+            rows: [
+              [0, 0, true, null, null, 1, "key-00", 0, "key-00", "name 00", 1000, true],
+              [1, 1, true, null, null, 1, "key-01", 0, "key-01", "name 01", 1001, true],
+              [2, 2, true, null, null, 1, "key-02", 0, "key-02", "name 02", 1002, true],
+              [3, 3, true, null, null, 1, "key-03", 0, "key-03", "name 03", 1003, true],
+              [4, 4, true, null, null, 1, "key-04", 0, "key-04", "name 04", 1004, true],
+              [5, 5, true, null, null, 1, "key-05", 0, "key-05", "name 05", 1005, true],
+            ]
+          }
+        }
+      });
 
 
     })
@@ -808,7 +823,7 @@ describe('ServerProxy', () => {
   describe('selection', () => {
 
     it('single select', () => {
-      const [clientSubscription1, serverSubscriptionAck1] = createSubscription({hi: 20, bufferSize: 100});
+      const [clientSubscription1, serverSubscriptionAck1] = createSubscription({ hi: 20, bufferSize: 100 });
       const callback = jest.fn();
       const serverProxy = new ServerProxy(mockConnection, callback);
       serverProxy.subscribe(clientSubscription1);
@@ -832,7 +847,7 @@ describe('ServerProxy', () => {
         type: "select",
         rangeSelect: false,
         keepExistingSelection: false,
-        row:  [1, 1, true, null, null, 1, "key-01", 0, "key-01", "name 01", 1001, true]
+        row: [1, 1, true, null, null, 1, "key-01", 0, "key-01", "name 01", 1001, true]
       });
 
       expect(callback).toHaveBeenCalledTimes(0);
@@ -879,6 +894,177 @@ describe('ServerProxy', () => {
     })
 
   })
+
+
+  describe.only('GroupBy', () => {
+    const [clientSubscription1, serverSubscriptionAck1] = createSubscription();
+
+    it('sets viewport isTree when groupby in place', () => {
+      const callback = jest.fn();
+      const serverProxy = new ServerProxy(mockConnection, callback);
+      serverProxy.subscribe(clientSubscription1);
+      serverProxy.handleMessageFromServer(serverSubscriptionAck1);
+
+      serverProxy.handleMessageFromServer({
+        body: {
+          type: "TABLE_ROW", rows: [
+            { viewPortId: "server-vp-1", vpSize: 100, rowIndex: -1, rowKey: "SIZE", updateType: "SIZE", ts: 1 },
+            ...createTableRows("server-vp-1", 0, 10)
+          ]
+        }
+      })
+
+      TEST_setRequestId(1);
+      callback.mockClear();
+      mockConnection.send.mockClear();
+
+      serverProxy.handleMessageFromClient({
+        viewport: "client-vp-1",
+        type: "groupBy",
+        groupBy: ["col-4"],
+      });
+
+      expect(callback).toHaveBeenCalledTimes(0);
+      expect(mockConnection.send).toHaveBeenCalledTimes(1);
+
+      expect(mockConnection.send).toHaveBeenCalledWith({
+        requestId: "1",
+        body: {
+          viewPortId: "server-vp-1",
+          type: "CHANGE_VP",
+          columns: ["col-1", "col-2", "col-3", "col-4"],
+          sort: { sortDefs: [] },
+          filterSpec: { filter: "" },
+          groupBy: ["col-4"]
+        },
+        user: "user",
+        module: "CORE"
+      })
+
+      serverProxy.handleMessageFromServer({
+        requestId: '1', body: {
+          type: "CHANGE_VP_SUCCESS",
+          viewPortId: "server-vp-1",
+          columns: ["col-1", "col-2", "col-3", "col-4"],
+          sort: { sortDefs: [] },
+          filterSpec: { filter: "" },
+          groupBy: ["col-4"]
+        }
+      });
+
+      expect(serverProxy.viewports.get("server-vp-1").isTree).toBe(true);
+
+
+    });
+
+    it('ignores regular row updates after grouping is in place', () => {
+      const callback = jest.fn();
+      const serverProxy = new ServerProxy(mockConnection, callback);
+      serverProxy.subscribe(clientSubscription1);
+      serverProxy.handleMessageFromServer(serverSubscriptionAck1);
+
+      serverProxy.handleMessageFromServer({
+        body: {
+          type: "TABLE_ROW", rows: [
+            { viewPortId: "server-vp-1", vpSize: 100, rowIndex: -1, rowKey: "SIZE", updateType: "SIZE", ts: 1 },
+            ...createTableRows("server-vp-1", 0, 10)
+          ]
+        }
+      })
+
+      TEST_setRequestId(1);
+      callback.mockClear();
+      mockConnection.send.mockClear();
+
+      serverProxy.handleMessageFromClient({
+        viewport: "client-vp-1",
+        type: "groupBy",
+        groupBy: ["col-4"],
+      });
+
+      serverProxy.handleMessageFromServer({
+        requestId: '1', body: {
+          type: "CHANGE_VP_SUCCESS",
+          viewPortId: "server-vp-1",
+          columns: ["col-1", "col-2", "col-3", "col-4"],
+          sort: { sortDefs: [] },
+          filterSpec: { filter: "" },
+          groupBy: ["col-4"]
+        }
+      });
+
+      callback.mockClear();
+
+      serverProxy.handleMessageFromServer({
+        body: {
+          type: "TABLE_ROW", rows: [
+            ...createTableRows("server-vp-1", 0, 10)
+          ]
+        }
+      })
+
+      expect(callback).toHaveBeenCalledTimes(0);
+
+    });
+
+    it('processes group row updates', () => {
+      const callback = jest.fn();
+      const serverProxy = new ServerProxy(mockConnection, callback);
+      serverProxy.subscribe(clientSubscription1);
+      serverProxy.handleMessageFromServer(serverSubscriptionAck1);
+
+      serverProxy.handleMessageFromServer({
+        body: {
+          type: "TABLE_ROW", rows: [
+            { viewPortId: "server-vp-1", vpSize: 100, rowIndex: -1, rowKey: "SIZE", updateType: "SIZE", ts: 1 },
+            ...createTableRows("server-vp-1", 0, 10)
+          ]
+        }
+      })
+
+      TEST_setRequestId(1);
+      callback.mockClear();
+      mockConnection.send.mockClear();
+
+      serverProxy.handleMessageFromClient({
+        viewport: "client-vp-1",
+        type: "groupBy",
+        groupBy: ["col-4"],
+      });
+
+      serverProxy.handleMessageFromServer({
+        requestId: '1', body: {
+          type: "CHANGE_VP_SUCCESS",
+          viewPortId: "server-vp-1",
+          columns: ["col-1", "col-2", "col-3", "col-4"],
+          sort: { sortDefs: [] },
+          filterSpec: { filter: "" },
+          groupBy: ["col-4"]
+        }
+      });
+
+      callback.mockClear();
+
+      serverProxy.handleMessageFromServer(createTableGroupRows());
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(serverProxy.viewports.get("server-vp-1").dataWindow.internalData).toHaveLength(4);
+      expect(callback).toHaveBeenCalledWith({type: "viewport-updates", viewports: {
+        "client-vp-1": {
+          rows: [
+            [0,0, false, false, 1, 43714, '$root/USD', 0, "", "USD", "","","","",""],
+            [1,1, false, false, 1, 43941, '$root/EUR', 0, "", "EUR", "","","","",""],
+            [2,2, false, false, 1, 43997, '$root/GBX', 0, "", "GBX", "","","","",""],
+            [3,3, false, false, 1, 44108, '$root/CAD', 0, "", "CAD", "","","","",""]
+          ],
+          size: 4
+        }
+      }})
+
+
+    });
+
+  });
 
 
 });

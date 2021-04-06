@@ -8,7 +8,7 @@ const { IDX, SELECTED } = metadataKeys;
 const EMPTY_ARRAY = [];
 
 export class Viewport {
-  constructor({ viewport, tablename, columns, range, bufferSize = 0 }) {
+  constructor({ viewport, tablename, columns, range, bufferSize = 0, filter="", sort=[], groupBy=[] }) {
     this.clientViewportId = viewport;
     this.table = tablename;
     this.status = '';
@@ -16,11 +16,11 @@ export class Viewport {
     this.clientRange = range;
     this.bufferSize = bufferSize;
     this.sort = {
-      sortDefs: []
+      sortDefs: sort
     };
-    this.groupBy = undefined;
+    this.groupBy = groupBy;
     this.filterSpec = {
-      filter: ""
+      filter
     };
     this.isTree = false;
     this.dataWindow = undefined;
@@ -60,17 +60,17 @@ export class Viewport {
     this.isTree = groupBy && groupBy.length > 0;
     this.dataWindow = new ArrayBackedMovingWindow(this.clientRange, range, this.bufferSize);
 
-    //   console.log(`%cViewport subscribed
-    //     clientVpId: ${this.clientViewportId}
-    //     serverVpId: ${this.serverViewportId}
-    //     table: ${this.table}
-    //     columns: ${columns.join(',')}
-    //     range: ${JSON.stringify(range)}
-    //     sort: ${JSON.stringify(sort)}
-    //     groupBy: ${JSON.stringify(groupBy)}
-    //     filterSpec: ${JSON.stringify(filterSpec)}
-    //     bufferSize: ${this.bufferSize}
-    //   `, 'color: blue');
+      console.log(`%cViewport subscribed
+        clientVpId: ${this.clientViewportId}
+        serverVpId: ${this.serverViewportId}
+        table: ${this.table}
+        columns: ${columns.join(',')}
+        range: ${JSON.stringify(range)}
+        sort: ${JSON.stringify(sort)}
+        groupBy: ${JSON.stringify(groupBy)}
+        filterSpec: ${JSON.stringify(filterSpec)}
+        bufferSize: ${this.bufferSize}
+      `, 'color: blue');
   }
 
   awaitOperation(requestId, type) {
@@ -215,6 +215,9 @@ export class Viewport {
       const records = this.dataWindow.getData();
       const clientRows = [];
       const { keys } = this;
+      const toClient = this.isTree
+        ? toClientRowTree
+        : toClientRow
 
       if (force || this.requiresKeyAssignment) {
         keys.reset(this.dataWindow.clientRange);
@@ -223,7 +226,7 @@ export class Viewport {
 
       for (let row of records) {
         if (force || row.ts >= timeStamp){
-          clientRows.push(toClientRow(row, keys))
+          clientRows.push(toClient(row, keys))
         }
       }
       this.hasUpdates = false;
@@ -247,5 +250,10 @@ export class Viewport {
 
 const toClientRow = ({ rowIndex, rowKey, sel: isSelected, data }, keys) =>
   [rowIndex, keys.keyFor(rowIndex), true, null, null, 1, rowKey, isSelected].concat(data)
+
+const toClientRowTree = ({ rowIndex, rowKey, sel: isSelected, data }, keys) => {
+  let [depth, isExpanded, path, isLeaf, label, count, ...rest] = data;
+  return [rowIndex, keys.keyFor(rowIndex), isLeaf, isExpanded, depth, count, rowKey, isSelected].concat(rest);
+}
 
 

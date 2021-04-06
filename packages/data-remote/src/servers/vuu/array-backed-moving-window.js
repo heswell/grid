@@ -19,10 +19,16 @@ export class ArrayBackedMovingWindow {
   }
 
   setRowCount = rowCount => {
+    if (rowCount < this.internalData.length){
+      this.internalData.length = rowCount;
+    }
     if (rowCount < this.rowCount){
       const [overlapFrom, overlapTo] = this.range.overlap(rowCount, this.rowCount);
       for (let i=overlapFrom;i<overlapTo;i++){
         const rowIndex = i - this.range.from;
+        if (i === rowCount){
+          break;
+        }
         this.internalData[rowIndex] = undefined;
         if (this.isWithinClientRange(rowIndex)){
           this.rowsWithinRange -= 1;

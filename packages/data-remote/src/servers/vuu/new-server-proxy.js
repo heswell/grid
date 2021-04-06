@@ -32,6 +32,7 @@ export class ServerProxy {
   }
 
   subscribe(message) {
+    console.log({message})
     const viewport = new Viewport(message);
     this.viewports.set(message.viewport, viewport);
     // use client side viewport as request id, so that when we process the response,
@@ -239,9 +240,15 @@ export class ServerProxy {
         const [{ts: firstBatchTimestamp}={ts: timeStamp}] = body.rows || EMPTY_ARRAY;
         // console.log(`\nbatch timestamp ${time(timeStamp)} first timestamp ${time(firstBatchTimestamp)} ${body.rows.length} rows in batch`)
         for (const row of body.rows) {
-          const { viewPortId, rowIndex, updateType } = row;
+          const { viewPortId, rowIndex, rowKey, updateType } = row;
+          const viewport = viewports.get(viewPortId);
           // console.log(`row timestamp ${time(row.ts)}`)
-          viewports.get(viewPortId).handleUpdate(updateType, rowIndex, row);
+          if (viewport.isTree && updateType === "U" && !rowKey.startsWith("$root")){
+            console.log('Ignore blank rows sent after GroupBy')
+          } else {
+            viewport.handleUpdate(updateType, rowIndex, row);
+
+          }
         }
         this.processUpdates(firstBatchTimestamp);
         break;
@@ -275,6 +282,12 @@ export class ServerProxy {
     let clientMessage;
     this.viewports.forEach((viewport) => {
       if (viewport.shouldUpdateClient) {
+
+        // if (viewport.isTree){
+        //   console.table(viewport.getClientRows(false, timeStamp));
+        //   return;
+        // }
+
         // console.log(`%cviewport will update client`,'color: green;')
         clientMessage = clientMessage || { type: "viewport-updates", viewports: {} };
         clientMessage.viewports[viewport.clientViewportId] = {

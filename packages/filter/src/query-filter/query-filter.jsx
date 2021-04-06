@@ -154,6 +154,7 @@ const QueryFilter = ({ onChange }) => {
                   [`${classBase}-pill-selected`]: filters[filterName].enabled
                 })}
                 isSelected={filters[filterName].enabled}
+                key={i}
                 onChange={() => toggleFilter(filterName)}
                 onKeyDown={(e) => handleFilterTagKeyDown(e, filterName)}>
                 <span>{filterName}</span>

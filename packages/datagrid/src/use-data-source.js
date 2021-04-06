@@ -13,7 +13,6 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
   const dataWindow = useRef(new MovingWindow(subscriptionDetails.range))
   const [, forceUpdate] = useState(null);
   const setData = updates => {
-    console.log(`setData ${updates.length} rows`)
     const movingWindow = dataWindow.current;
     for (const row of updates){
       movingWindow.add(row);
@@ -95,10 +94,17 @@ export class MovingWindow {
   }
 
   setRowCount = rowCount => {
+    if (rowCount < this.data.length){
+      this.data.length = rowCount;
+    }
+
     if (rowCount < this.rowCount){
       const [overlapFrom, overlapTo] = this.range.overlap(rowCount, this.rowCount);
       for (let i=overlapFrom;i<overlapTo;i++){
         const rowIndex = i - this.range.from;
+        if (i === rowCount){
+          break;
+        }
         this.data[rowIndex] = undefined;
       }
     }

@@ -317,10 +317,16 @@ class ArrayBackedMovingWindow {
   }
 
   setRowCount = rowCount => {
+    if (rowCount < this.internalData.length){
+      this.internalData.length = rowCount;
+    }
     if (rowCount < this.rowCount){
       const [overlapFrom, overlapTo] = this.range.overlap(rowCount, this.rowCount);
       for (let i=overlapFrom;i<overlapTo;i++){
         const rowIndex = i - this.range.from;
+        if (i === rowCount){
+          break;
+        }
         this.internalData[rowIndex] = undefined;
         if (this.isWithinClientRange(rowIndex)){
           this.rowsWithinRange -= 1;
@@ -434,7 +440,7 @@ const { IDX, SELECTED } = metadataKeys;
 const EMPTY_ARRAY$1 = [];
 
 class Viewport {
-  constructor({ viewport, tablename, columns, range, bufferSize = 0 }) {
+  constructor({ viewport, tablename, columns, range, bufferSize = 0, filter="", sort=[], groupBy=[] }) {
     this.clientViewportId = viewport;
     this.table = tablename;
     this.status = '';
@@ -442,11 +448,11 @@ class Viewport {
     this.clientRange = range;
     this.bufferSize = bufferSize;
     this.sort = {
-      sortDefs: []
+      sortDefs: sort
     };
-    this.groupBy = undefined;
+    this.groupBy = groupBy;
     this.filterSpec = {
-      filter: ""
+      filter
     };
     this.isTree = false;
     this.dataWindow = undefined;
@@ -486,17 +492,17 @@ class Viewport {
     this.isTree = groupBy && groupBy.length > 0;
     this.dataWindow = new ArrayBackedMovingWindow(this.clientRange, range, this.bufferSize);
 
-    //   console.log(`%cViewport subscribed
-    //     clientVpId: ${this.clientViewportId}
-    //     serverVpId: ${this.serverViewportId}
-    //     table: ${this.table}
-    //     columns: ${columns.join(',')}
-    //     range: ${JSON.stringify(range)}
-    //     sort: ${JSON.stringify(sort)}
-    //     groupBy: ${JSON.stringify(groupBy)}
-    //     filterSpec: ${JSON.stringify(filterSpec)}
-    //     bufferSize: ${this.bufferSize}
-    //   `, 'color: blue');
+      console.log(`%cViewport subscribed
+        clientVpId: ${this.clientViewportId}
+        serverVpId: ${this.serverViewportId}
+        table: ${this.table}
+        columns: ${columns.join(',')}
+        range: ${JSON.stringify(range)}
+        sort: ${JSON.stringify(sort)}
+        groupBy: ${JSON.stringify(groupBy)}
+        filterSpec: ${JSON.stringify(filterSpec)}
+        bufferSize: ${this.bufferSize}
+      `, 'color: blue');
   }
 
   awaitOperation(requestId, type) {
@@ -641,6 +647,9 @@ class Viewport {
       const records = this.dataWindow.getData();
       const clientRows = [];
       const { keys } = this;
+      const toClient = this.isTree
+        ? toClientRowTree
+        : toClientRow;
 
       if (force || this.requiresKeyAssignment) {
         keys.reset(this.dataWindow.clientRange);
@@ -649,7 +658,7 @@ class Viewport {
 
       for (let row of records) {
         if (force || row.ts >= timeStamp){
-          clientRows.push(toClientRow(row, keys));
+          clientRows.push(toClient(row, keys));
         }
       }
       this.hasUpdates = false;
@@ -673,6 +682,11 @@ class Viewport {
 
 const toClientRow = ({ rowIndex, rowKey, sel: isSelected, data }, keys) =>
   [rowIndex, keys.keyFor(rowIndex), true, null, null, 1, rowKey, isSelected].concat(data);
+
+const toClientRowTree = ({ rowIndex, rowKey, sel: isSelected, data }, keys) => {
+  let [depth, isExpanded, path, isLeaf, label, count, ...rest] = data;
+  return [rowIndex, keys.keyFor(rowIndex), isLeaf, isExpanded, depth, count, rowKey, isSelected].concat(rest);
+};
 
 let _requestId = 1;
 
@@ -704,6 +718,7 @@ class ServerProxy {
   }
 
   subscribe(message) {
+    console.log({message});
     const viewport = new Viewport(message);
     this.viewports.set(message.viewport, viewport);
     // use client side viewport as request id, so that when we process the response,
@@ -910,9 +925,15 @@ class ServerProxy {
         const [{ts: firstBatchTimestamp}={ts: timeStamp}] = body.rows || EMPTY_ARRAY;
         // console.log(`\nbatch timestamp ${time(timeStamp)} first timestamp ${time(firstBatchTimestamp)} ${body.rows.length} rows in batch`)
         for (const row of body.rows) {
-          const { viewPortId, rowIndex, updateType } = row;
+          const { viewPortId, rowIndex, rowKey, updateType } = row;
+          const viewport = viewports.get(viewPortId);
           // console.log(`row timestamp ${time(row.ts)}`)
-          viewports.get(viewPortId).handleUpdate(updateType, rowIndex, row);
+          if (viewport.isTree && updateType === "U" && !rowKey.startsWith("$root")){
+            console.log('Ignore blank rows sent after GroupBy');
+          } else {
+            viewport.handleUpdate(updateType, rowIndex, row);
+
+          }
         }
         this.processUpdates(firstBatchTimestamp);
         break;
@@ -946,6 +967,12 @@ class ServerProxy {
     let clientMessage;
     this.viewports.forEach((viewport) => {
       if (viewport.shouldUpdateClient) {
+
+        // if (viewport.isTree){
+        //   console.table(viewport.getClientRows(false, timeStamp));
+        //   return;
+        // }
+
         // console.log(`%cviewport will update client`,'color: green;')
         clientMessage = clientMessage || { type: "viewport-updates", viewports: {} };
         clientMessage.viewports[viewport.clientViewportId] = {

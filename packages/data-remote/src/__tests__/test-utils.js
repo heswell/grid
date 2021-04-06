@@ -17,6 +17,26 @@ export const createTableRows = (viewPortId, lo, hi, vpSize=100) => {
   return results;
 }
 
+export const createTableGroupRows = (viewPortId, groupLevels) => {
+  return (
+    {
+      requestId: "1",
+      body: {
+        type: "TABLE_ROW",
+        rows: [
+          {viewPortId: "server-vp-1", vpSize: 4, rowIndex:-1, rowKey: "SIZE",      updateType: "SIZE","ts":1,"sel":0,"data":[]},
+          {viewPortId: "server-vp-1", vpSize: 4, rowIndex:0,  rowKey: "$root/USD", updateType: "U", ts: 1,"sel":0,"data":[1,false,"$root/USD",false,"USD",43714,"","USD","","","","",""]},
+          {viewPortId: "server-vp-1", vpSize: 4, rowIndex:1,  rowKey: "$root/EUR", updateType: "U", ts: 1,"sel":0,"data":[1,false,"$root/EUR",false,"EUR",43941,"","EUR","","","","",""]},
+          {viewPortId: "server-vp-1", vpSize: 4, rowIndex:2,  rowKey: "$root/GBX", updateType: "U", ts: 1,"sel":0,"data":[1,false,"$root/GBX",false,"GBX",43997,"","GBX","","","","",""]},
+          {viewPortId: "server-vp-1", vpSize: 4, rowIndex:3,  rowKey: "$root/CAD", updateType: "U", ts: 1,"sel":0,"data":[1,false,"$root/CAD",false,"CAD",44108,"","CAD","","","","",""]}]},
+      }
+
+  )
+
+}
+
+
+
 export const updateTableRow = (viewPortId, rowIndex, updatedVal, {vpSize=100,ts=2}={}) => {
     const key = ('0'+rowIndex).slice(-2);
     const rowKey = `key-${key}`;
