@@ -1,14 +1,23 @@
-import { metadataKeys } from "@heswell/utils/src/column-utils";
-import { KeySet } from "./keyset";
+import { metadataKeys } from '@heswell/utils/src/column-utils';
+import { KeySet } from './keyset';
 import * as Message from './messages';
-import { ArrayBackedMovingWindow } from "./array-backed-moving-window";
-import { getFullRange } from "@heswell/utils/src/range-utils";
+import { ArrayBackedMovingWindow } from './array-backed-moving-window';
+import { getFullRange } from '@heswell/utils/src/range-utils';
 
 const { IDX, SELECTED } = metadataKeys;
 const EMPTY_ARRAY = [];
 
 export class Viewport {
-  constructor({ viewport, tablename, columns, range, bufferSize = 0, filter="", sort=[], groupBy=[] }) {
+  constructor({
+    viewport,
+    tablename,
+    columns,
+    range,
+    bufferSize = 0,
+    filter = '',
+    sort = [],
+    groupBy = [],
+  }) {
     this.clientViewportId = viewport;
     this.table = tablename;
     this.status = '';
@@ -16,11 +25,11 @@ export class Viewport {
     this.clientRange = range;
     this.bufferSize = bufferSize;
     this.sort = {
-      sortDefs: sort
+      sortDefs: sort,
     };
     this.groupBy = groupBy;
     this.filterSpec = {
-      filter
+      filter,
     };
     this.isTree = false;
     this.dataWindow = undefined;
@@ -29,11 +38,13 @@ export class Viewport {
     this.pendingOperations = new Map();
     this.hasUpdates = false;
     this.requiresKeyAssignment = true;
-
   }
 
   get shouldUpdateClient() {
-    return this.rowCountChanged || (this.hasUpdates && this.dataWindow.hasAllRowsWithinRange);
+    return (
+      this.rowCountChanged ||
+      (this.hasUpdates && this.dataWindow.hasAllRowsWithinRange)
+    );
   }
 
   subscribe() {
@@ -44,11 +55,19 @@ export class Viewport {
       columns: this.columns,
       sort: this.sort,
       groupBy: this.groupBy,
-      filterSpec: this.filterSpec
-    }
+      filterSpec: this.filterSpec,
+    };
   }
 
-  handleSubscribed({ viewPortId, columns, table, range, sort, groupBy, filterSpec }) {
+  handleSubscribed({
+    viewPortId,
+    columns,
+    table,
+    range,
+    sort,
+    groupBy,
+    filterSpec,
+  }) {
     this.serverViewportId = viewPortId;
     this.status = 'subscribed';
     this.columns = columns;
@@ -58,19 +77,26 @@ export class Viewport {
     this.groupBy = groupBy;
     this.filterSpec = filterSpec;
     this.isTree = groupBy && groupBy.length > 0;
-    this.dataWindow = new ArrayBackedMovingWindow(this.clientRange, range, this.bufferSize);
+    this.dataWindow = new ArrayBackedMovingWindow(
+      this.clientRange,
+      range,
+      this.bufferSize,
+    );
 
-      console.log(`%cViewport subscribed
-        clientVpId: ${this.clientViewportId}
-        serverVpId: ${this.serverViewportId}
-        table: ${this.table}
-        columns: ${columns.join(',')}
-        range: ${JSON.stringify(range)}
-        sort: ${JSON.stringify(sort)}
-        groupBy: ${JSON.stringify(groupBy)}
-        filterSpec: ${JSON.stringify(filterSpec)}
-        bufferSize: ${this.bufferSize}
-      `, 'color: blue');
+    // console.log(
+    //   `%cViewport subscribed
+    //     clientVpId: ${this.clientViewportId}
+    //     serverVpId: ${this.serverViewportId}
+    //     table: ${this.table}
+    //     columns: ${columns.join(',')}
+    //     range: ${JSON.stringify(range)}
+    //     sort: ${JSON.stringify(sort)}
+    //     groupBy: ${JSON.stringify(groupBy)}
+    //     filterSpec: ${JSON.stringify(filterSpec)}
+    //     bufferSize: ${this.bufferSize}
+    //   `,
+    //   'color: blue',
+    // );
   }
 
   awaitOperation(requestId, type) {
@@ -93,21 +119,21 @@ export class Viewport {
       this.isTree = true;
       this.groupBy = data;
       return { clientViewportId, type, groupBy: data };
-    } else if (type === "groupByClear") {
+    } else if (type === 'groupByClear') {
       this.isTree = false;
       this.groupBy = [];
-      return { clientViewportId, type: "groupBy", groupBy: null };
+      return { clientViewportId, type: 'groupBy', groupBy: null };
     } else if (type === 'filter') {
       this.filterSpec = { filter: data };
       return { clientViewportId, type, filter: data };
     } else if (type === 'sort') {
       this.sort = { sortDefs: data };
       return { clientViewportId, type, sort: data };
-    } else if (type === "selection") {
+    } else if (type === 'selection') {
       this.selection = data;
-    } else if (type === "disable") {
+    } else if (type === 'disable') {
       this.suspended = true; // assuming its _SUCCESS, of cource
-    } else if (type === "enable") {
+    } else if (type === 'enable') {
       this.suspended = false;
     }
   }
@@ -116,18 +142,30 @@ export class Viewport {
     // If we can satisfy the range request from the buffer, we will.
     // May or may not need to make a server request, depending on status of buffer
     const type = Message.CHANGE_VP_RANGE;
-    const [serverDataRequired/*, clientRows*/] = this.dataWindow.setClientRange(from, to);
+    const [
+      serverDataRequired /*, clientRows*/,
+    ] = this.dataWindow.setClientRange(from, to);
     const serverRequest = serverDataRequired
-      ? { type, viewPortId: this.serverViewportId, ...getFullRange({ lo: from, hi: to }, this.bufferSize, this.dataWindow.rowCount) }
+      ? {
+          type,
+          viewPortId: this.serverViewportId,
+          ...getFullRange(
+            { lo: from, hi: to },
+            this.bufferSize,
+            this.dataWindow.rowCount,
+          ),
+        }
       : undefined;
     if (serverRequest) {
+      // TODO check that there os not already a pending server request for more data
       this.awaitOperation(requestId, { type });
     }
 
     const clientRows = this.dataWindow.hasAllRowsWithinRange
-    ? this.getClientRows(true)
-    : undefined;
-  return [serverRequest, clientRows];
+      ? this.getClientRows(true)
+      : undefined;
+    // TODO don't we need to reset keys here ?
+    return [serverRequest, clientRows];
 
     // if (clientRows){
     //   this.keys.reset(this.dataWindow.clientRange);
@@ -138,35 +176,35 @@ export class Viewport {
   }
 
   enable(requestId) {
-    this.awaitOperation(requestId, { type: "enable" });
+    this.awaitOperation(requestId, { type: 'enable' });
     return {
       type: Message.ENABLE_VP,
       viewPortId: this.serverViewportId,
-    }
+    };
   }
 
   disable(requestId) {
-    this.awaitOperation(requestId, { type: "disable" });
+    this.awaitOperation(requestId, { type: 'disable' });
     return {
       type: Message.DISABLE_VP,
       viewPortId: this.serverViewportId,
-    }
+    };
   }
 
   filterRequest(requestId, filter) {
-    this.awaitOperation(requestId, { type: "filter", data: filter });
+    this.awaitOperation(requestId, { type: 'filter', data: filter });
     return this.createRequest({ filterSpec: { filter } });
   }
 
   sortRequest(requestId, sortDefs) {
-    this.awaitOperation(requestId, { type: "sort", data: sortDefs });
-    return this.createRequest({ sort: { sortDefs } })
+    this.awaitOperation(requestId, { type: 'sort', data: sortDefs });
+    return this.createRequest({ sort: { sortDefs } });
   }
 
   groupByRequest(requestId, groupBy = EMPTY_ARRAY) {
-    const type = groupBy === EMPTY_ARRAY ? "groupByClear" : "groupBy";
+    const type = groupBy === EMPTY_ARRAY ? 'groupByClear' : 'groupBy';
     this.awaitOperation(requestId, { type, data: groupBy });
-    return this.createRequest({ groupBy })
+    return this.createRequest({ groupBy });
   }
 
   selectRequest(requestId, row, rangeSelect, keepExistingSelection) {
@@ -174,17 +212,17 @@ export class Viewport {
     const selection = row[SELECTED]
       ? singleSelect
         ? []
-        : this.selection.filter(idx => idx !== row[IDX])
+        : this.selection.filter((idx) => idx !== row[IDX])
       : keepExistingSelection
-        ? this.selection.concat(row[IDX])
-        : [row[IDX]];
+      ? this.selection.concat(row[IDX])
+      : [row[IDX]];
 
-    this.awaitOperation(requestId, { type: "selection", data: selection });
+    this.awaitOperation(requestId, { type: 'selection', data: selection });
     return {
       type: Message.SET_SELECTION,
       vpId: this.serverViewportId,
-      selection
-    }
+      selection,
+    };
   }
 
   handleUpdate(updateType, rowIndex, row) {
@@ -200,24 +238,22 @@ export class Viewport {
     }
   }
 
-
   getRowCount = () => {
     if (this.rowCountChanged) {
       this.rowCountChanged = false;
       return this.dataWindow.rowCount;
     }
-  }
+  };
 
   // TODO do we only return a client rowset when server range matches client range ?
   getClientRows(force, timeStamp) {
-    const readyToSendRows = force || (this.hasUpdates && this.dataWindow.hasAllRowsWithinRange);
+    const readyToSendRows =
+      force || (this.hasUpdates && this.dataWindow.hasAllRowsWithinRange);
     if (readyToSendRows) {
       const records = this.dataWindow.getData();
       const clientRows = [];
       const { keys } = this;
-      const toClient = this.isTree
-        ? toClientRowTree
-        : toClientRow
+      const toClient = this.isTree ? toClientRowTree : toClientRow;
 
       if (force || this.requiresKeyAssignment) {
         keys.reset(this.dataWindow.clientRange);
@@ -225,8 +261,8 @@ export class Viewport {
       }
 
       for (let row of records) {
-        if (force || row.ts >= timeStamp){
-          clientRows.push(toClient(row, keys))
+        if (force || row.ts >= timeStamp) {
+          clientRows.push(toClient(row, keys));
         }
       }
       this.hasUpdates = false;
@@ -242,18 +278,33 @@ export class Viewport {
       sort: this.sort,
       groupBy: this.groupBy,
       filterSpec: this.filterSpec,
-      ...params
-    }
+      ...params,
+    };
   }
-
 }
 
 const toClientRow = ({ rowIndex, rowKey, sel: isSelected, data }, keys) =>
-  [rowIndex, keys.keyFor(rowIndex), true, null, null, 1, rowKey, isSelected].concat(data)
+  [
+    rowIndex,
+    keys.keyFor(rowIndex),
+    true,
+    null,
+    null,
+    1,
+    rowKey,
+    isSelected,
+  ].concat(data);
 
 const toClientRowTree = ({ rowIndex, rowKey, sel: isSelected, data }, keys) => {
   let [depth, isExpanded, path, isLeaf, label, count, ...rest] = data;
-  return [rowIndex, keys.keyFor(rowIndex), isLeaf, isExpanded, depth, count, rowKey, isSelected].concat(rest);
-}
-
-
+  return [
+    rowIndex,
+    keys.keyFor(rowIndex),
+    isLeaf,
+    isExpanded,
+    depth,
+    count,
+    rowKey,
+    isSelected,
+  ].concat(rest);
+};

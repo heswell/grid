@@ -1,9 +1,7 @@
-
-import { WindowRange } from "@heswell/utils/src/range-utils";
+import { WindowRange } from '@heswell/utils/src/range-utils';
 export class ArrayBackedMovingWindow {
-
   // Note, the buffer is already accounted for in the range passed in here
-  constructor({lo, hi}, {from, to}, bufferSize){
+  constructor({ lo, hi }, { from, to }, bufferSize) {
     this.bufferSize = bufferSize;
     this.clientRange = new WindowRange(lo, hi);
     this.range = new WindowRange(from, to);
@@ -13,68 +11,68 @@ export class ArrayBackedMovingWindow {
     this.rowCount = 0;
   }
 
-  get hasAllRowsWithinRange(){
-    return (this.rowsWithinRange === this.clientRange.to - this.clientRange.from) ||
-      (this.rowCount > 0 && this.rowsWithinRange === this.rowCount);
+  get hasAllRowsWithinRange() {
+    return (
+      this.rowsWithinRange === this.clientRange.to - this.clientRange.from ||
+      (this.rowCount > 0 && this.rowsWithinRange === this.rowCount)
+    );
   }
 
-  setRowCount = rowCount => {
-    if (rowCount < this.internalData.length){
+  setRowCount = (rowCount) => {
+    if (rowCount < this.internalData.length) {
       this.internalData.length = rowCount;
     }
-    if (rowCount < this.rowCount){
-      const [overlapFrom, overlapTo] = this.range.overlap(rowCount, this.rowCount);
-      for (let i=overlapFrom;i<overlapTo;i++){
+    if (rowCount < this.rowCount) {
+      // Brute force, works
+      this.rowsWithinRange = 0;
+      const end = Math.max(rowCount, this.clientRange.to);
+      for (let i = this.clientRange.from; i < end; i++) {
         const rowIndex = i - this.range.from;
-        if (i === rowCount){
-          break;
-        }
-        this.internalData[rowIndex] = undefined;
-        if (this.isWithinClientRange(rowIndex)){
-          this.rowsWithinRange -= 1;
+        if (this.internalData[rowIndex] !== undefined) {
+          this.rowsWithinRange += 1;
         }
       }
     }
     this.rowCount = rowCount;
-  }
+  };
 
-  setAtIndex(index, data){
+  setAtIndex(index, data) {
     //onsole.log(`ingest row at rowIndex ${index} [${index - this.range.from}]`)
     const isWithinClientRange = this.isWithinClientRange(index);
-    if(isWithinClientRange || this.isWithinRange(index)){
+    if (isWithinClientRange || this.isWithinRange(index)) {
       const internalIndex = index - this.range.from;
-      if (!this.internalData[internalIndex] && isWithinClientRange){
+      if (!this.internalData[internalIndex] && isWithinClientRange) {
         this.rowsWithinRange += 1;
         //onsole.log(`rowsWithinRange is now ${this.rowsWithinRange} out of ${this.range.to - this.range.from}`)
       }
-      this.internalData[internalIndex] = data
+      this.internalData[internalIndex] = data;
     }
     return isWithinClientRange;
   }
 
-  getAtIndex(index){
-      return this.range.isWithin(index) && this.internalData[index - this.range.from] != null
-        ? this.internalData[index - this.range.from]
-        : undefined;
+  getAtIndex(index) {
+    return this.range.isWithin(index) &&
+      this.internalData[index - this.range.from] != null
+      ? this.internalData[index - this.range.from]
+      : undefined;
   }
 
-  isWithinRange(index){
+  isWithinRange(index) {
     return this.range.isWithin(index);
   }
 
-  isWithinClientRange(index){
+  isWithinClientRange(index) {
     return this.clientRange.isWithin(index);
   }
 
-  setClientRange(from, to){
-
+  setClientRange(from, to) {
     // const originalRange = this.clientRange.copy();
     this.clientRange.from = from;
     this.clientRange.to = to;
     this.rowsWithinRange = 0;
-    for (let i=from;i<to;i++){
+    for (let i = from; i < to; i++) {
       const internalIndex = i - this.range.from;
-      if (this.internalData[internalIndex]){
+      if (this.internalData[internalIndex]) {
         this.rowsWithinRange += 1;
       }
     }
@@ -94,46 +92,48 @@ export class ArrayBackedMovingWindow {
     let serverDataRequired = false;
 
     // Is data required from server ... how close are we to buffer threshold ?
-    const bufferPerimeter = this.bufferSize * .25;
-    if (this.range.to - to < bufferPerimeter){
+    const bufferPerimeter = this.bufferSize * 0.25;
+    if (this.range.to - to < bufferPerimeter) {
       serverDataRequired = true;
-    } else if (this.range.from > 0 && from - this.range.from < bufferPerimeter){
+    } else if (
+      this.range.from > 0 &&
+      from - this.range.from < bufferPerimeter
+    ) {
       serverDataRequired = true;
     }
 
-    return [serverDataRequired]
+    return [serverDataRequired];
   }
 
-  setRange(from, to){
-      const [overlapFrom, overlapTo] = this.range.overlap(from, to);
+  setRange(from, to) {
+    const [overlapFrom, overlapTo] = this.range.overlap(from, to);
 
-      const newData = new Array(to - from + this.bufferSize);
-      this.rowsWithinRange = 0;
+    const newData = new Array(to - from + this.bufferSize);
+    this.rowsWithinRange = 0;
 
-      for (let i=overlapFrom; i < overlapTo; i++){
-        const data = this.getAtIndex(i);
-        if (data){
-          const index = i - from;
-          newData[index] = data;
-          if (this.isWithinClientRange(i)){
-            this.rowsWithinRange += 1;
-          }
+    for (let i = overlapFrom; i < overlapTo; i++) {
+      const data = this.getAtIndex(i);
+      if (data) {
+        const index = i - from;
+        newData[index] = data;
+        if (this.isWithinClientRange(i)) {
+          this.rowsWithinRange += 1;
         }
       }
+    }
 
-      this.internalData = newData
-      this.range.from = from
-      this.range.to = to
+    this.internalData = newData;
+    this.range.from = from;
+    this.range.to = to;
   }
 
-  getData(){
-    const {from, to} = this.range;
-    const {from: lo, to: hi} = this.clientRange;
+  getData() {
+    const { from, to } = this.range;
+    const { from: lo, to: hi } = this.clientRange;
     const startOffset = Math.max(0, lo - from);
-    const endOffset = Math.min(to-from, to, hi - from, this.rowCount);
+    const endOffset = Math.min(to - from, to, hi - from, this.rowCount);
     // const endOffset = Math.min(to-from, to, hi - from, this.rowCount);
     //onsole.log(`MovingWindow getData (${lo}, ${hi}) range = ${from} ${to} , so start=${startOffset}, end=${endOffset}`)
-    return this.internalData.slice(startOffset,endOffset);
+    return this.internalData.slice(startOffset, endOffset);
   }
-
 }
