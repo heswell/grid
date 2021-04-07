@@ -17,7 +17,6 @@ export default function useScroll(scrollPos, callback, scrollThreshold = 0) {
     e => {
       // important for the horizontal scroll on Canvas
       e.stopPropagation();
-      console.log(`onScroll suspended = ${scrollHandlingSuspended.current}`)
       if (!scrollHandlingSuspended.current){
         const scrollPosition = e.target[scrollPos];
         if (scrollPosition !== pos.current) {

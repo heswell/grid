@@ -1527,14 +1527,6 @@
     date-fns "^2.9.0"
     xstate "^4.2.2"
 
-"@heswell/utils@3.0.1":
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/@heswell/utils/-/utils-3.0.1.tgz#57920626b5008e6d279735a17c27723c02caa05d"
-  integrity sha512-IOc7PHywEkPzFOgGWfJNKAw4uqRVLnjDZjXdwjrvZ8ZcUCXHNuaLu8puQNGt0EfSOuYVNZqMlMem9KigqRujlA==
-  dependencies:
-    nanoid "^3.1.20"
-    react "^17.0.1"
-
 "@icons/material@^0.2.4":
   version "0.2.4"
   resolved "https://registry.yarnpkg.com/@icons/material/-/material-0.2.4.tgz#e90c9f71768b3736e76d7dd6783fc6c2afa88bc8"

@@ -1,7 +1,7 @@
 import * as Message from './messages';
 import { Viewport } from './new-viewport';
 // TEST_DATA_COLLECTION
-import { saveTestData } from './test-data-collection';
+import { saveTestData } from '../../test-data-collection';
 
 let _requestId = 1;
 export const TEST_setRequestId = (id) => (_requestId = id);
@@ -88,7 +88,6 @@ export class ServerProxy {
               [viewport.clientViewportId]: { rows },
             },
           };
-          console.table(clientMessage.viewports['client-vp-1'].rows);
           this.postMessageToClient(clientMessage);
         }
         break;
@@ -357,7 +356,6 @@ export class ServerProxy {
         // }
         // updateTime = now;
         this.postMessageToClient(clientMessage);
-        console.table(clientMessage.viewports['client-vp-1'].rows);
       }
     });
   }

@@ -266,6 +266,16 @@ export class Viewport {
         }
       }
       this.hasUpdates = false;
+
+
+      // if (!uniqueKeys(clientRows)){
+      //   debugger;
+      // }
+
+      // if (clientRows.length > 0 && clientRows.length < (this.dataWindow.clientRange.to - this.dataWindow.clientRange.from)){
+      //   console.log(`%conly sending ${clientRows.length} rows to client`,'color:red;font-weight: bold;')
+      // }
+
       return clientRows;
     }
   }
@@ -308,3 +318,9 @@ const toClientRowTree = ({ rowIndex, rowKey, sel: isSelected, data }, keys) => {
     isSelected,
   ].concat(rest);
 };
+
+const uniqueKeys = rows => {
+  const keys = rows.map(row => row[1]);
+  const uniqueKeys = new Set(keys);
+  return uniqueKeys.size === keys.length;
+}

@@ -316,7 +316,8 @@ const Canvas = forwardRef(function Canvas(
           height: Math.max(contentHeight + horizontalScrollbarHeight, height),
         }}
       >
-        {rows.sort(byKey).map((row) => (
+        {/* {rows.sort(byKey).map((row) => ( */}
+        {rows.map((row) => (
           <Row
             key={row[RENDER_IDX]}
             columnMap={columnMap}

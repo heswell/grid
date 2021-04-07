@@ -3,10 +3,17 @@ import ReactDOM from 'react-dom';
 
 import "./test-data-capture.css"
 let _data;
+let clientViewportId;
+let serverViewportId;
 
 export function storeData(data) {
   console.log(`got the data ${data.length} messages`);
   _data = data;
+  const [createViewportMessage] = data;
+  const message = JSON.parse(createViewportMessage);
+  clientViewportId = message.requestId;
+  serverViewportId = message.body.viewPortId;
+
   document.getElementById("btn-create-test").disabled = false;
 }
 
@@ -22,10 +29,45 @@ const collectData = () => {
 }
 
 const getTestText = () => {
+
+  const testContent = _data.map(message => {
+    if (message.startsWith(`{"viewport"`)){
+      return `
+      serverProxy.handleMessageFromClient(${message});
+    `;
+    } else {
+      return `
+      serverProxy.handleMessageFromServer(${message});
+    `;
+    }
+
+  }).join('\n\n');
+
 return `
-export const messages = [
-  ${_data.join(',\n')}
-]
+import { ServerProxy, TEST_setRequestId } from '../servers/vuu/new-server-proxy';
+import { createSubscription } from "./test-utils";
+
+const mockConnection = {
+  send: jest.fn()
+}
+const callback = jest.fn();
+
+describe('server-proxy-generated-test', () => {
+    test('test with captures messages', () => {
+      let state = undefined;
+
+      const [clientSubscription] = createSubscription({viewport: '${clientViewportId}', bufferSize: 100});
+      const serverProxy = new ServerProxy(mockConnection, callback);
+      serverProxy.subscribe(clientSubscription);
+
+      ${testContent}
+
+
+      const viewport = serverProxy.viewports.get('${serverViewportId}')
+      expect(viewport.isTree).toBe(false);
+
+    });
+  });
 `
 }
 

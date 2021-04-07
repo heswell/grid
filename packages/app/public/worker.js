@@ -11,6 +11,34 @@ const createLogger = (source, labelColor=plain, msgColor=plain) => ({
   warn: (msg) => console.warn(`[${source}] ${msg}`)
 });
 
+const data = [];
+
+const saveTestData = (message, source) => {
+  // if (source === 'server' && (
+  //   HB.test(message) ||
+  //   AUTH_SUCCESS.test(message) ||
+  //   LOGIN_SUCCESS.test(message) ||
+  //   TABLE_LIST.test(message) ||
+  //   TABLE_META.test(message)
+  //   )) {
+  //   return;
+  // } else if (source === 'client') {
+  //   if (message.type.startsWith("GET_TABLE_")){
+  //     return
+  //   }
+
+
+  //   message = JSON.stringify(message);
+  // }
+  // data.push(message);
+};
+
+const getTestMessages = () => {
+  const messages = data.slice();
+  data.length = 0;
+  return messages;
+};
+
 const logger$1 = createLogger('WebsocketConnection', logColor.brown);
 
 const connectionAttempts = {};
@@ -18,42 +46,51 @@ const connectionAttempts = {};
 const setWebsocket = Symbol('setWebsocket');
 const connectionCallback = Symbol('connectionCallback');
 
-async function connect(connectionString, callback, connectionStatusCallback) {
-    return makeConnection(connectionString, msg => {
-      const {type} = msg;
-      if (type === 'connection-status'){
-        connectionStatusCallback(msg);
-      } else if (type === 'HB'){
-          console.log(`swallowing HB in WebsocketConnection`);
-      } else if (type === 'Welcome'){
-        // Note: we are actually resolving the connection before we get this session message
-        logger$1.log(`Session established clientId: ${msg.clientId}`);
-      } else {
-        callback(msg);
-      }
-    });
+async function connect(
+  connectionString,
+  callback,
+  connectionStatusCallback,
+) {
+  return makeConnection(connectionString, (msg) => {
+    const { type } = msg;
+    if (type === 'connection-status') {
+      connectionStatusCallback(msg);
+    } else if (type === 'HB') {
+      console.log(`swallowing HB in WebsocketConnection`);
+    } else if (type === 'Welcome') {
+      // Note: we are actually resolving the connection before we get this session message
+      logger$1.log(`Session established clientId: ${msg.clientId}`);
+    } else {
+      callback(msg);
+    }
+  });
 }
 
-async function reconnect(connection){
+async function reconnect(connection) {
   console.log(`reconnect connection at ${connection.url}`);
   makeConnection(connection.url, connection[connectionCallback], connection);
 }
 
-async function makeConnection(url, callback, connection){
-
-  const connectionStatus = connectionAttempts[url] || (connectionAttempts[url] = {
-    attemptsRemaining: 5,
-    status: 'not-connected'
-  });
+async function makeConnection(url, callback, connection) {
+  const connectionStatus =
+    connectionAttempts[url] ||
+    (connectionAttempts[url] = {
+      attemptsRemaining: 5,
+      status: 'not-connected',
+    });
 
   try {
-    callback({type: 'connection-status', status: 'connecting'});
+    callback({ type: 'connection-status', status: 'connecting' });
     const reconnecting = typeof connection !== 'undefined';
     const ws = await createWebsocket(url);
 
-    console.log(`%c⚡ %c${url}`, 'font-size: 24px;color: green;font-weight: bold;','color:green; font-size: 14px;');
+    console.log(
+      `%c⚡ %c${url}`,
+      'font-size: 24px;color: green;font-weight: bold;',
+      'color:green; font-size: 14px;',
+    );
 
-    if (reconnecting){
+    if (reconnecting) {
       connection[setWebsocket](ws);
     } else {
       connection = new Connection(ws, url, callback);
@@ -61,100 +98,110 @@ async function makeConnection(url, callback, connection){
 
     const status = reconnecting ? 'reconnected' : 'connected';
 
-    callback({type: 'connection-status', status});
+    callback({ type: 'connection-status', status });
 
     connection.status = status;
 
     return connection;
-
-  } catch(evt){
+  } catch (evt) {
     const retry = --connectionStatus.attemptsRemaining > 0;
-    callback({type: 'connection-status', status: 'not-connected', reason: 'failed to connect', retry});
-    if (retry){
+    callback({
+      type: 'connection-status',
+      status: 'not-connected',
+      reason: 'failed to connect',
+      retry,
+    });
+    if (retry) {
       return makeConnectionIn(url, callback, connection, 10000);
     }
   }
 }
 
-const makeConnectionIn = (url, callback, connection, delay) => new Promise(resolve => {
-  setTimeout(() => {
-    resolve(makeConnection(url, callback, connection));
-  }, delay);
-});
+const makeConnectionIn = (url, callback, connection, delay) =>
+  new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(makeConnection(url, callback, connection));
+    }, delay);
+  });
 
-const createWebsocket = connectionString => new Promise((resolve, reject) => {
-  //TODO add timeout
+const createWebsocket = (connectionString) =>
+  new Promise((resolve, reject) => {
+    //TODO add timeout
     const ws = new WebSocket('ws://' + connectionString);
     ws.onopen = () => resolve(ws);
-    ws.onerror = evt => reject(evt);
-});
-
-// TEST DATA COLLECTION
-const websocket_messages = [];
-const getWebsocketData = () => {
-  const messages = websocket_messages.slice();
-  websocket_messages.length = 0;
-  return messages;
-};
+    ws.onerror = (evt) => reject(evt);
+  });
 
 class Connection {
-
   constructor(ws, url, callback) {
-
     this.url = url;
     this[connectionCallback] = callback;
     this[setWebsocket](ws);
     this.status = 'ready';
-
   }
 
-  reconnect(){
+  reconnect() {
     reconnect(this);
   }
 
-  [setWebsocket](ws){
-
+  [setWebsocket](ws) {
     const callback = this[connectionCallback];
 
-    ws.onmessage = evt => {
+    ws.onmessage = (evt) => {
       // TEST DATA COLLECTION
-      // if (!/"type":"HB"/.test(evt.data)){
-      //   websocket_messages.push(evt.data);
-      // }
+        saveTestData(evt.data);
       const message = JSON.parse(evt.data);
       // console.log(`%c<<< [${new Date().toISOString().slice(11,23)}]  (WebSocket) ${message.type || JSON.stringify(message)}`,'color:white;background-color:blue;font-weight:bold;');
       callback(message);
     };
 
-    ws.onerror = evt => {
-      console.log(`%c⚡ %c${this.url}`, 'font-size: 24px;color: red;font-weight: bold;','color:red; font-size: 14px;');
-      callback({type: 'connection-status', status: 'disconnected', reason: 'error'});
-      if (this.status !== 'closed'){
+    ws.onerror = (evt) => {
+      console.log(
+        `%c⚡ %c${this.url}`,
+        'font-size: 24px;color: red;font-weight: bold;',
+        'color:red; font-size: 14px;',
+      );
+      callback({
+        type: 'connection-status',
+        status: 'disconnected',
+        reason: 'error',
+      });
+      if (this.status !== 'closed') {
         reconnect(this);
         this.send = queue;
       }
     };
 
-    ws.onclose = evt => {
-      console.log(`%c⚡ %c${this.url}`, 'font-size: 24px;color: orange;font-weight: bold;','color:orange; font-size: 14px;');
-      callback({type: 'connection-status', status: 'disconnected', reason: 'close'});
-      if (this.status !== 'closed'){
+    ws.onclose = (evt) => {
+      console.log(
+        `%c⚡ %c${this.url}`,
+        'font-size: 24px;color: orange;font-weight: bold;',
+        'color:orange; font-size: 14px;',
+      );
+      callback({
+        type: 'connection-status',
+        status: 'disconnected',
+        reason: 'close',
+      });
+      if (this.status !== 'closed') {
         reconnect(this);
         this.send = queue;
       }
     };
 
-    const send = msg => {
+    const send = (msg) => {
       // console.log(`%c>>>  (WebSocket) ${JSON.stringify(msg)}`,'color:blue;font-weight:bold;');
       ws.send(JSON.stringify(msg));
     };
 
-    const warn = msg => {
+    const warn = (msg) => {
       logger$1.log(`Message cannot be sent, socket closed: ${msg.type}`);
     };
 
-    const queue = msg => {
-      console.log(`queuing message ${JSON.stringify(msg)} until websocket reconnected`);
+    const queue = (msg) => {
+      console.log(
+        `queuing message ${JSON.stringify(msg)} until websocket reconnected`,
+      );
     };
 
     this.send = send;
@@ -165,9 +212,7 @@ class Connection {
       ws.close();
       this.send = warn;
     };
-
   }
-
 }
 
 const AUTH = 'AUTH';
@@ -299,9 +344,8 @@ class WindowRange {
 }
 
 class ArrayBackedMovingWindow {
-
   // Note, the buffer is already accounted for in the range passed in here
-  constructor({lo, hi}, {from, to}, bufferSize){
+  constructor({ lo, hi }, { from, to }, bufferSize) {
     this.bufferSize = bufferSize;
     this.clientRange = new WindowRange(lo, hi);
     this.range = new WindowRange(from, to);
@@ -311,37 +355,37 @@ class ArrayBackedMovingWindow {
     this.rowCount = 0;
   }
 
-  get hasAllRowsWithinRange(){
-    return (this.rowsWithinRange === this.clientRange.to - this.clientRange.from) ||
-      (this.rowCount > 0 && this.rowsWithinRange === this.rowCount);
+  get hasAllRowsWithinRange() {
+    return (
+      this.rowsWithinRange === this.clientRange.to - this.clientRange.from ||
+      (this.rowCount > 0 && this.rowsWithinRange === this.rowCount)
+    );
   }
 
-  setRowCount = rowCount => {
-    if (rowCount < this.internalData.length){
+  setRowCount = (rowCount) => {
+    if (rowCount < this.internalData.length) {
       this.internalData.length = rowCount;
     }
-    if (rowCount < this.rowCount){
-      const [overlapFrom, overlapTo] = this.range.overlap(rowCount, this.rowCount);
-      for (let i=overlapFrom;i<overlapTo;i++){
+    if (rowCount < this.rowCount) {
+      // Brute force, works
+      this.rowsWithinRange = 0;
+      const end = Math.max(rowCount, this.clientRange.to);
+      for (let i = this.clientRange.from; i < end; i++) {
         const rowIndex = i - this.range.from;
-        if (i === rowCount){
-          break;
-        }
-        this.internalData[rowIndex] = undefined;
-        if (this.isWithinClientRange(rowIndex)){
-          this.rowsWithinRange -= 1;
+        if (this.internalData[rowIndex] !== undefined) {
+          this.rowsWithinRange += 1;
         }
       }
     }
     this.rowCount = rowCount;
-  }
+  };
 
-  setAtIndex(index, data){
+  setAtIndex(index, data) {
     //onsole.log(`ingest row at rowIndex ${index} [${index - this.range.from}]`)
     const isWithinClientRange = this.isWithinClientRange(index);
-    if(isWithinClientRange || this.isWithinRange(index)){
+    if (isWithinClientRange || this.isWithinRange(index)) {
       const internalIndex = index - this.range.from;
-      if (!this.internalData[internalIndex] && isWithinClientRange){
+      if (!this.internalData[internalIndex] && isWithinClientRange) {
         this.rowsWithinRange += 1;
         //onsole.log(`rowsWithinRange is now ${this.rowsWithinRange} out of ${this.range.to - this.range.from}`)
       }
@@ -350,29 +394,29 @@ class ArrayBackedMovingWindow {
     return isWithinClientRange;
   }
 
-  getAtIndex(index){
-      return this.range.isWithin(index) && this.internalData[index - this.range.from] != null
-        ? this.internalData[index - this.range.from]
-        : undefined;
+  getAtIndex(index) {
+    return this.range.isWithin(index) &&
+      this.internalData[index - this.range.from] != null
+      ? this.internalData[index - this.range.from]
+      : undefined;
   }
 
-  isWithinRange(index){
+  isWithinRange(index) {
     return this.range.isWithin(index);
   }
 
-  isWithinClientRange(index){
+  isWithinClientRange(index) {
     return this.clientRange.isWithin(index);
   }
 
-  setClientRange(from, to){
-
+  setClientRange(from, to) {
     // const originalRange = this.clientRange.copy();
     this.clientRange.from = from;
     this.clientRange.to = to;
     this.rowsWithinRange = 0;
-    for (let i=from;i<to;i++){
+    for (let i = from; i < to; i++) {
       const internalIndex = i - this.range.from;
-      if (this.internalData[internalIndex]){
+      if (this.internalData[internalIndex]) {
         this.rowsWithinRange += 1;
       }
     }
@@ -392,55 +436,66 @@ class ArrayBackedMovingWindow {
     let serverDataRequired = false;
 
     // Is data required from server ... how close are we to buffer threshold ?
-    const bufferPerimeter = this.bufferSize * .25;
-    if (this.range.to - to < bufferPerimeter){
+    const bufferPerimeter = this.bufferSize * 0.25;
+    if (this.range.to - to < bufferPerimeter) {
       serverDataRequired = true;
-    } else if (this.range.from > 0 && from - this.range.from < bufferPerimeter){
+    } else if (
+      this.range.from > 0 &&
+      from - this.range.from < bufferPerimeter
+    ) {
       serverDataRequired = true;
     }
 
-    return [serverDataRequired]
+    return [serverDataRequired];
   }
 
-  setRange(from, to){
-      const [overlapFrom, overlapTo] = this.range.overlap(from, to);
+  setRange(from, to) {
+    const [overlapFrom, overlapTo] = this.range.overlap(from, to);
 
-      const newData = new Array(to - from + this.bufferSize);
-      this.rowsWithinRange = 0;
+    const newData = new Array(to - from + this.bufferSize);
+    this.rowsWithinRange = 0;
 
-      for (let i=overlapFrom; i < overlapTo; i++){
-        const data = this.getAtIndex(i);
-        if (data){
-          const index = i - from;
-          newData[index] = data;
-          if (this.isWithinClientRange(i)){
-            this.rowsWithinRange += 1;
-          }
+    for (let i = overlapFrom; i < overlapTo; i++) {
+      const data = this.getAtIndex(i);
+      if (data) {
+        const index = i - from;
+        newData[index] = data;
+        if (this.isWithinClientRange(i)) {
+          this.rowsWithinRange += 1;
         }
       }
+    }
 
-      this.internalData = newData;
-      this.range.from = from;
-      this.range.to = to;
+    this.internalData = newData;
+    this.range.from = from;
+    this.range.to = to;
   }
 
-  getData(){
-    const {from, to} = this.range;
-    const {from: lo, to: hi} = this.clientRange;
+  getData() {
+    const { from, to } = this.range;
+    const { from: lo, to: hi } = this.clientRange;
     const startOffset = Math.max(0, lo - from);
-    const endOffset = Math.min(to-from, to, hi - from, this.rowCount);
+    const endOffset = Math.min(to - from, to, hi - from, this.rowCount);
     // const endOffset = Math.min(to-from, to, hi - from, this.rowCount);
     //onsole.log(`MovingWindow getData (${lo}, ${hi}) range = ${from} ${to} , so start=${startOffset}, end=${endOffset}`)
-    return this.internalData.slice(startOffset,endOffset);
+    return this.internalData.slice(startOffset, endOffset);
   }
-
 }
 
 const { IDX, SELECTED } = metadataKeys;
 const EMPTY_ARRAY$1 = [];
 
 class Viewport {
-  constructor({ viewport, tablename, columns, range, bufferSize = 0, filter="", sort=[], groupBy=[] }) {
+  constructor({
+    viewport,
+    tablename,
+    columns,
+    range,
+    bufferSize = 0,
+    filter = '',
+    sort = [],
+    groupBy = [],
+  }) {
     this.clientViewportId = viewport;
     this.table = tablename;
     this.status = '';
@@ -448,11 +503,11 @@ class Viewport {
     this.clientRange = range;
     this.bufferSize = bufferSize;
     this.sort = {
-      sortDefs: sort
+      sortDefs: sort,
     };
     this.groupBy = groupBy;
     this.filterSpec = {
-      filter
+      filter,
     };
     this.isTree = false;
     this.dataWindow = undefined;
@@ -461,11 +516,13 @@ class Viewport {
     this.pendingOperations = new Map();
     this.hasUpdates = false;
     this.requiresKeyAssignment = true;
-
   }
 
   get shouldUpdateClient() {
-    return this.rowCountChanged || (this.hasUpdates && this.dataWindow.hasAllRowsWithinRange);
+    return (
+      this.rowCountChanged ||
+      (this.hasUpdates && this.dataWindow.hasAllRowsWithinRange)
+    );
   }
 
   subscribe() {
@@ -476,11 +533,19 @@ class Viewport {
       columns: this.columns,
       sort: this.sort,
       groupBy: this.groupBy,
-      filterSpec: this.filterSpec
-    }
+      filterSpec: this.filterSpec,
+    };
   }
 
-  handleSubscribed({ viewPortId, columns, table, range, sort, groupBy, filterSpec }) {
+  handleSubscribed({
+    viewPortId,
+    columns,
+    table,
+    range,
+    sort,
+    groupBy,
+    filterSpec,
+  }) {
     this.serverViewportId = viewPortId;
     this.status = 'subscribed';
     this.columns = columns;
@@ -490,19 +555,26 @@ class Viewport {
     this.groupBy = groupBy;
     this.filterSpec = filterSpec;
     this.isTree = groupBy && groupBy.length > 0;
-    this.dataWindow = new ArrayBackedMovingWindow(this.clientRange, range, this.bufferSize);
+    this.dataWindow = new ArrayBackedMovingWindow(
+      this.clientRange,
+      range,
+      this.bufferSize,
+    );
 
-      console.log(`%cViewport subscribed
-        clientVpId: ${this.clientViewportId}
-        serverVpId: ${this.serverViewportId}
-        table: ${this.table}
-        columns: ${columns.join(',')}
-        range: ${JSON.stringify(range)}
-        sort: ${JSON.stringify(sort)}
-        groupBy: ${JSON.stringify(groupBy)}
-        filterSpec: ${JSON.stringify(filterSpec)}
-        bufferSize: ${this.bufferSize}
-      `, 'color: blue');
+    // console.log(
+    //   `%cViewport subscribed
+    //     clientVpId: ${this.clientViewportId}
+    //     serverVpId: ${this.serverViewportId}
+    //     table: ${this.table}
+    //     columns: ${columns.join(',')}
+    //     range: ${JSON.stringify(range)}
+    //     sort: ${JSON.stringify(sort)}
+    //     groupBy: ${JSON.stringify(groupBy)}
+    //     filterSpec: ${JSON.stringify(filterSpec)}
+    //     bufferSize: ${this.bufferSize}
+    //   `,
+    //   'color: blue',
+    // );
   }
 
   awaitOperation(requestId, type) {
@@ -525,21 +597,21 @@ class Viewport {
       this.isTree = true;
       this.groupBy = data;
       return { clientViewportId, type, groupBy: data };
-    } else if (type === "groupByClear") {
+    } else if (type === 'groupByClear') {
       this.isTree = false;
       this.groupBy = [];
-      return { clientViewportId, type: "groupBy", groupBy: null };
+      return { clientViewportId, type: 'groupBy', groupBy: null };
     } else if (type === 'filter') {
       this.filterSpec = { filter: data };
       return { clientViewportId, type, filter: data };
     } else if (type === 'sort') {
       this.sort = { sortDefs: data };
       return { clientViewportId, type, sort: data };
-    } else if (type === "selection") {
+    } else if (type === 'selection') {
       this.selection = data;
-    } else if (type === "disable") {
+    } else if (type === 'disable') {
       this.suspended = true; // assuming its _SUCCESS, of cource
-    } else if (type === "enable") {
+    } else if (type === 'enable') {
       this.suspended = false;
     }
   }
@@ -548,18 +620,30 @@ class Viewport {
     // If we can satisfy the range request from the buffer, we will.
     // May or may not need to make a server request, depending on status of buffer
     const type = CHANGE_VP_RANGE;
-    const [serverDataRequired/*, clientRows*/] = this.dataWindow.setClientRange(from, to);
+    const [
+      serverDataRequired /*, clientRows*/,
+    ] = this.dataWindow.setClientRange(from, to);
     const serverRequest = serverDataRequired
-      ? { type, viewPortId: this.serverViewportId, ...getFullRange({ lo: from, hi: to }, this.bufferSize, this.dataWindow.rowCount) }
+      ? {
+          type,
+          viewPortId: this.serverViewportId,
+          ...getFullRange(
+            { lo: from, hi: to },
+            this.bufferSize,
+            this.dataWindow.rowCount,
+          ),
+        }
       : undefined;
     if (serverRequest) {
+      // TODO check that there os not already a pending server request for more data
       this.awaitOperation(requestId, { type });
     }
 
     const clientRows = this.dataWindow.hasAllRowsWithinRange
-    ? this.getClientRows(true)
-    : undefined;
-  return [serverRequest, clientRows];
+      ? this.getClientRows(true)
+      : undefined;
+    // TODO don't we need to reset keys here ?
+    return [serverRequest, clientRows];
 
     // if (clientRows){
     //   this.keys.reset(this.dataWindow.clientRange);
@@ -570,35 +654,35 @@ class Viewport {
   }
 
   enable(requestId) {
-    this.awaitOperation(requestId, { type: "enable" });
+    this.awaitOperation(requestId, { type: 'enable' });
     return {
       type: ENABLE_VP,
       viewPortId: this.serverViewportId,
-    }
+    };
   }
 
   disable(requestId) {
-    this.awaitOperation(requestId, { type: "disable" });
+    this.awaitOperation(requestId, { type: 'disable' });
     return {
       type: DISABLE_VP,
       viewPortId: this.serverViewportId,
-    }
+    };
   }
 
   filterRequest(requestId, filter) {
-    this.awaitOperation(requestId, { type: "filter", data: filter });
+    this.awaitOperation(requestId, { type: 'filter', data: filter });
     return this.createRequest({ filterSpec: { filter } });
   }
 
   sortRequest(requestId, sortDefs) {
-    this.awaitOperation(requestId, { type: "sort", data: sortDefs });
-    return this.createRequest({ sort: { sortDefs } })
+    this.awaitOperation(requestId, { type: 'sort', data: sortDefs });
+    return this.createRequest({ sort: { sortDefs } });
   }
 
   groupByRequest(requestId, groupBy = EMPTY_ARRAY$1) {
-    const type = groupBy === EMPTY_ARRAY$1 ? "groupByClear" : "groupBy";
+    const type = groupBy === EMPTY_ARRAY$1 ? 'groupByClear' : 'groupBy';
     this.awaitOperation(requestId, { type, data: groupBy });
-    return this.createRequest({ groupBy })
+    return this.createRequest({ groupBy });
   }
 
   selectRequest(requestId, row, rangeSelect, keepExistingSelection) {
@@ -606,17 +690,17 @@ class Viewport {
     const selection = row[SELECTED]
       ? singleSelect
         ? []
-        : this.selection.filter(idx => idx !== row[IDX])
+        : this.selection.filter((idx) => idx !== row[IDX])
       : keepExistingSelection
-        ? this.selection.concat(row[IDX])
-        : [row[IDX]];
+      ? this.selection.concat(row[IDX])
+      : [row[IDX]];
 
-    this.awaitOperation(requestId, { type: "selection", data: selection });
+    this.awaitOperation(requestId, { type: 'selection', data: selection });
     return {
       type: SET_SELECTION,
       vpId: this.serverViewportId,
-      selection
-    }
+      selection,
+    };
   }
 
   handleUpdate(updateType, rowIndex, row) {
@@ -632,24 +716,22 @@ class Viewport {
     }
   }
 
-
   getRowCount = () => {
     if (this.rowCountChanged) {
       this.rowCountChanged = false;
       return this.dataWindow.rowCount;
     }
-  }
+  };
 
   // TODO do we only return a client rowset when server range matches client range ?
   getClientRows(force, timeStamp) {
-    const readyToSendRows = force || (this.hasUpdates && this.dataWindow.hasAllRowsWithinRange);
+    const readyToSendRows =
+      force || (this.hasUpdates && this.dataWindow.hasAllRowsWithinRange);
     if (readyToSendRows) {
       const records = this.dataWindow.getData();
       const clientRows = [];
       const { keys } = this;
-      const toClient = this.isTree
-        ? toClientRowTree
-        : toClientRow;
+      const toClient = this.isTree ? toClientRowTree : toClientRow;
 
       if (force || this.requiresKeyAssignment) {
         keys.reset(this.dataWindow.clientRange);
@@ -657,11 +739,21 @@ class Viewport {
       }
 
       for (let row of records) {
-        if (force || row.ts >= timeStamp){
+        if (force || row.ts >= timeStamp) {
           clientRows.push(toClient(row, keys));
         }
       }
       this.hasUpdates = false;
+
+
+      // if (!uniqueKeys(clientRows)){
+      //   debugger;
+      // }
+
+      // if (clientRows.length > 0 && clientRows.length < (this.dataWindow.clientRange.to - this.dataWindow.clientRange.from)){
+      //   console.log(`%conly sending ${clientRows.length} rows to client`,'color:red;font-weight: bold;')
+      // }
+
       return clientRows;
     }
   }
@@ -674,18 +766,35 @@ class Viewport {
       sort: this.sort,
       groupBy: this.groupBy,
       filterSpec: this.filterSpec,
-      ...params
-    }
+      ...params,
+    };
   }
-
 }
 
 const toClientRow = ({ rowIndex, rowKey, sel: isSelected, data }, keys) =>
-  [rowIndex, keys.keyFor(rowIndex), true, null, null, 1, rowKey, isSelected].concat(data);
+  [
+    rowIndex,
+    keys.keyFor(rowIndex),
+    true,
+    null,
+    null,
+    1,
+    rowKey,
+    isSelected,
+  ].concat(data);
 
 const toClientRowTree = ({ rowIndex, rowKey, sel: isSelected, data }, keys) => {
   let [depth, isExpanded, path, isLeaf, label, count, ...rest] = data;
-  return [rowIndex, keys.keyFor(rowIndex), isLeaf, isExpanded, depth, count, rowKey, isSelected].concat(rest);
+  return [
+    rowIndex,
+    keys.keyFor(rowIndex),
+    isLeaf,
+    isExpanded,
+    depth,
+    count,
+    rowKey,
+    isSelected,
+  ].concat(rest);
 };
 
 let _requestId = 1;
@@ -693,44 +802,46 @@ let _requestId = 1;
 const nextRequestId = () => `${_requestId++}`;
 const EMPTY_ARRAY = [];
 class ServerProxy {
-
   constructor(connection, callback) {
     this.connection = connection;
     this.postMessageToClient = callback;
     this.viewports = new Map();
     this.mapClientToServerViewport = new Map();
     this.currentTimestamp = undefined;
-
   }
 
   async authenticate(username, password) {
     return new Promise((resolve, reject) => {
-      this.sendMessageToServer({ type: AUTH, username, password }, "");
+      this.sendMessageToServer({ type: AUTH, username, password }, '');
       this.pendingAuthentication = { resolve, reject };
-    })
+    });
   }
 
   async login() {
     return new Promise((resolve, reject) => {
-      this.sendMessageToServer({ type: LOGIN, token: this.loginToken, user: "user" }, "");
+      this.sendMessageToServer(
+        { type: LOGIN, token: this.loginToken, user: 'user' },
+        '',
+      );
       this.pendingLogin = { resolve, reject };
-    })
+    });
   }
 
   subscribe(message) {
-    console.log({message});
     const viewport = new Viewport(message);
     this.viewports.set(message.viewport, viewport);
     // use client side viewport as request id, so that when we process the response,
     // with the serverside viewport we can establish a mapping between the two
-    const isReady = this.sessionId !== "";
+    const isReady = this.sessionId !== '';
     this.sendIfReady(viewport.subscribe(), message.viewport, isReady);
-
   }
 
   handleMessageFromClient(message) {
     const { type, viewport: clientViewportId } = message;
-    const serverViewportId = this.mapClientToServerViewport.get(clientViewportId);
+    const serverViewportId = this.mapClientToServerViewport.get(
+      clientViewportId,
+    );
+    //---------------------
     const viewport = this.viewports.get(serverViewportId);
     if (!viewport) {
       switch (type) {
@@ -738,7 +849,10 @@ class ServerProxy {
           this.sendMessageToServer({ type }, message.requestId);
           break;
         case GET_TABLE_META:
-          this.sendMessageToServer({ type, table: message.table }, message.requestId);
+          this.sendMessageToServer(
+            { type, table: message.table },
+            message.requestId,
+          );
           break;
       }
       return;
@@ -748,104 +862,133 @@ class ServerProxy {
     switch (message.type) {
       case 'setViewRange':
         const requestId = nextRequestId();
-        const [serverRequest, rows] = viewport.rangeRequest(requestId, message.range.lo, message.range.hi);
+        const [serverRequest, rows] = viewport.rangeRequest(
+          requestId,
+          message.range.lo,
+          message.range.hi,
+        );
         if (serverRequest) {
           this.sendIfReady(serverRequest, requestId, isReady);
         }
         if (rows) {
           const clientMessage = {
-            type: "viewport-updates", viewports: {
-              [viewport.clientViewportId]: { rows }
-            }
+            type: 'viewport-updates',
+            viewports: {
+              [viewport.clientViewportId]: { rows },
+            },
           };
           this.postMessageToClient(clientMessage);
         }
         break;
 
-      case 'sort': {
-        const requestId = nextRequestId();
-        const request = viewport.sortRequest(requestId, message.sortCriteria);
-        this.sendIfReady(request, requestId, isReady);
-      }
-        break
-
-      case 'groupBy': {
-        const requestId = nextRequestId();
-        const request = viewport.groupByRequest(requestId, message.groupBy);
-        this.sendIfReady(request, requestId, isReady);
-      }
+      case 'sort':
+        {
+          const requestId = nextRequestId();
+          const request = viewport.sortRequest(requestId, message.sortCriteria);
+          this.sendIfReady(request, requestId, isReady);
+        }
         break;
 
-      case 'filterQuery': {
-        const requestId = nextRequestId();
-        const request = viewport.filterRequest(requestId, message.filter);
-        this.sendIfReady(request, requestId, isReady);
-      }
+      case 'groupBy':
+        {
+          const requestId = nextRequestId();
+          const request = viewport.groupByRequest(requestId, message.groupBy);
+          this.sendIfReady(request, requestId, isReady);
+        }
         break;
 
-      case 'select': {
-        const requestId = nextRequestId();
-        const { row, rangeSelect, keepExistingSelection } = message;
-        const request = viewport.selectRequest(requestId, row, rangeSelect, keepExistingSelection);
-        this.sendIfReady(request, requestId, isReady);
-      }
+      case 'filterQuery':
+        {
+          const requestId = nextRequestId();
+          const request = viewport.filterRequest(requestId, message.filter);
+          this.sendIfReady(request, requestId, isReady);
+        }
         break;
 
-      case 'disable': {
-        const requestId = nextRequestId();
-        const request = viewport.disable(requestId);
-        this.sendIfReady(request, requestId, isReady);
-      }
+      case 'select':
+        {
+          const requestId = nextRequestId();
+          const { row, rangeSelect, keepExistingSelection } = message;
+          const request = viewport.selectRequest(
+            requestId,
+            row,
+            rangeSelect,
+            keepExistingSelection,
+          );
+          this.sendIfReady(request, requestId, isReady);
+        }
         break;
 
-      case 'enable': {
-        const requestId = nextRequestId();
-        const request = viewport.enable(requestId);
-        this.sendIfReady(request, requestId, isReady);
-      }
+      case 'disable':
+        {
+          const requestId = nextRequestId();
+          const request = viewport.disable(requestId);
+          this.sendIfReady(request, requestId, isReady);
+        }
+        break;
+
+      case 'enable':
+        {
+          const requestId = nextRequestId();
+          const request = viewport.enable(requestId);
+          this.sendIfReady(request, requestId, isReady);
+        }
         break;
 
       case 'openTreeNode':
-        this.sendIfReady({
-          type: OPEN_TREE_NODE,
-          vpId: viewport.serverViewportId,
-          treeKey: message.key
-        },
+        this.sendIfReady(
+          {
+            type: OPEN_TREE_NODE,
+            vpId: viewport.serverViewportId,
+            treeKey: message.key,
+          },
           _requestId++,
-          isReady);
+          isReady,
+        );
         break;
 
       case 'closeTreeNode':
-        this.sendIfReady({
-          type: CLOSE_TREE_NODE,
-          vpId: viewport.serverViewportId,
-          treeKey: message.key
-        },
+        this.sendIfReady(
+          {
+            type: CLOSE_TREE_NODE,
+            vpId: viewport.serverViewportId,
+            treeKey: message.key,
+          },
           _requestId++,
-          isReady);
+          isReady,
+        );
 
         break;
 
-
-      case "createLink": {
-        const { parentVpId, childVpId, parentColumnName, childColumnName } = message;
-        this.sendIfReady({
-          type: CREATE_VISUAL_LINK,
-          parentVpId,
-          childVpId,
-          parentColumnName,
-          childColumnName
-        },
-          _requestId++,
-          isReady);
-      }
+      case 'createLink':
+        {
+          const {
+            parentVpId,
+            childVpId,
+            parentColumnName,
+            childColumnName,
+          } = message;
+          this.sendIfReady(
+            {
+              type: CREATE_VISUAL_LINK,
+              parentVpId,
+              childVpId,
+              parentColumnName,
+              childColumnName,
+            },
+            _requestId++,
+            isReady,
+          );
+        }
         break;
 
       default:
-        console.log(`Vuu ServerProxy Unexpected message from client ${JSON.stringify(message)}`);
-
+        console.log(
+          `Vuu ServerProxy Unexpected message from client ${JSON.stringify(
+            message,
+          )}`,
+        );
     }
-
   }
 
   sendIfReady(message, requestId, isReady = true) {
@@ -865,20 +1008,24 @@ class ServerProxy {
       requestId,
       sessionId: this.sessionId,
       token: this.loginToken,
-      user: "user",
-      module: "CORE",
-      body
+      user: 'user',
+      module: 'CORE',
+      body,
     });
   }
 
-
   handleMessageFromServer(message) {
-    const { requestId, body: { type,timeStamp,  ...body } } = message;
+    const {
+      requestId,
+      body: { type, timeStamp, ...body },
+    } = message;
     const { viewports } = this;
     switch (type) {
-
       case HB:
-        this.sendMessageToServer({ type: HB_RESP, ts: +(new Date()) }, "NA");
+        this.sendMessageToServer(
+          { type: HB_RESP, ts: +new Date() },
+          'NA',
+        );
         break;
 
       case AUTH_SUCCESS:
@@ -912,36 +1059,40 @@ class ServerProxy {
       case DISABLE_VP_SUCCESS:
       case ENABLE_VP_SUCCESS:
         if (viewports.has(body.viewPortId)) {
-          const response = this.viewports.get(body.viewPortId).completeOperation(requestId);
+          const response = this.viewports
+            .get(body.viewPortId)
+            .completeOperation(requestId);
           if (response) {
             this.postMessageToClient(response);
           }
-
         }
 
         break;
 
       case TABLE_ROW:
-        const [{ts: firstBatchTimestamp}={ts: timeStamp}] = body.rows || EMPTY_ARRAY;
+        const [{ ts: firstBatchTimestamp } = { ts: timeStamp }] =
+          body.rows || EMPTY_ARRAY;
         // console.log(`\nbatch timestamp ${time(timeStamp)} first timestamp ${time(firstBatchTimestamp)} ${body.rows.length} rows in batch`)
         for (const row of body.rows) {
           const { viewPortId, rowIndex, rowKey, updateType } = row;
           const viewport = viewports.get(viewPortId);
           // console.log(`row timestamp ${time(row.ts)}`)
-          if (viewport.isTree && updateType === "U" && !rowKey.startsWith("$root")){
-            console.log('Ignore blank rows sent after GroupBy');
-          } else {
+          if (
+            viewport.isTree &&
+            updateType === 'U' &&
+            !rowKey.startsWith('$root')
+          ) ; else {
             viewport.handleUpdate(updateType, rowIndex, row);
-
           }
         }
         this.processUpdates(firstBatchTimestamp);
         break;
 
-      case CHANGE_VP_RANGE_SUCCESS: {
-        const { viewPortId, from, to } = body;
-        viewports.get(viewPortId).completeOperation(requestId, from, to);
-      }
+      case CHANGE_VP_RANGE_SUCCESS:
+        {
+          const { viewPortId, from, to } = body;
+          viewports.get(viewPortId).completeOperation(requestId, from, to);
+        }
         break;
 
       case OPEN_TREE_SUCCESS:
@@ -953,43 +1104,48 @@ class ServerProxy {
         this.postMessageToClient({ type, tables: body.tables, requestId });
         break;
       case TABLE_META_RESP:
-        this.postMessageToClient({ type, table: body.table, columns: body.columns, requestId });
+        this.postMessageToClient({
+          type,
+          table: body.table,
+          columns: body.columns,
+          requestId,
+        });
         break;
-
 
       default:
         console.log(`handleMessageFromServer,${body.type}.`);
     }
   }
 
-
   processUpdates(timeStamp) {
     let clientMessage;
     this.viewports.forEach((viewport) => {
       if (viewport.shouldUpdateClient) {
-
         // if (viewport.isTree){
         //   console.table(viewport.getClientRows(false, timeStamp));
         //   return;
         // }
 
-        // console.log(`%cviewport will update client`,'color: green;')
-        clientMessage = clientMessage || { type: "viewport-updates", viewports: {} };
+        // onsole.log(`%cviewport will update client`,'color: green;')
+        clientMessage = clientMessage || {
+          type: 'viewport-updates',
+          viewports: {},
+        };
         clientMessage.viewports[viewport.clientViewportId] = {
           rows: viewport.getClientRows(false, timeStamp),
-          size: viewport.getRowCount()
+          size: viewport.getRowCount(),
         };
-      }      if (clientMessage) {
+      }
+      if (clientMessage) {
         // const now = performance.now();
         // if (updateTime){
-        //   console.log(`time between updates ${now - updateTime}`)
+        //   onsole.log(`time between updates ${now - updateTime}`)
         // }
         // updateTime = now;
         this.postMessageToClient(clientMessage);
       }
     });
   }
-
 }
 
 /* eslint-disable no-restricted-globals */
@@ -997,19 +1153,17 @@ const url = new URL(self.location);
 const urlParams = url.hash.slice(2);
 console.log(`urlParams: ${urlParams}`);
 
-
 const logger = createLogger('Worker', logColor.brown);
 
 let server;
 
 async function connectToServer(url) {
-
   const connection = await connect(
     url,
     // if this was called during connect, we would get a ReferenceError, but it will
     // never be called until subscriptions have been made, so this is safe.
-    msg => server.handleMessageFromServer(msg),
-    msg => logger.log(JSON.stringify(msg))
+    (msg) => server.handleMessageFromServer(msg),
+    (msg) => logger.log(JSON.stringify(msg)),
     // msg => {
     //   onConnectionStatusMessage(msg);
     //   if (msg.status === 'disconnected'){
@@ -1019,7 +1173,7 @@ async function connectToServer(url) {
     //   }
     // }
   );
-  server = new ServerProxy(connection, msg => postMessage(msg));
+  server = new ServerProxy(connection, (msg) => postMessage(msg));
   // TODO handle authentication, login
   if (typeof server.authenticate === 'function') {
     await server.authenticate('steve', 'pword');
@@ -1027,7 +1181,6 @@ async function connectToServer(url) {
   if (typeof server.login === 'function') {
     await server.login();
   }
-
 }
 
 const handleMessageFromClient = async ({ data: message }) => {
@@ -1044,15 +1197,15 @@ const handleMessageFromClient = async ({ data: message }) => {
       break;
     // TEST DATA COLLECTION
     case 'send-websocket-data':
-      postMessage({type: "websocket-data", data: getWebsocketData()});
+      postMessage({ type: 'websocket-data', data: getTestMessages() });
       break;
     default:
       server.handleMessageFromClient(message);
-    }
+  }
 };
 
 /* eslint-disable-next-line no-restricted-globals */
-self.addEventListener('message',handleMessageFromClient);
+self.addEventListener('message', handleMessageFromClient);
 
-postMessage({ type: "ready" });
+postMessage({ type: 'ready' });
 //# sourceMappingURL=worker.js.map

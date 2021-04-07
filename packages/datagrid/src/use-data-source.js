@@ -2,6 +2,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { WindowRange } from "@heswell/utils/src/range-utils";
 
+// const uniqueKeys = rows => {
+//   const keys = rows.map(row => row[1]).filter(i => i !== undefined);
+//   const uniqueKeys = new Set(keys);
+//   return uniqueKeys.size === keys.length;
+// }
+
+
 //TODO allow subscription details to be set before subscribe call
 export default function useDataSource(dataSource, subscriptionDetails, renderBufferSize, callback) {
 
@@ -17,6 +24,11 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
     for (const row of updates){
       movingWindow.add(row);
     }
+
+    // if (!uniqueKeys(dataWindow.current.data)){
+    //   debugger;
+    // }
+
     forceUpdate({});
   }
 
@@ -86,7 +98,6 @@ export class MovingWindow {
 
   // Note, the buffer is already accounted for in the range passed in here
   constructor({lo, hi}){
-    console.log(`useDataSource MovingWindow ${lo}:${hi}`)
     this.range = new WindowRange(lo, hi);
     //internal data is always 0 based, we add range.from to determine an offset
     this.data = new Array(hi-lo);
@@ -98,16 +109,16 @@ export class MovingWindow {
       this.data.length = rowCount;
     }
 
-    if (rowCount < this.rowCount){
-      const [overlapFrom, overlapTo] = this.range.overlap(rowCount, this.rowCount);
-      for (let i=overlapFrom;i<overlapTo;i++){
-        const rowIndex = i - this.range.from;
-        if (i === rowCount){
-          break;
-        }
-        this.data[rowIndex] = undefined;
-      }
-    }
+    // if (rowCount < this.rowCount){
+    //   const [overlapFrom, overlapTo] = this.range.overlap(rowCount, this.rowCount);
+    //   for (let i=overlapFrom;i<overlapTo;i++){
+    //     const rowIndex = i - this.range.from;
+    //     if (i === rowCount){
+    //       break;
+    //     }
+    //     this.data[rowIndex] = undefined;
+    //   }
+    // }
     this.rowCount = rowCount;
   }
 
@@ -117,6 +128,11 @@ export class MovingWindow {
     if(this.isWithinRange(index)){
       const internalIndex = index - this.range.from;
       this.data[internalIndex] = data
+
+      // if (!sequential(this.data)){
+      //   debugger;
+      // }
+
     }
   }
 
@@ -146,3 +162,11 @@ export class MovingWindow {
   }
 
 }
+
+// const sequential = (rows) => {
+//   for (let i=0; i<rows.length; i++){
+//      if (rows[i] && rows[i-1] && rows[i][0] - rows[i-1][0] !== 1){
+//       debugger;
+//      }
+//   }
+// }

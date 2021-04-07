@@ -52,8 +52,9 @@ export const updateTableRow = (viewPortId, rowIndex, updatedVal, {vpSize=100,ts=
     };
 }
 
-export const createSubscription = ({key='1', lo=0, hi=10, bufferSize=0}={}) => ([
-  { viewport: `client-vp-${key}`, tablename: "test-table", range: { lo, hi }, bufferSize },
+export const createSubscription = ({
+  key='1', lo=0, hi=10, bufferSize=0, viewport=`client-vp-${key}`}={}) => ([
+  { viewport, tablename: "test-table", range: { lo, hi }, bufferSize },
   {
     requestId: `client-vp-${key}`, body: {
       type: "CREATE_VP_SUCCESS",

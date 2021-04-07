@@ -34,6 +34,12 @@ const getToggleStrategy = (dataSource) => {
   }
 };
 
+const uniqueKeys = rows => {
+  const keys = rows.map(row => row[1]);
+  const uniqueKeys = new Set(keys);
+  return uniqueKeys.size === keys.length;
+}
+
 /** @type {Viewport} */
 const Viewport = forwardRef(function Viewport(
   { columnDragData, gridModel, onColumnDragStart, onColumnDrop, onConfigChange, onRowClick },
@@ -223,6 +229,7 @@ const Viewport = forwardRef(function Viewport(
     gridModel.renderBufferSize,
     dataSourceCallback
   );
+
 
   useUpdate(() => {
     setRange(
