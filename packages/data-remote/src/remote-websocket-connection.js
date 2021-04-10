@@ -1,7 +1,7 @@
 import { createLogger, logColor } from '@heswell/utils/src/logging';
 
 // TEST_DATA_COLLECTION
-import { saveTestData } from './test-data-collection';
+// import { saveTestData } from './test-data-collection';
 
 const logger = createLogger('WebsocketConnection', logColor.brown);
 
@@ -113,7 +113,7 @@ class Connection {
 
     ws.onmessage = (evt) => {
       // TEST DATA COLLECTION
-        saveTestData(evt.data, 'server');
+        // saveTestData(evt.data, 'server');
       const message = JSON.parse(evt.data);
       // console.log(`%c<<< [${new Date().toISOString().slice(11,23)}]  (WebSocket) ${message.type || JSON.stringify(message)}`,'color:white;background-color:blue;font-weight:bold;');
       callback(message);
@@ -166,10 +166,6 @@ class Connection {
       console.log(
         `queuing message ${JSON.stringify(msg)} until websocket reconnected`,
       );
-    };
-
-    const abort = (msg) => {
-      throw Error('This connection is dead');
     };
 
     this.send = send;

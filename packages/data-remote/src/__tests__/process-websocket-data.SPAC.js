@@ -29,7 +29,6 @@ describe('websocket messages', () => {
     const ms = end-start;
     console.log(`took ${ms}ms to process ${messages.length} server messages = ${Math.round((messages.length/ms) * 1000)} messages/sec`)
 
-    // serverProxy.viewports.forEach(viewport => console.table(viewport.getClientRows()))
 
     expect(messages).toHaveLength(571);
   })

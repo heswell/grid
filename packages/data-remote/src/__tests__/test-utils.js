@@ -1,4 +1,4 @@
-export const createTableRows = (viewPortId, lo, hi, vpSize=100) => {
+export const createTableRows = (viewPortId, lo, hi, vpSize=100, ts=1) => {
   const results = [];
   for (let rowIndex = lo; rowIndex < hi; rowIndex++){
     const key = ('0'+rowIndex).slice(-2);
@@ -10,7 +10,7 @@ export const createTableRows = (viewPortId, lo, hi, vpSize=100) => {
       rowKey,
       updateType: 'U',
       sel: 0,
-      ts: 1,
+      ts,
       data: [ rowKey, `name ${key}`, 1000 + rowIndex, true]
     });
   }

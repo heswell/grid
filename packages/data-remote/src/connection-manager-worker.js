@@ -1,6 +1,6 @@
 import { createLogger, logColor, EventEmitter, uuid } from '@heswell/utils';
 
-import {storeData, setDataCollectionMethod} from "./test-data-capture";
+// import {storeData, setDataCollectionMethod} from "./test-data-capture";
 
 const logger = createLogger('ConnectionManager', logColor.green);
 
@@ -61,7 +61,7 @@ function handleMessageFromWorker({ data: message }) {
     resolve(rest);
   // TEST DATA COLLECTION
   } else if (message.type === "websocket-data"){
-    storeData(message.data);
+    // storeData(message.data);
   } else {
     logger.log(`Unexpected message from the worker ${message.type} requestId ${message.requestId}`, pendingRequests)
   }
@@ -129,10 +129,10 @@ class ConnectionManager extends EventEmitter {
     // return new Promise((resolve, reject) => {
 
     // TEST DATA COLLECTION
-      setDataCollectionMethod(() => {
-        console.log(`sending 'send-websocket-data' message to worker`)
-        worker.postMessage({type: "send-websocket-data"})
-      })
+      // setDataCollectionMethod(() => {
+      //   console.log(`sending 'send-websocket-data' message to worker`)
+      //   worker.postMessage({type: "send-websocket-data"})
+      // })
 
 
     const target = {};

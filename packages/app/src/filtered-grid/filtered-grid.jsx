@@ -58,7 +58,7 @@ export const FilteredGrid = ({schema}) => {
       columns={schema.columns}
       groupBy={config.current?.group}
       onConfigChange={handleConfigChange}
-      renderBufferSize={0}
+      renderBufferSize={10}
       sort={config.current?.sort}
       showLineNumbers/>
   </>

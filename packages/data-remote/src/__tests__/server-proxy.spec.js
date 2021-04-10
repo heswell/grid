@@ -73,7 +73,7 @@ describe('ServerProxy', () => {
       });
     });
 
-    it('only sends data to client when initial full dataset is received', () => {
+    it('only sends data to client once all data for client range is available', () => {
       const callback = jest.fn();
       const serverProxy = new ServerProxy(mockConnection, callback);
       serverProxy.subscribe(clientSubscription1);
@@ -102,7 +102,7 @@ describe('ServerProxy', () => {
 
       serverProxy.handleMessageFromServer({
         body: {
-          type: "TABLE_ROW", rows: createTableRows("server-vp-1", 5, 10)
+          type: "TABLE_ROW", rows: createTableRows("server-vp-1", 5, 10, 100, 2 /* ts */)
         }
       })
 
@@ -238,7 +238,7 @@ describe('ServerProxy', () => {
   describe("Updates", () => {
     const [clientSubscription1, serverSubscriptionAck1] = createSubscription();
 
-    it('Updates, no scrolling, onlyt sensds updated rows to client', () => {
+    it('Updates, no scrolling, only sends updated rows to client', () => {
 
       const callback = jest.fn();
       const serverProxy = new ServerProxy(mockConnection, callback);
@@ -420,7 +420,7 @@ describe('ServerProxy', () => {
       serverProxy.handleMessageFromServer({
         body: {
           type: "TABLE_ROW", rows: [
-            ...createTableRows("server-vp-1", 9, 15)
+            ...createTableRows("server-vp-1", 9, 15, 100, 2)
           ]
         }
       });
@@ -554,7 +554,6 @@ describe('ServerProxy', () => {
 
     it("returns client range requests from buffer, if available. Calls server when end of buffer is approached", () => {
       const [clientSubscription1, serverSubscriptionAck1] = createSubscription({ bufferSize: 10 });
-
       const callback = jest.fn();
       const serverProxy = new ServerProxy(mockConnection, callback);
       serverProxy.subscribe(clientSubscription1);
@@ -581,14 +580,14 @@ describe('ServerProxy', () => {
         type: "viewport-updates", viewports: {
           "client-vp-1": {
             rows: [
-              [2, 2, true, null, null, 1, "key-02", 0, "key-02", "name 02", 1002, true],
-              [3, 3, true, null, null, 1, "key-03", 0, "key-03", "name 03", 1003, true],
-              [4, 4, true, null, null, 1, "key-04", 0, "key-04", "name 04", 1004, true],
-              [5, 5, true, null, null, 1, "key-05", 0, "key-05", "name 05", 1005, true],
-              [6, 6, true, null, null, 1, "key-06", 0, "key-06", "name 06", 1006, true],
-              [7, 7, true, null, null, 1, "key-07", 0, "key-07", "name 07", 1007, true],
-              [8, 8, true, null, null, 1, "key-08", 0, "key-08", "name 08", 1008, true],
-              [9, 9, true, null, null, 1, "key-09", 0, "key-09", "name 09", 1009, true],
+              // [2, 2, true, null, null, 1, "key-02", 0, "key-02", "name 02", 1002, true],
+              // [3, 3, true, null, null, 1, "key-03", 0, "key-03", "name 03", 1003, true],
+              // [4, 4, true, null, null, 1, "key-04", 0, "key-04", "name 04", 1004, true],
+              // [5, 5, true, null, null, 1, "key-05", 0, "key-05", "name 05", 1005, true],
+              // [6, 6, true, null, null, 1, "key-06", 0, "key-06", "name 06", 1006, true],
+              // [7, 7, true, null, null, 1, "key-07", 0, "key-07", "name 07", 1007, true],
+              // [8, 8, true, null, null, 1, "key-08", 0, "key-08", "name 08", 1008, true],
+              // [9, 9, true, null, null, 1, "key-09", 0, "key-09", "name 09", 1009, true],
               [10, 1, true, null, null, 1, "key-10", 0, "key-10", "name 10", 1010, true],
               [11, 0, true, null, null, 1, "key-11", 0, "key-11", "name 11", 1011, true],
             ],
@@ -608,13 +607,13 @@ describe('ServerProxy', () => {
         type: "viewport-updates", viewports: {
           "client-vp-1": {
             rows: [
-              [5, 5, true, null, null, 1, "key-05", 0, "key-05", "name 05", 1005, true],
-              [6, 6, true, null, null, 1, "key-06", 0, "key-06", "name 06", 1006, true],
-              [7, 7, true, null, null, 1, "key-07", 0, "key-07", "name 07", 1007, true],
-              [8, 8, true, null, null, 1, "key-08", 0, "key-08", "name 08", 1008, true],
-              [9, 9, true, null, null, 1, "key-09", 0, "key-09", "name 09", 1009, true],
-              [10, 1, true, null, null, 1, "key-10", 0, "key-10", "name 10", 1010, true],
-              [11, 0, true, null, null, 1, "key-11", 0, "key-11", "name 11", 1011, true],
+              // [5, 5, true, null, null, 1, "key-05", 0, "key-05", "name 05", 1005, true],
+              // [6, 6, true, null, null, 1, "key-06", 0, "key-06", "name 06", 1006, true],
+              // [7, 7, true, null, null, 1, "key-07", 0, "key-07", "name 07", 1007, true],
+              // [8, 8, true, null, null, 1, "key-08", 0, "key-08", "name 08", 1008, true],
+              // [9, 9, true, null, null, 1, "key-09", 0, "key-09", "name 09", 1009, true],
+              // [10, 1, true, null, null, 1, "key-10", 0, "key-10", "name 10", 1010, true],
+              // [11, 0, true, null, null, 1, "key-11", 0, "key-11", "name 11", 1011, true],
               [12, 4, true, null, null, 1, "key-12", 0, "key-12", "name 12", 1012, true],
               [13, 3, true, null, null, 1, "key-13", 0, "key-13", "name 13", 1013, true],
               [14, 2, true, null, null, 1, "key-14", 0, "key-14", "name 14", 1014, true],
@@ -636,13 +635,13 @@ describe('ServerProxy', () => {
         type: "viewport-updates", viewports: {
           "client-vp-1": {
             rows: [
-              [8, 8, true, null, null, 1, "key-08", 0, "key-08", "name 08", 1008, true],
-              [9, 9, true, null, null, 1, "key-09", 0, "key-09", "name 09", 1009, true],
-              [10, 1, true, null, null, 1, "key-10", 0, "key-10", "name 10", 1010, true],
-              [11, 0, true, null, null, 1, "key-11", 0, "key-11", "name 11", 1011, true],
-              [12, 4, true, null, null, 1, "key-12", 0, "key-12", "name 12", 1012, true],
-              [13, 3, true, null, null, 1, "key-13", 0, "key-13", "name 13", 1013, true],
-              [14, 2, true, null, null, 1, "key-14", 0, "key-14", "name 14", 1014, true],
+              // [8, 8, true, null, null, 1, "key-08", 0, "key-08", "name 08", 1008, true],
+              // [9, 9, true, null, null, 1, "key-09", 0, "key-09", "name 09", 1009, true],
+              // [10, 1, true, null, null, 1, "key-10", 0, "key-10", "name 10", 1010, true],
+              // [11, 0, true, null, null, 1, "key-11", 0, "key-11", "name 11", 1011, true],
+              // [12, 4, true, null, null, 1, "key-12", 0, "key-12", "name 12", 1012, true],
+              // [13, 3, true, null, null, 1, "key-13", 0, "key-13", "name 13", 1013, true],
+              // [14, 2, true, null, null, 1, "key-14", 0, "key-14", "name 14", 1014, true],
               [15, 7, true, null, null, 1, "key-15", 0, "key-15", "name 15", 1015, true],
               [16, 6, true, null, null, 1, "key-16", 0, "key-16", "name 16", 1016, true],
               [17, 5, true, null, null, 1, "key-17", 0, "key-17", "name 17", 1017, true],
@@ -656,11 +655,182 @@ describe('ServerProxy', () => {
         user: "user",
         body: { viewPortId: "server-vp-1", type: "CHANGE_VP_RANGE", from: 3, to: 23 },
         module: "CORE"
+      });
+    });
+
+    it("data is purged from holding pen if scrolled out of range, holding pen records sent to client when enough data available", () => {
+
+      const [clientSubscription1, serverSubscriptionAck1] = createSubscription({ bufferSize: 10 });
+
+      const callback = jest.fn();
+      const serverProxy = new ServerProxy(mockConnection, callback);
+      serverProxy.subscribe(clientSubscription1);
+      serverProxy.handleMessageFromServer(serverSubscriptionAck1);
+
+      const viewport = serverProxy.viewports.get("server-vp-1")
+
+      serverProxy.handleMessageFromServer({
+        body: {
+          type: "TABLE_ROW", rows: [
+            { viewPortId: "server-vp-1", vpSize: 100, rowIndex: -1, rowKey: "SIZE", updateType: "SIZE", ts: 1 },
+            ...createTableRows("server-vp-1", 0, 5)
+          ]
+        }
       })
+
+      // First call will be size only
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith({
+        type: "viewport-updates", viewports: {
+          "client-vp-1": {
+            size: 100
+          }
+        }
+      });
+
+      expect(viewport.holdingPen).toHaveLength(5);
+
+      callback.mockClear();
+
+      serverProxy.handleMessageFromClient({ viewport: "client-vp-1", type: "setViewRange", range: { lo: 2, hi: 12 } });
+
+      expect(callback).toHaveBeenCalledTimes(0);
+      expect(viewport.holdingPen).toHaveLength(3);
+
+      serverProxy.handleMessageFromServer({
+        body: {
+          type: "TABLE_ROW", rows: [
+            ...createTableRows("server-vp-1", 5, 10, 100, 2)
+          ]
+        }
+      })
+
+      expect(callback).toHaveBeenCalledTimes(0);
+      expect(viewport.holdingPen).toHaveLength(8);
+
+      callback.mockClear();
+
+      serverProxy.handleMessageFromServer({
+        body: {
+          type: "TABLE_ROW", rows: [
+            ...createTableRows("server-vp-1", 10, 15, 100, 3)
+          ]
+        }
+      })
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(viewport.holdingPen).toHaveLength(0);
+
+      expect(callback).toHaveBeenCalledWith({
+        type: "viewport-updates", viewports: {
+          "client-vp-1": {
+            rows: [
+              [2, 2, true, null, null, 1, "key-02", 0, "key-02", "name 02", 1002, true],
+              [3, 3, true, null, null, 1, "key-03", 0, "key-03", "name 03", 1003, true],
+              [4, 4, true, null, null, 1, "key-04", 0, "key-04", "name 04", 1004, true],
+              [5, 5, true, null, null, 1, "key-05", 0, "key-05", "name 05", 1005, true],
+              [6, 6, true, null, null, 1, "key-06", 0, "key-06", "name 06", 1006, true],
+              [7, 7, true, null, null, 1, "key-07", 0, "key-07", "name 07", 1007, true],
+              [8, 8, true, null, null, 1, "key-08", 0, "key-08", "name 08", 1008, true],
+              [9, 9, true, null, null, 1, "key-09", 0, "key-09", "name 09", 1009, true],
+              [10, 1, true, null, null, 1, "key-10", 0, "key-10", "name 10", 1010, true],
+              [11, 0, true, null, null, 1, "key-11", 0, "key-11", "name 11", 1011, true],
+            ]
+          }
+        }
+      });
+
+    });
+
+    it("data sequence is correct when scrolling backward and data from holding pen is used", () => {
+
+      const [clientSubscription1, serverSubscriptionAck1] = createSubscription({ bufferSize: 10 });
+
+      const callback = jest.fn();
+      const serverProxy = new ServerProxy(mockConnection, callback);
+      serverProxy.subscribe(clientSubscription1);
+      serverProxy.handleMessageFromServer(serverSubscriptionAck1);
+
+      const viewport = serverProxy.viewports.get("server-vp-1")
+
+      serverProxy.handleMessageFromServer({
+        body: {
+          type: "TABLE_ROW", rows: [
+            { viewPortId: "server-vp-1", vpSize: 100, rowIndex: -1, rowKey: "SIZE", updateType: "SIZE", ts: 1 },
+            ...createTableRows("server-vp-1", 0, 20)
+          ]
+        }
+      });
+
+      callback.mockClear();
+
+      TEST_setRequestId(1);
+      serverProxy.handleMessageFromClient({ viewport: "client-vp-1", type: "setViewRange", range: { lo: 20, hi: 30 } });
+      serverProxy.handleMessageFromServer({ requestId: '1', body: { type: "CHANGE_VP_RANGE_SUCCESS", viewPortId: "server-vp-1", from: 15, to: 35 } });
+
+      serverProxy.handleMessageFromServer({
+        body: {
+          type: "TABLE_ROW", rows: [
+            ...createTableRows("server-vp-1", 15, 35, 100, 2)
+          ]
+        }
+      })
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(viewport.holdingPen).toHaveLength(0);
+
+      callback.mockClear();
+
+      // now we scroll backward, beyond buffer, so we won't have all data, but we will have some
+      TEST_setRequestId(1);
+      serverProxy.handleMessageFromClient({ viewport: "client-vp-1", type: "setViewRange", range: { lo: 12, hi: 22 } });
+      expect(callback).toHaveBeenCalledTimes(0);
+      expect(viewport.holdingPen).toHaveLength(5);
+
+      serverProxy.handleMessageFromServer({ requestId: '1', body: { type: "CHANGE_VP_RANGE_SUCCESS", viewPortId: "server-vp-1", from: 7, to: 27 } });
+
+      serverProxy.handleMessageFromServer({
+        body: {
+          type: "TABLE_ROW", rows: [
+            ...createTableRows("server-vp-1", 13, 15, 100, 3)
+          ]
+        }
+      })
+      expect(callback).toHaveBeenCalledTimes(0);
+      expect(viewport.holdingPen).toHaveLength(7);
+
+      callback.mockClear();
+
+      serverProxy.handleMessageFromServer({
+        body: {
+          type: "TABLE_ROW", rows: [
+            ...createTableRows("server-vp-1", 7, 13, 100, 4)
+          ]
+        }
+      })
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(viewport.holdingPen).toHaveLength(0);
+
+      expect(callback).toHaveBeenCalledWith({
+        type: "viewport-updates", viewports: {
+          "client-vp-1": {
+            rows: [
+              [12, 0, true, null, null, 1, "key-12", 0, "key-12", "name 12", 1012, true],
+              [13, 1, true, null, null, 1, "key-13", 0, "key-13", "name 13", 1013, true],
+              [14, 2, true, null, null, 1, "key-14", 0, "key-14", "name 14", 1014, true],
+              [15, 3, true, null, null, 1, "key-15", 0, "key-15", "name 15", 1015, true],
+              [16, 4, true, null, null, 1, "key-16", 0, "key-16", "name 16", 1016, true],
+              [17, 5, true, null, null, 1, "key-17", 0, "key-17", "name 17", 1017, true],
+              [18, 6, true, null, null, 1, "key-18", 0, "key-18", "name 18", 1018, true],
+              [19, 7, true, null, null, 1, "key-19", 0, "key-19", "name 19", 1019, true],
+            ],
+          }
+        }
+      });
 
 
     });
-    it.only("Scrolling with large buffer. Keys are recomputed on each scroll. Calls server when end of buffer is approached", () => {
+
+    it("Scrolling with large buffer. Keys are recomputed on each scroll. Calls server when end of buffer is approached", () => {
       const [clientSubscription1, serverSubscriptionAck1] = createSubscription({ bufferSize: 100 });
 
       const callback = jest.fn();
@@ -676,10 +846,10 @@ describe('ServerProxy', () => {
           ]
         }
       });
-    
+
       expect(serverProxy.viewports.get("server-vp-1").dataWindow.internalData).toHaveLength(110);
       expect(serverProxy.viewports.get("server-vp-1").dataWindow.clientRange).toEqual({from:0, to: 10});
-    
+
       callback.mockClear();
       mockConnection.send.mockClear()
 
@@ -716,26 +886,24 @@ describe('ServerProxy', () => {
       expect(mockConnection.send).toHaveBeenCalledTimes(0);
       expect(callback).toHaveBeenCalledTimes(1);
 
-
-
-      // expect(callback).toHaveBeenCalledWith({
-      //   type: "viewport-updates", viewports: {
-      //     "client-vp-1": {
-      //       rows: [
-      //         [2, 2, true, null, null, 1, "key-02", 0, "key-02", "name 02", 1002, true],
-      //         [3, 3, true, null, null, 1, "key-03", 0, "key-03", "name 03", 1003, true],
-      //         [4, 4, true, null, null, 1, "key-04", 0, "key-04", "name 04", 1004, true],
-      //         [5, 5, true, null, null, 1, "key-05", 0, "key-05", "name 05", 1005, true],
-      //         [6, 6, true, null, null, 1, "key-06", 0, "key-06", "name 06", 1006, true],
-      //         [7, 7, true, null, null, 1, "key-07", 0, "key-07", "name 07", 1007, true],
-      //         [8, 8, true, null, null, 1, "key-08", 0, "key-08", "name 08", 1008, true],
-      //         [9, 9, true, null, null, 1, "key-09", 0, "key-09", "name 09", 1009, true],
-      //         [10, 1, true, null, null, 1, "key-10", 0, "key-10", "name 10", 1010, true],
-      //         [11, 0, true, null, null, 1, "key-11", 0, "key-11", "name 11", 1011, true],
-      //       ],
-      //     }
-      //   }
-      // });
+      expect(callback).toHaveBeenCalledWith({
+        type: "viewport-updates", viewports: {
+          "client-vp-1": {
+            rows: [
+              [30, 0, true, null, null, 1, "key-30", 0, "key-30", "name 30", 1030, true],
+              [31, 1, true, null, null, 1, "key-31", 0, "key-31", "name 31", 1031, true],
+              [32, 2, true, null, null, 1, "key-32", 0, "key-32", "name 32", 1032, true],
+              [33, 3, true, null, null, 1, "key-33", 0, "key-33", "name 33", 1033, true],
+              [34, 4, true, null, null, 1, "key-34", 0, "key-34", "name 34", 1034, true],
+              [35, 5, true, null, null, 1, "key-35", 0, "key-35", "name 35", 1035, true],
+              [36, 6, true, null, null, 1, "key-36", 0, "key-36", "name 36", 1036, true],
+              [37, 7, true, null, null, 1, "key-37", 0, "key-37", "name 37", 1037, true],
+              [38, 8, true, null, null, 1, "key-38", 0, "key-38", "name 38", 1038, true],
+              [39, 9, true, null, null, 1, "key-39", 0, "key-39", "name 39", 1039, true],
+            ],
+          }
+        }
+      });
 
       // callback.mockClear();
       // mockConnection.send.mockClear()
@@ -803,6 +971,128 @@ describe('ServerProxy', () => {
     });
 
   });
+
+  describe("synchronising with server", () => {
+
+    it('does not spam server when buffer limit reached', () => {
+
+      const [clientSubscription1, serverSubscriptionAck1] = createSubscription({ bufferSize: 20 });
+      const callback = jest.fn();
+      const serverProxy = new ServerProxy(mockConnection, callback);
+
+      TEST_setRequestId(1);
+
+      serverProxy.subscribe(clientSubscription1);
+      serverProxy.handleMessageFromServer(serverSubscriptionAck1);
+
+      serverProxy.handleMessageFromServer({
+        body: {
+          type: "TABLE_ROW", rows: [
+            { viewPortId: "server-vp-1", vpSize: 100, rowIndex: -1, rowKey: "SIZE", updateType: "SIZE", ts: 1 },
+            ...createTableRows("server-vp-1", 0, 30)
+          ]
+        }
+      })
+
+      callback.mockClear();
+      mockConnection.send.mockClear()
+
+      serverProxy.handleMessageFromClient({ viewport: "client-vp-1", type: "setViewRange", range: { lo: 16, hi: 26 } });
+
+      expect(mockConnection.send).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledTimes(1)
+
+      expect(mockConnection.send).toHaveBeenCalledWith({
+        requestId: '1',
+        user: "user",
+        body: { viewPortId: "server-vp-1", type: "CHANGE_VP_RANGE", from: 6, to: 36 },
+        module: "CORE"
+      });
+
+
+      callback.mockClear();
+      mockConnection.send.mockClear()
+      serverProxy.handleMessageFromClient({ viewport: "client-vp-1", type: "setViewRange", range: { lo: 17, hi: 27 } });
+
+      expect(mockConnection.send).toHaveBeenCalledTimes(0);
+      expect(callback).toHaveBeenCalledTimes(1)
+
+      callback.mockClear();
+      mockConnection.send.mockClear()
+
+      serverProxy.handleMessageFromClient({ viewport: "client-vp-1", type: "setViewRange", range: { lo: 18, hi: 28 } });
+
+      expect(mockConnection.send).toHaveBeenCalledTimes(0);
+      expect(callback).toHaveBeenCalledTimes(1)
+
+
+    });
+
+    it('re-requests data from server even before receiving results', () => {
+
+      const [clientSubscription1, serverSubscriptionAck1] = createSubscription({ bufferSize: 20 });
+      const callback = jest.fn();
+      const serverProxy = new ServerProxy(mockConnection, callback);
+
+      TEST_setRequestId(1);
+
+      serverProxy.subscribe(clientSubscription1);
+      serverProxy.handleMessageFromServer(serverSubscriptionAck1);
+
+      serverProxy.handleMessageFromServer({
+        body: {
+          type: "TABLE_ROW", rows: [
+            { viewPortId: "server-vp-1", vpSize: 100, rowIndex: -1, rowKey: "SIZE", updateType: "SIZE", ts: 1 },
+            ...createTableRows("server-vp-1", 0, 30)
+          ]
+        }
+      })
+
+      callback.mockClear();
+      mockConnection.send.mockClear()
+
+      TEST_setRequestId(1);
+
+      serverProxy.handleMessageFromClient({ viewport: "client-vp-1", type: "setViewRange", range: { lo: 16, hi: 26 } });
+
+      expect(mockConnection.send).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledTimes(1)
+
+      expect(mockConnection.send).toHaveBeenCalledWith({
+        requestId: '1',
+        user: "user",
+        body: { viewPortId: "server-vp-1", type: "CHANGE_VP_RANGE", from: 6, to: 36 },
+        module: "CORE"
+      });
+
+
+      callback.mockClear();
+      mockConnection.send.mockClear()
+      serverProxy.handleMessageFromClient({ viewport: "client-vp-1", type: "setViewRange", range: { lo: 17, hi: 27 } });
+
+      expect(mockConnection.send).toHaveBeenCalledTimes(0);
+      expect(callback).toHaveBeenCalledTimes(1)
+
+      callback.mockClear();
+      mockConnection.send.mockClear()
+
+      TEST_setRequestId(1);
+
+      serverProxy.handleMessageFromClient({ viewport: "client-vp-1", type: "setViewRange", range: { lo: 24, hi: 34 } });
+
+      expect(mockConnection.send).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledTimes(0)
+
+      expect(mockConnection.send).toHaveBeenCalledWith({
+        requestId: '1',
+        user: "user",
+        body: { viewPortId: "server-vp-1", type: "CHANGE_VP_RANGE", from: 14, to: 44 },
+        module: "CORE"
+      });
+
+    })
+
+  })
 
   describe("growing and shrinking rowset (Orders)", () => {
 

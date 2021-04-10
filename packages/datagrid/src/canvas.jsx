@@ -20,7 +20,7 @@ import { getColumnOffset } from "./grid-model-utils";
 import "./canvas.css";
 
 const { IDX, RENDER_IDX, count: metadataCount } = metadataKeys;
-const byKey = (row1, row2) => row1[RENDER_IDX] - row2[RENDER_IDX];
+// const byKey = (row1, row2) => row1[RENDER_IDX] - row2[RENDER_IDX];
 
 /** @type {Canvas} */
 const Canvas = forwardRef(function Canvas(

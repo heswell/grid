@@ -1,4 +1,5 @@
 import { WindowRange } from '@heswell/utils/src/range-utils';
+import {bufferBreakout} from "./buffer-range";
 export class ArrayBackedMovingWindow {
   // Note, the buffer is already accounted for in the range passed in here
   constructor({ lo, hi }, { from, to }, bufferSize) {
@@ -66,7 +67,7 @@ export class ArrayBackedMovingWindow {
   }
 
   setClientRange(from, to) {
-    // const originalRange = this.clientRange.copy();
+    const originalRange = this.clientRange.copy();
     this.clientRange.from = from;
     this.clientRange.to = to;
     this.rowsWithinRange = 0;
@@ -77,32 +78,30 @@ export class ArrayBackedMovingWindow {
       }
     }
 
-    // let clientRows = undefined;
-    // if (this.hasAllRowsWithinRange){
-    //   const offset = this.range.from;
-    //   if (to > originalRange.to){
-    //     const start = Math.max(from, originalRange.to);
-    //     clientRows = this.internalData.slice(start-offset, to-offset);
-    //   } else {
-    //     const end = Math.min(originalRange.to, to);
-    //     clientRows = this.internalData.slice(from-offset, end);
-    //   }
-    // }
+    let clientRows = undefined;
+    let holdingRows = undefined;
+    const offset = this.range.from;
 
-    let serverDataRequired = false;
-
-    // Is data required from server ... how close are we to buffer threshold ?
-    const bufferPerimeter = this.bufferSize * 0.25;
-    if (this.range.to - to < bufferPerimeter) {
-      serverDataRequired = true;
-    } else if (
-      this.range.from > 0 &&
-      from - this.range.from < bufferPerimeter
-    ) {
-      serverDataRequired = true;
+    if (this.hasAllRowsWithinRange){
+      if (to > originalRange.to){
+        const start = Math.max(from, originalRange.to);
+        clientRows = this.internalData.slice(start-offset, to-offset);
+      } else {
+        const end = Math.min(originalRange.from, to);
+        clientRows = this.internalData.slice(from-offset, end-offset);
+      }
+    } else if (this.rowsWithinRange > 0){
+      if (to > originalRange.to){
+        const start = Math.max(from, originalRange.to);
+        holdingRows = this.internalData.slice(start-offset, to-offset).filter(row => !!row);
+      } else {
+        const end = Math.min(originalRange.from, to);
+        holdingRows = this.internalData.slice(Math.max(0,from-offset), end-offset).filter(row => !!row);
+      }
     }
 
-    return [serverDataRequired];
+    const serverDataRequired = bufferBreakout(this.range, from, to, this.bufferSize);
+    return [serverDataRequired, clientRows, holdingRows];
   }
 
   setRange(from, to) {

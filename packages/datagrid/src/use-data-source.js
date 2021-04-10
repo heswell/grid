@@ -1,6 +1,10 @@
 // @ts-nocheck
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { WindowRange } from "@heswell/utils/src/range-utils";
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { metadataKeys } from "@heswell/utils/src/column-utils";
+import { WindowRange, getFullRange } from "@heswell/utils/src/range-utils";
+const { RENDER_IDX } = metadataKeys;
+
+const byKey = (row1, row2) => row1[RENDER_IDX] - row2[RENDER_IDX];
 
 // const uniqueKeys = rows => {
 //   const keys = rows.map(row => row[1]).filter(i => i !== undefined);
@@ -17,34 +21,32 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
     callbackRef.current = callback;
   }
 
-  const dataWindow = useRef(new MovingWindow(subscriptionDetails.range))
+  const data = useRef([])
+  const dataWindow = useMemo(
+    () => new MovingWindow(getFullRange(subscriptionDetails.range, renderBufferSize)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  )
+
   const [, forceUpdate] = useState(null);
   const setData = updates => {
-    const movingWindow = dataWindow.current;
     for (const row of updates){
-      movingWindow.add(row);
+      dataWindow.add(row);
     }
 
     // if (!uniqueKeys(dataWindow.current.data)){
     //   debugger;
     // }
-
+    data.current = dataWindow.data.slice().sort(byKey);
     forceUpdate({});
   }
 
-  const expandRange = useCallback((lo,hi) => {
-    return {
-        lo: Math.max(0, lo - renderBufferSize),
-        hi: hi + renderBufferSize
-    };
-  },[renderBufferSize]);
-
 
   const setRange = useCallback((lo, hi) => {
-    const range = expandRange(lo,hi);
-    dataSource.setRange(range.lo, range.hi);
-    dataWindow.current.setRange(lo, hi)
-  }, [dataSource, expandRange]);
+    const {from, to} = getFullRange({lo,hi}, renderBufferSize);
+    dataSource.setRange(from, to);
+    dataWindow.setRange(from, to)
+  }, [dataSource, dataWindow, renderBufferSize]);
 
   useEffect(() => {
     console.log(`subscribe datasource status ${dataSource.status} (suspended = ${dataSource.suspended}) with `, subscriptionDetails)
@@ -56,7 +58,7 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
           const sizeChanged = msg.size !== undefined;
           if (sizeChanged){
             callbackRef.current('size', msg.size);
-            dataWindow.current.setRowCount(msg.size);
+            dataWindow.setRowCount(msg.size);
           }
           if (msg.rows){
             setData(msg.rows);
@@ -90,17 +92,16 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
   },[subscriptionDetails])
 
 
-  return [dataWindow.current.data, setRange];
+  return [data.current, setRange];
 }
 
 
 export class MovingWindow {
 
-  // Note, the buffer is already accounted for in the range passed in here
-  constructor({lo, hi}){
-    this.range = new WindowRange(lo, hi);
+  constructor({from, to}){
+    this.range = new WindowRange(from, to);
     //internal data is always 0 based, we add range.from to determine an offset
-    this.data = new Array(hi-lo);
+    this.data = new Array(to-from);
     this.rowCount = 0;
   }
 

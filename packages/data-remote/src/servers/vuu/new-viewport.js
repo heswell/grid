@@ -3,9 +3,12 @@ import { KeySet } from './keyset';
 import * as Message from './messages';
 import { ArrayBackedMovingWindow } from './array-backed-moving-window';
 import { getFullRange } from '@heswell/utils/src/range-utils';
+import { bufferBreakout } from "./buffer-range";
 
 const { IDX, SELECTED } = metadataKeys;
 const EMPTY_ARRAY = [];
+
+const byRowIndex = ([index1],[index2]) => index1 - index2;
 
 export class Viewport {
   constructor({
@@ -34,17 +37,15 @@ export class Viewport {
     this.isTree = false;
     this.dataWindow = undefined;
     this.rowCountChanged = false;
-    this.keys = new KeySet();
+    this.keys = new KeySet(range);
     this.pendingOperations = new Map();
+    this.pendingRangeRequest = null;
     this.hasUpdates = false;
-    this.requiresKeyAssignment = true;
+    this.holdingPen = [];
   }
 
-  get shouldUpdateClient() {
-    return (
-      this.rowCountChanged ||
-      (this.hasUpdates && this.dataWindow.hasAllRowsWithinRange)
-    );
+  get hasUpdatesToProcess() {
+    return this.rowCountChanged || this.hasUpdates;
   }
 
   subscribe() {
@@ -112,9 +113,8 @@ export class Viewport {
     if (type === Message.CHANGE_VP_RANGE) {
       const [from, to] = params;
       this.dataWindow.setRange(from, to);
-      // this is only true if client range is affected
-      this.requiresKeyAssignment = true;
-      this.hasUpdates = true;
+      //this.hasUpdates = true; // is this right ??????????
+      this.pendingRangeRequest = null;
     } else if (type === 'groupBy') {
       this.isTree = true;
       this.groupBy = data;
@@ -142,10 +142,16 @@ export class Viewport {
     // If we can satisfy the range request from the buffer, we will.
     // May or may not need to make a server request, depending on status of buffer
     const type = Message.CHANGE_VP_RANGE;
+    // If dataWindow has all data for the new range, it will return the
+    // delta of rows which are in the new range but were not in the
+    // previous range.
+    // Note: what if it doesn't have the entire range but DOES have all
+    // rows that constitute the delta ? Is this even possible ?
     const [
-      serverDataRequired /*, clientRows*/,
+      serverDataRequired , clientRows, holdingRows
     ] = this.dataWindow.setClientRange(from, to);
-    const serverRequest = serverDataRequired
+    const serverRequest = serverDataRequired &&
+      bufferBreakout(this.pendingRangeRequest, from, to, this.bufferSize)
       ? {
           type,
           viewPortId: this.serverViewportId,
@@ -159,20 +165,27 @@ export class Viewport {
     if (serverRequest) {
       // TODO check that there os not already a pending server request for more data
       this.awaitOperation(requestId, { type });
+      this.pendingRangeRequest = serverRequest;
     }
 
-    const clientRows = this.dataWindow.hasAllRowsWithinRange
-      ? this.getClientRows(true)
-      : undefined;
-    // TODO don't we need to reset keys here ?
-    return [serverRequest, clientRows];
+    // always reset the keys here, even if we're not going to return rows immediately.
+    this.keys.reset(this.dataWindow.clientRange);
 
-    // if (clientRows){
-    //   this.keys.reset(this.dataWindow.clientRange);
-    //   return [serverRequest, clientRows.map(row => toClientRow(row, this.keys))];
-    // } else {
-    //   return [serverRequest]
-    // }
+    if (this.holdingPen.some(([index]) => index < from || index >= to)){
+      this.holdingPen = this.holdingPen.filter(([index]) => index >= from && index < to);
+    }
+
+    if (holdingRows){
+      holdingRows.forEach(row => {
+        this.holdingPen.push(toClientRow(row, this.keys))
+      })
+    }
+
+    if (clientRows){
+      return [serverRequest, clientRows.map(row => toClientRow(row, this.keys))];
+    } else {
+      return [serverRequest]
+    }
   }
 
   enable(requestId) {
@@ -238,45 +251,45 @@ export class Viewport {
     }
   }
 
-  getRowCount = () => {
+  getNewRowCount = () => {
     if (this.rowCountChanged) {
       this.rowCountChanged = false;
       return this.dataWindow.rowCount;
     }
   };
 
-  // TODO do we only return a client rowset when server range matches client range ?
-  getClientRows(force, timeStamp) {
-    const readyToSendRows =
-      force || (this.hasUpdates && this.dataWindow.hasAllRowsWithinRange);
-    if (readyToSendRows) {
+  // This is called only after new data has been received from server - data
+  // returned direcly from buffer does not use this.
+  // If we have updates, but we don't yet have data for the full client range
+  // in our buffer, store them in the holding pen. We know the remaining rows
+  // have been requested and will arrive imminently. Soon as we receive data,
+  // contents of holding pen plus additional rows received that fill the range
+  // will be dispatched to client.
+  // If we have any rows in the holding pen, and we now have a full set of
+  // client data, make sure we empty the pen and send those rows to client,
+  // along qith the new data.
+  // TODO what if we're going backwards
+  getClientRows(timeStamp) {
+    if (this.hasUpdates) {
       const records = this.dataWindow.getData();
-      const clientRows = [];
       const { keys } = this;
       const toClient = this.isTree ? toClientRowTree : toClientRow;
 
-      if (force || this.requiresKeyAssignment) {
-        keys.reset(this.dataWindow.clientRange);
-        this.requiresKeyAssignment = false;
-      }
+      const clientRows = this.dataWindow.hasAllRowsWithinRange
+        ? this.holdingPen.splice(0) : undefined;
+
+      const out = clientRows || this.holdingPen;
 
       for (let row of records) {
-        if (force || row.ts >= timeStamp) {
-          clientRows.push(toClient(row, keys));
+        if (row && row.ts >= timeStamp) {
+          out.push(toClient(row, keys));
         }
       }
       this.hasUpdates = false;
 
-
-      // if (!uniqueKeys(clientRows)){
-      //   debugger;
-      // }
-
-      // if (clientRows.length > 0 && clientRows.length < (this.dataWindow.clientRange.to - this.dataWindow.clientRange.from)){
-      //   console.log(`%conly sending ${clientRows.length} rows to client`,'color:red;font-weight: bold;')
-      // }
-
-      return clientRows;
+      // this only matters where we scroll backwards and have holdingPen data
+      // should we test for that explicitly ?
+      return clientRows && clientRows.sort(byRowIndex);
     }
   }
 
@@ -318,9 +331,3 @@ const toClientRowTree = ({ rowIndex, rowKey, sel: isSelected, data }, keys) => {
     isSelected,
   ].concat(rest);
 };
-
-const uniqueKeys = rows => {
-  const keys = rows.map(row => row[1]);
-  const uniqueKeys = new Set(keys);
-  return uniqueKeys.size === keys.length;
-}

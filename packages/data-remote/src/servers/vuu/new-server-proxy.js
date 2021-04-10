@@ -1,7 +1,7 @@
 import * as Message from './messages';
 import { Viewport } from './new-viewport';
 // TEST_DATA_COLLECTION
-import { saveTestData } from '../../test-data-collection';
+// import { saveTestData } from '../../test-data-collection';
 
 let _requestId = 1;
 export const TEST_setRequestId = (id) => (_requestId = id);
@@ -50,7 +50,7 @@ export class ServerProxy {
     );
 
     // TEST DATA COLLECTION
-    saveTestData(message, 'client');
+    // saveTestData(message, 'client');
     //---------------------
     const viewport = this.viewports.get(serverViewportId);
     if (!viewport) {
@@ -333,21 +333,16 @@ export class ServerProxy {
   processUpdates(timeStamp) {
     let clientMessage;
     this.viewports.forEach((viewport) => {
-      if (viewport.shouldUpdateClient) {
-        // if (viewport.isTree){
-        //   console.table(viewport.getClientRows(false, timeStamp));
-        //   return;
-        // }
-
-        // onsole.log(`%cviewport will update client`,'color: green;')
-        clientMessage = clientMessage || {
-          type: 'viewport-updates',
-          viewports: {},
-        };
-        clientMessage.viewports[viewport.clientViewportId] = {
-          rows: viewport.getClientRows(false, timeStamp),
-          size: viewport.getRowCount(),
-        };
+      if (viewport.hasUpdatesToProcess) {
+        const rows = viewport.getClientRows(timeStamp);
+        const size = viewport.getNewRowCount();
+        if (size !== undefined || rows){
+          clientMessage = clientMessage || {
+            type: 'viewport-updates',
+            viewports: {},
+          };
+          clientMessage.viewports[viewport.clientViewportId] = { rows, size };
+        }
       }
       if (clientMessage) {
         // const now = performance.now();
