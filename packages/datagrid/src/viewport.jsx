@@ -34,12 +34,6 @@ const getToggleStrategy = (dataSource) => {
   }
 };
 
-const uniqueKeys = rows => {
-  const keys = rows.map(row => row[1]);
-  const uniqueKeys = new Set(keys);
-  return uniqueKeys.size === keys.length;
-}
-
 /** @type {Viewport} */
 const Viewport = forwardRef(function Viewport(
   { columnDragData, gridModel, onColumnDragStart, onColumnDrop, onConfigChange, onRowClick },
@@ -212,9 +206,9 @@ const Viewport = forwardRef(function Viewport(
           }
           break;
 
+        // TODO how do we abstract these concepts away from the grid itself ?
         case "VP_VISUAL_LINKS_RESP":
           dispatchGridModelAction({ type: "visual-links", links: options });
-
           break;
 
         default:
@@ -229,7 +223,6 @@ const Viewport = forwardRef(function Viewport(
     gridModel.renderBufferSize,
     dataSourceCallback
   );
-
 
   useUpdate(() => {
     setRange(

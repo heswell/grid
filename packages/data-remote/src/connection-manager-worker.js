@@ -30,11 +30,12 @@ const getWorker = async (url, server) => {
 
 const messagesToRelayToClient = {
   'table-row': true,
+  'visual-link-created': true,
   VP_VISUAL_LINKS_RESP: true,
   sort: true,
   groupBy: true,
   filter: true
-}
+};
 
 function handleMessageFromWorker({ data: message }) {
   if (message.type === "viewport-updates"){

@@ -216,6 +216,7 @@ const ENABLE_VP = "ENABLE_VP";
 const ENABLE_VP_SUCCESS = "ENABLE_VP_SUCCESS";
 const GET_TABLE_LIST = "GET_TABLE_LIST";
 const GET_TABLE_META = "GET_TABLE_META";
+const GET_VP_VISUAL_LINKS = 'GET_VP_VISUAL_LINKS';
 const HB = "HB";
 const HB_RESP = "HB_RESP";
 const LOGIN = 'LOGIN';
@@ -226,6 +227,7 @@ const SET_SELECTION = 'SET_SELECTION';
 const SET_SELECTION_SUCCESS = 'SET_SELECTION_SUCCESS';
 const TABLE_META_RESP = 'TABLE_META_RESP';
 const TABLE_LIST_RESP = 'TABLE_LIST_RESP';
+const VP_VISUAL_LINKS_RESP = 'VP_VISUAL_LINKS_RESP';
 
 const TABLE_ROW = 'TABLE_ROW';
 
@@ -505,6 +507,7 @@ class Viewport {
     this.clientViewportId = viewport;
     this.table = tablename;
     this.status = '';
+    this.suspended = false;
     this.columns = columns;
     this.clientRange = range;
     this.bufferSize = bufferSize;
@@ -519,6 +522,7 @@ class Viewport {
     this.dataWindow = undefined;
     this.rowCountChanged = false;
     this.keys = new KeySet(range);
+    this.linkedParent = null;
     this.pendingOperations = new Map();
     this.pendingRangeRequest = null;
     this.hasUpdates = false;
@@ -616,6 +620,17 @@ class Viewport {
       this.suspended = true; // assuming its _SUCCESS, of cource
     } else if (type === 'enable') {
       this.suspended = false;
+    } else if (type === CREATE_VISUAL_LINK){
+      console.log('visual link vreatewd, inform UI');
+      const [colName, parentVpId, parentColName] = params;
+      this.linkedParent = {
+        viewportId : parentVpId,
+        colName,
+        parentColName
+      };
+      return {
+        type: 'visual-link-created', clientViewportId
+      }
     }
   }
 
@@ -656,17 +671,33 @@ class Viewport {
       this.holdingPen = this.holdingPen.filter(([index]) => index >= from && index < to);
     }
 
+    const toClient = this.isTree ? toClientRowTree(this.groupBy, this.columns) : toClientRow;
+
     if (holdingRows){
       holdingRows.forEach(row => {
-        this.holdingPen.push(toClientRow(row, this.keys));
+        this.holdingPen.push(toClient(row, this.keys));
       });
     }
 
     if (clientRows){
-      return [serverRequest, clientRows.map(row => toClientRow(row, this.keys))];
+      return [serverRequest, clientRows.map(row => toClient(row, this.keys))];
     } else {
       return [serverRequest]
     }
+  }
+
+
+
+  createLink(requestId, colName, parentVpId,  parentColumnName) {
+    const message = {
+      type: CREATE_VISUAL_LINK,
+      parentVpId,
+      childVpId: this.serverViewportId,
+      parentColumnName,
+      childColumnName: colName,
+    };
+    this.awaitOperation(requestId, message);
+    return message;
   }
 
   enable(requestId) {
@@ -754,7 +785,7 @@ class Viewport {
     if (this.hasUpdates) {
       const records = this.dataWindow.getData();
       const { keys } = this;
-      const toClient = this.isTree ? toClientRowTree : toClientRow;
+      const toClient = this.isTree ? toClientRowTree(this.groupBy, this.columns) : toClientRow;
 
       const clientRows = this.dataWindow.hasAllRowsWithinRange
         ? this.holdingPen.splice(0) : undefined;
@@ -799,9 +830,16 @@ const toClientRow = ({ rowIndex, rowKey, sel: isSelected, data }, keys) =>
     isSelected,
   ].concat(data);
 
-const toClientRowTree = ({ rowIndex, rowKey, sel: isSelected, data }, keys) => {
+const toClientRowTree = (groupBy, columns) => ({ rowIndex, rowKey, sel: isSelected, data }, keys) => {
   let [depth, isExpanded, path, isLeaf, label, count, ...rest] = data;
-  return [
+  const steps = rowKey.split('/').slice(1);
+
+  groupBy.forEach((col,i) => {
+    const idx = columns.indexOf(col);
+    rest[idx] = steps[i];
+  });
+
+  const record = [
     rowIndex,
     keys.keyFor(rowIndex),
     isLeaf,
@@ -811,6 +849,8 @@ const toClientRowTree = ({ rowIndex, rowKey, sel: isSelected, data }, keys) => {
     rowKey,
     isSelected,
   ].concat(rest);
+
+  return record;
 };
 
 // TEST_DATA_COLLECTION
@@ -986,21 +1026,23 @@ class ServerProxy {
         {
           const {
             parentVpId,
-            childVpId,
             parentColumnName,
             childColumnName,
+            viewport: clientViewportId
           } = message;
-          this.sendIfReady(
-            {
-              type: CREATE_VISUAL_LINK,
-              parentVpId,
-              childVpId,
-              parentColumnName,
-              childColumnName,
-            },
-            _requestId++,
-            isReady,
+
+          const serverViewportId = this.mapClientToServerViewport.get(clientViewportId);
+          const viewport = this.viewports.get(serverViewportId);
+          const requestId = nextRequestId();
+          const request = viewport.createLink(
+            requestId,
+            childColumnName,
+            parentVpId,
+            parentColumnName
           );
+
+          this.sendMessageToServer(request, requestId);
+
         }
         break;
 
@@ -1069,6 +1111,13 @@ class ServerProxy {
           viewports.delete(requestId);
           this.mapClientToServerViewport.set(requestId, serverViewportId);
           viewport.handleSubscribed(body);
+
+          this.sendMessageToServer({
+            type: GET_VP_VISUAL_LINKS,
+            vpId: serverViewportId
+          }, nextRequestId());
+
+
         }
         break;
       case SET_SELECTION_SUCCESS:
@@ -1119,12 +1168,27 @@ class ServerProxy {
 
       case OPEN_TREE_SUCCESS:
       case CLOSE_TREE_SUCCESS:
-      case CREATE_VISUAL_LINK_SUCCESS:
+
+        break;
+
+      case CREATE_VISUAL_LINK_SUCCESS: {
+        const { childVpId, childColumnName, parentVpId, parentColumnName } = body;
+        const response = this.viewports.get(childVpId).completeOperation(
+          requestId,
+          childColumnName,
+          parentVpId,
+          parentColumnName
+        );
+        if (response){
+          this.postMessageToClient(response);
+        }
+      }
         break;
 
       case TABLE_LIST_RESP:
         this.postMessageToClient({ type, tables: body.tables, requestId });
         break;
+
       case TABLE_META_RESP:
         this.postMessageToClient({
           type,
@@ -1134,10 +1198,49 @@ class ServerProxy {
         });
         break;
 
+      case VP_VISUAL_LINKS_RESP: {
+        const links = this.getActiveLinks(body.links);
+        console.log({ links });
+        if (links.length) {
+          console.log(`${links.length} active links identified`);
+          const { clientViewportId } = this.viewports.get(body.vpId);
+          // console.log({links: body.links})
+          // //-------------------
+          // console.group(`links for (${this.viewportStatus[body.vpId].table})`);
+          // body.links.forEach(({parentVpId, link}) => {
+          //   console.log(`link parentVpId = ${parentVpId}`);
+          //   const vp = this.viewportStatus[parentVpId];
+          //   if (vp){
+          //     console.log(`   parent table = ${vp.table}`)
+          //     console.log(JSON.stringify(link,null,2))
+          //   }
+          // })
+          // console.groupEnd();
+          //--------------------
+          this.postMessageToClient({ type: "VP_VISUAL_LINKS_RESP", links, clientViewportId });
+
+        }
+      }
+
+        break;
+
+      case "ERROR":
+        console.error(body.msg);
+        break;
+
       default:
         console.log(`handleMessageFromServer,${body.type}.`);
     }
   }
+
+  // Eliminate links to suspended viewports
+  getActiveLinks(links) {
+    return links.filter(link => {
+      const viewport = this.viewports.get(link.parentVpId);
+      return viewport && !viewport.suspended;
+    })
+  }
+
 
   processUpdates(timeStamp) {
     let clientMessage;
@@ -1145,7 +1248,7 @@ class ServerProxy {
       if (viewport.hasUpdatesToProcess) {
         const rows = viewport.getClientRows(timeStamp);
         const size = viewport.getNewRowCount();
-        if (size !== undefined || rows){
+        if (size !== undefined || rows) {
           clientMessage = clientMessage || {
             type: 'viewport-updates',
             viewports: {},
@@ -1190,7 +1293,7 @@ async function connectToServer(url) {
     //   }
     // }
   );
-  server = new ServerProxy(connection, (msg) => postMessage(msg));
+  server = new ServerProxy(connection, (msg) => sendMessageToClient(msg));
   // TODO handle authentication, login
   if (typeof server.authenticate === 'function') {
     await server.authenticate('steve', 'pword');
@@ -1198,6 +1301,11 @@ async function connectToServer(url) {
   if (typeof server.login === 'function') {
     await server.login();
   }
+}
+
+function sendMessageToClient(message){
+  Math.round(performance.now());
+  postMessage(message);
 }
 
 const handleMessageFromClient = async ({ data: message }) => {

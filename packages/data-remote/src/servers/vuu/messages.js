@@ -19,6 +19,7 @@ export const ENABLE_VP_SUCCESS = "ENABLE_VP_SUCCESS";
 export const ENABLE_VP_REJECT = "ENABLE_VP_REJECT";
 export const GET_TABLE_LIST = "GET_TABLE_LIST";
 export const GET_TABLE_META = "GET_TABLE_META";
+export const GET_VP_VISUAL_LINKS = 'GET_VP_VISUAL_LINKS';
 export const HB = "HB";
 export const HB_RESP = "HB_RESP";
 export const LOGIN = 'LOGIN';
@@ -30,6 +31,7 @@ export const SET_SELECTION = 'SET_SELECTION';
 export const SET_SELECTION_SUCCESS = 'SET_SELECTION_SUCCESS';
 export const TABLE_META_RESP = 'TABLE_META_RESP';
 export const TABLE_LIST_RESP = 'TABLE_LIST_RESP';
+export const VP_VISUAL_LINKS_RESP = 'VP_VISUAL_LINKS_RESP';
 
 export const TABLE_ROW = 'TABLE_ROW';
 export const SIZE = 'SIZE'

@@ -29,7 +29,7 @@ async function connectToServer(url) {
     //   }
     // }
   );
-  server = new ServerProxy(connection, (msg) => postMessage(msg));
+  server = new ServerProxy(connection, (msg) => sendMessageToClient(msg));
   // TODO handle authentication, login
   if (typeof server.authenticate === 'function') {
     await server.authenticate('steve', 'pword');
@@ -37,6 +37,23 @@ async function connectToServer(url) {
   if (typeof server.login === 'function') {
     await server.login();
   }
+}
+
+let lastTime = 0;
+const timings = [];
+
+function sendMessageToClient(message){
+  const now = Math.round(performance.now());
+  if (lastTime){
+    timings.push(now-lastTime)
+
+    // if (timings.length % 100 === 0){
+    //   console.log(timings.join(', : '))
+    //   timings.length = 0;
+    // }
+  }
+  postMessage(message);
+  lastTime= now;
 }
 
 const handleMessageFromClient = async ({ data: message }) => {

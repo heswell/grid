@@ -1,11 +1,9 @@
-import React, { useCallback, useState } from 'react';
-import { Provider, defaultTheme } from '@adobe/react-spectrum';
+import React, { useCallback } from 'react';
 import useLayoutConfig from "./use-layout-config";
 
 import { Chest, DraggableLayout, Drawer, Flexbox, registerComponent, Stack, View } from "@heswell/layout";
 
 import { TableList } from "./table-list";
-// import { orders as ordersSchema, prices as pricesSchema } from "./table-schemas";
 import { FilteredGrid } from "./filtered-grid"
 
 import './App.css';
@@ -14,22 +12,14 @@ registerComponent("FilteredGrid",FilteredGrid);
 
 
 function App() {
-  const [colorScheme/*, setColorScheme*/] = useState('light')
   const [layoutConfig, setLayoutConfig] = useLayoutConfig("https://localhost:8443/api/vui/steve")
-
-  // const toggleColorScheme = useCallback(() => {
-  //   setColorScheme(color => color === 'light' ? 'dark' : 'light')
-  // },[]);
-
-  console.log({ defaultTheme })
 
   const handleLayoutChange = useCallback((layout) => {
     setLayoutConfig(layout)
   }, [setLayoutConfig])
 
   return (
-    <Provider theme={defaultTheme} colorScheme={colorScheme}>
-      <DraggableLayout style={{ width: '100vw', height: "100vh" }} onLayoutChange={handleLayoutChange}  layout={layoutConfig}>
+      <DraggableLayout className="hw" style={{ width: '100vw', height: "100vh" }} onLayoutChange={handleLayoutChange}  layout={layoutConfig}>
         <Flexbox className="App" style={{ flexDirection: 'column', height: '100%' }}>
           <div style={{ height: 40, borderBottom: 'solid 1px #ccc' }}>
             {/* <ToggleButton onChange={toggleColorScheme}>
@@ -50,7 +40,6 @@ function App() {
           </Chest>
         </Flexbox>
       </DraggableLayout>
-    </Provider>
   );
 }
 

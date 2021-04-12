@@ -175,21 +175,23 @@ export class ServerProxy {
         {
           const {
             parentVpId,
-            childVpId,
             parentColumnName,
             childColumnName,
+            viewport: clientViewportId
           } = message;
-          this.sendIfReady(
-            {
-              type: Message.CREATE_VISUAL_LINK,
-              parentVpId,
-              childVpId,
-              parentColumnName,
-              childColumnName,
-            },
-            _requestId++,
-            isReady,
+
+          const serverViewportId = this.mapClientToServerViewport.get(clientViewportId);
+          const viewport = this.viewports.get(serverViewportId)
+          const requestId = nextRequestId();
+          const request = viewport.createLink(
+            requestId,
+            childColumnName,
+            parentVpId,
+            parentColumnName
           );
+
+          this.sendMessageToServer(request, requestId);
+
         }
         break;
 
@@ -258,6 +260,13 @@ export class ServerProxy {
           viewports.delete(requestId);
           this.mapClientToServerViewport.set(requestId, serverViewportId);
           viewport.handleSubscribed(body);
+
+          this.sendMessageToServer({
+            type: Message.GET_VP_VISUAL_LINKS,
+            vpId: serverViewportId
+          }, nextRequestId());
+
+
         }
         break;
       case Message.SET_SELECTION_SUCCESS:
@@ -310,12 +319,27 @@ export class ServerProxy {
 
       case Message.OPEN_TREE_SUCCESS:
       case Message.CLOSE_TREE_SUCCESS:
-      case Message.CREATE_VISUAL_LINK_SUCCESS:
+
+        break;
+
+      case Message.CREATE_VISUAL_LINK_SUCCESS: {
+        const { childVpId, childColumnName, parentVpId, parentColumnName } = body;
+        const response = this.viewports.get(childVpId).completeOperation(
+          requestId,
+          childColumnName,
+          parentVpId,
+          parentColumnName
+        );
+        if (response){
+          this.postMessageToClient(response)
+        }
+      }
         break;
 
       case Message.TABLE_LIST_RESP:
         this.postMessageToClient({ type, tables: body.tables, requestId });
         break;
+
       case Message.TABLE_META_RESP:
         this.postMessageToClient({
           type,
@@ -325,10 +349,49 @@ export class ServerProxy {
         });
         break;
 
+      case Message.VP_VISUAL_LINKS_RESP: {
+        const links = this.getActiveLinks(body.links);
+        console.log({ links })
+        if (links.length) {
+          console.log(`${links.length} active links identified`)
+          const { clientViewportId } = this.viewports.get(body.vpId);
+          // console.log({links: body.links})
+          // //-------------------
+          // console.group(`links for (${this.viewportStatus[body.vpId].table})`);
+          // body.links.forEach(({parentVpId, link}) => {
+          //   console.log(`link parentVpId = ${parentVpId}`);
+          //   const vp = this.viewportStatus[parentVpId];
+          //   if (vp){
+          //     console.log(`   parent table = ${vp.table}`)
+          //     console.log(JSON.stringify(link,null,2))
+          //   }
+          // })
+          // console.groupEnd();
+          //--------------------
+          this.postMessageToClient({ type: "VP_VISUAL_LINKS_RESP", links, clientViewportId });
+
+        }
+      }
+
+        break;
+
+      case "ERROR":
+        console.error(body.msg)
+        break;
+
       default:
         console.log(`handleMessageFromServer,${body.type}.`);
     }
   }
+
+  // Eliminate links to suspended viewports
+  getActiveLinks(links) {
+    return links.filter(link => {
+      const viewport = this.viewports.get(link.parentVpId);
+      return viewport && !viewport.suspended;
+    })
+  }
+
 
   processUpdates(timeStamp) {
     let clientMessage;
@@ -336,7 +399,7 @@ export class ServerProxy {
       if (viewport.hasUpdatesToProcess) {
         const rows = viewport.getClientRows(timeStamp);
         const size = viewport.getNewRowCount();
-        if (size !== undefined || rows){
+        if (size !== undefined || rows) {
           clientMessage = clientMessage || {
             type: 'viewport-updates',
             viewports: {},

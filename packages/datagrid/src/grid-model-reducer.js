@@ -245,7 +245,6 @@ function setAvailableColumns(state, action) {
   }
 }
 
-
 function addVisualLinks(state, { links }) {
   return {
     ...state,
@@ -256,7 +255,6 @@ function addVisualLinks(state, { links }) {
 /** @type {GridModelReducer<GridModelSortAction>} */
 function sortRows(state, { sort }) {
   // const sortColumns = columns && sortByToMap(columns);
-
   return {
     ...state,
     sort

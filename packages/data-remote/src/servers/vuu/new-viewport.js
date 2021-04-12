@@ -24,6 +24,7 @@ export class Viewport {
     this.clientViewportId = viewport;
     this.table = tablename;
     this.status = '';
+    this.suspended = false;
     this.columns = columns;
     this.clientRange = range;
     this.bufferSize = bufferSize;
@@ -38,6 +39,7 @@ export class Viewport {
     this.dataWindow = undefined;
     this.rowCountChanged = false;
     this.keys = new KeySet(range);
+    this.linkedParent = null;
     this.pendingOperations = new Map();
     this.pendingRangeRequest = null;
     this.hasUpdates = false;
@@ -135,6 +137,17 @@ export class Viewport {
       this.suspended = true; // assuming its _SUCCESS, of cource
     } else if (type === 'enable') {
       this.suspended = false;
+    } else if (type === Message.CREATE_VISUAL_LINK){
+      console.log('visual link vreatewd, inform UI')
+      const [colName, parentVpId, parentColName] = params;
+      this.linkedParent = {
+        viewportId : parentVpId,
+        colName,
+        parentColName
+      };
+      return {
+        type: 'visual-link-created', clientViewportId
+      }
     }
   }
 
@@ -175,17 +188,33 @@ export class Viewport {
       this.holdingPen = this.holdingPen.filter(([index]) => index >= from && index < to);
     }
 
+    const toClient = this.isTree ? toClientRowTree(this.groupBy, this.columns) : toClientRow;
+
     if (holdingRows){
       holdingRows.forEach(row => {
-        this.holdingPen.push(toClientRow(row, this.keys))
+        this.holdingPen.push(toClient(row, this.keys))
       })
     }
 
     if (clientRows){
-      return [serverRequest, clientRows.map(row => toClientRow(row, this.keys))];
+      return [serverRequest, clientRows.map(row => toClient(row, this.keys))];
     } else {
       return [serverRequest]
     }
+  }
+
+
+
+  createLink(requestId, colName, parentVpId,  parentColumnName) {
+    const message = {
+      type: Message.CREATE_VISUAL_LINK,
+      parentVpId,
+      childVpId: this.serverViewportId,
+      parentColumnName,
+      childColumnName: colName,
+    }
+    this.awaitOperation(requestId, message);
+    return message;
   }
 
   enable(requestId) {
@@ -273,7 +302,7 @@ export class Viewport {
     if (this.hasUpdates) {
       const records = this.dataWindow.getData();
       const { keys } = this;
-      const toClient = this.isTree ? toClientRowTree : toClientRow;
+      const toClient = this.isTree ? toClientRowTree(this.groupBy, this.columns) : toClientRow;
 
       const clientRows = this.dataWindow.hasAllRowsWithinRange
         ? this.holdingPen.splice(0) : undefined;
@@ -318,9 +347,16 @@ const toClientRow = ({ rowIndex, rowKey, sel: isSelected, data }, keys) =>
     isSelected,
   ].concat(data);
 
-const toClientRowTree = ({ rowIndex, rowKey, sel: isSelected, data }, keys) => {
+const toClientRowTree = (groupBy, columns) => ({ rowIndex, rowKey, sel: isSelected, data }, keys) => {
   let [depth, isExpanded, path, isLeaf, label, count, ...rest] = data;
-  return [
+  const steps = rowKey.split('/').slice(1);
+
+  groupBy.forEach((col,i) => {
+    const idx = columns.indexOf(col);
+    rest[idx] = steps[i]
+  })
+
+  const record = [
     rowIndex,
     keys.keyFor(rowIndex),
     isLeaf,
@@ -330,4 +366,6 @@ const toClientRowTree = ({ rowIndex, rowKey, sel: isSelected, data }, keys) => {
     rowKey,
     isSelected,
   ].concat(rest);
+
+  return record;
 };

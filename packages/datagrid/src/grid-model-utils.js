@@ -422,7 +422,7 @@ export function extractGroupColumn(columns, groupBy) {
       heading: ['group-col'],
       isGroup: true,
       columns: groupCols,
-      width: groupCols.map(c => c.width).reduce((a, b) => a + b)
+      width: groupCols.map(c => c.width).reduce((a, b) => a + b) + 100
     };
 
 

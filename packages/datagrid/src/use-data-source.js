@@ -16,10 +16,25 @@ const byKey = (row1, row2) => row1[RENDER_IDX] - row2[RENDER_IDX];
 //TODO allow subscription details to be set before subscribe call
 export default function useDataSource(dataSource, subscriptionDetails, renderBufferSize, callback) {
 
+  const [, forceUpdate] = useState(null);
+  const hasUpdated = useRef(false);
+  const rafHandle = useRef(null);
   const callbackRef = useRef(callback);
   if (callback !== callbackRef.current){
     callbackRef.current = callback;
   }
+
+  const refreshIfUpdated = useCallback(() => {
+    if (hasUpdated.current){
+      forceUpdate({});
+      hasUpdated.current = false;
+    }
+    rafHandle.current = requestAnimationFrame(refreshIfUpdated);
+  },[forceUpdate])
+
+  useEffect(() => {
+    rafHandle.current = requestAnimationFrame(refreshIfUpdated);
+  }, [refreshIfUpdated])
 
   const data = useRef([])
   const dataWindow = useMemo(
@@ -28,17 +43,13 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
     []
   )
 
-  const [, forceUpdate] = useState(null);
   const setData = updates => {
     for (const row of updates){
       dataWindow.add(row);
     }
 
-    // if (!uniqueKeys(dataWindow.current.data)){
-    //   debugger;
-    // }
     data.current = dataWindow.data.slice().sort(byKey);
-    forceUpdate({});
+    hasUpdated.current = true;
   }
 
 
@@ -75,6 +86,8 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
           dataSource.emit('filter', msg.filter);
         } else if (messageType === 'VP_VISUAL_LINKS_RESP'){
           callbackRef.current(messageType, msg.links);
+        } else if (messageType === 'visual-link-created'){
+          dataSource.emit('visual-link-created');
         }
       }
     );
@@ -163,11 +176,3 @@ export class MovingWindow {
   }
 
 }
-
-// const sequential = (rows) => {
-//   for (let i=0; i<rows.length; i++){
-//      if (rows[i] && rows[i-1] && rows[i][0] - rows[i-1][0] !== 1){
-//       debugger;
-//      }
-//   }
-// }

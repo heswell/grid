@@ -1505,13 +1505,12 @@
   dependencies:
     "@hapi/hoek" "^8.3.0"
 
-"@heswell/layout@3.2.8":
-  version "3.2.8"
-  resolved "https://registry.yarnpkg.com/@heswell/layout/-/layout-3.2.8.tgz#3dfcbc60824f8217351eca0bbec4dd104eb51129"
-  integrity sha512-vfFxRLiIxY1ko3WRJP8CtsWeQ6mR59CrsL78axUUU/bx+KFDAX+wxMVCekgGbPgzoQPammog/jkD3Qab2TOdng==
+"@heswell/layout@3.2.16":
+  version "3.2.16"
+  resolved "https://registry.yarnpkg.com/@heswell/layout/-/layout-3.2.16.tgz#098704e1f82eb04507cfeaec715c80e6291e4344"
+  integrity sha512-NmUMlR5I8jymKmEg2673j3z+hh49GTAhZF7j1sVBj5HjHjZI1FGAK5CInU9PaEJUX05S5ClwUOcQIh9KwyM84w==
   dependencies:
-    "@adobe/react-spectrum" "^3.8.0"
-    "@spectrum-icons/workflow" "^3.2.0"
+    "@heswell/ui-controls" "2.0.19"
     classnames "^2.2.6"
 
 "@heswell/popup@2.1.15":
@@ -1519,13 +1518,18 @@
   resolved "https://registry.yarnpkg.com/@heswell/popup/-/popup-2.1.15.tgz#9666af1a1a280dcf173d38dbc09b42a8b312b085"
   integrity sha512-/+3PzluZYQLzNda3MLyUpSftPnS2NFz4CUq449IVfHTB/QUAP0n+YkD14RamNMuXThF9ck+Y/46DhWLfXdSsSA==
 
-"@heswell/ui-controls@2.0.18":
-  version "2.0.18"
-  resolved "https://registry.yarnpkg.com/@heswell/ui-controls/-/ui-controls-2.0.18.tgz#ec59727b71f57ee4000555cdbc3fc88666996413"
-  integrity sha512-TMXWP40RJzFtpoNQ5l35nOMCEhP0JZMv7k+V/K3FCLB7h/b6RFBRPOJxkKRDNATMfSyhJcqzsCqI5SsrOcsKZA==
+"@heswell/theme@1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@heswell/theme/-/theme-1.0.0.tgz#2e95901062f8e19a1b77091bcac51f5db3dcb86b"
+  integrity sha512-b0oS2HLB5ooQ7biZLXW70jO3exqoEVRhDe4sI7O/3QfQCSUmTvc4Q6iQG7L1/yiDChkLgms1OfVwMtDcX4gVVA==
+
+"@heswell/ui-controls@2.0.19":
+  version "2.0.19"
+  resolved "https://registry.yarnpkg.com/@heswell/ui-controls/-/ui-controls-2.0.19.tgz#03ed314afcabaf87c6ad4e546caa3ecc0f830a96"
+  integrity sha512-eOJn/tg7fGGR9TEMiKfUIVQI8Zb20i2sRWI6NYbuaYSqKsn/IviH6HFOpiATiVWm1vzRPnjb0R30DjpsrwE1xA==
   dependencies:
-    date-fns "^2.9.0"
-    xstate "^4.2.2"
+    date-fns "^2.19.0"
+    xstate "^4.16.2"
 
 "@icons/material@^0.2.4":
   version "0.2.4"
@@ -7120,10 +7124,10 @@ data-urls@^2.0.0:
     whatwg-mimetype "^2.3.0"
     whatwg-url "^8.0.0"
 
-date-fns@^2.9.0:
-  version "2.19.0"
-  resolved "https://registry.yarnpkg.com/date-fns/-/date-fns-2.19.0.tgz#65193348635a28d5d916c43ec7ce6fbd145059e1"
-  integrity sha512-X3bf2iTPgCAQp9wvjOQytnf5vO5rESYRXlPIVcgSbtT5OTScPcsf9eZU+B/YIkKAtYr5WeCii58BgATrNitlWg==
+date-fns@^2.19.0:
+  version "2.20.1"
+  resolved "https://registry.yarnpkg.com/date-fns/-/date-fns-2.20.1.tgz#7e60b7035284a5f83e37500376e738d9f49ecfd3"
+  integrity sha512-8P5M8Kxbnovd0zfvOs7ipkiVJ3/zZQ0F/nrBW4x5E+I0uAZVZ80h6CKd24fSXQ5TLK5hXMtI4yb2O5rEZdUt2A==
 
 debug@2.6.9, debug@^2.2.0, debug@^2.3.3, debug@^2.6.0, debug@^2.6.9:
   version "2.6.9"
@@ -17222,7 +17226,7 @@ xmlchars@^2.2.0:
   resolved "https://registry.yarnpkg.com/xmlchars/-/xmlchars-2.2.0.tgz#060fe1bcb7f9c76fe2a17db86a9bc3ab894210cb"
   integrity sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw==
 
-xstate@^4.2.2:
+xstate@^4.16.2:
   version "4.17.1"
   resolved "https://registry.yarnpkg.com/xstate/-/xstate-4.17.1.tgz#f027b51ee35dae28954d27ad09f37b4d5d5ce40f"
   integrity sha512-3q7so9qAKFnz9/t7BNQXQtV+9fwDATCOkC+0tAvVqczboEbu6gz2dvPPVCCkj55Hyzgro9aSOntGSPGLei82BA==

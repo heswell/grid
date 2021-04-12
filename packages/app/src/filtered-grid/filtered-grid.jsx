@@ -1,5 +1,6 @@
 import React, {useCallback, useEffect, useMemo, useRef} from 'react';
 import {useLayoutContext} from "@heswell/layout";
+import {Button} from "@heswell/ui-controls"
 import { Grid } from "@vuu-ui/datagrid";
 import {QueryFilter} from "@vuu-ui/filter";
 import {createDataSource} from "../create-data-source"
@@ -13,9 +14,15 @@ export const FilteredGrid = ({schema}) => {
       return ds;
     }
     ds = createDataSource(schema.table, schema, config.current);
+    const unlink = () => {
+      console.log('unlink')
+    }
+    ds.on('visual-link-created', (target) => {
+      dispatch({type: "toolbar-contribution", location: "post-title", content: <Button onClick={unlink}>Linked</Button>})
+    })
     saveSession(ds, "data-source");
     return ds;
-  },[loadSession, saveSession, schema]);
+  },[dispatch, loadSession, saveSession, schema]);
 
   useEffect(() => () => dataSource.disable() ,[dataSource])
 
