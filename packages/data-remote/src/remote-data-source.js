@@ -34,10 +34,10 @@ export default class RemoteDataSource extends EventEmitter {
     sort,
     tableName,
     serverName = AvailableProxies.Viewserver,
-    serverUrl
+    serverUrl,
+    "visual-link": visualLink
   }) {
     super();
-
     this.bufferSize = bufferSize;
     this.url = serverUrl;
     this.serverName = serverName;
@@ -46,6 +46,7 @@ export default class RemoteDataSource extends EventEmitter {
     this.columns = columns;
     this.subscription = null;
     this.viewport = null;
+    this.visualLink = visualLink;
     this.filterDataCallback = null;
     this.filterDataMessage = null;
     this.status = 'initialising'
@@ -71,7 +72,7 @@ export default class RemoteDataSource extends EventEmitter {
     range = defaultRange,
     sort = this.initialSort,
     groupBy = this.initialGroup,
-    filter = this.initialFilter
+    filter = this.initialFilter,
   }, callback) {
 
     if (!tableName) throw Error("RemoteDataSource subscribe called without table name");
@@ -99,7 +100,8 @@ export default class RemoteDataSource extends EventEmitter {
       sort,
       groupBy,
       filter,
-      bufferSize
+      bufferSize,
+      visualLink: this.visualLink
     }, this.handleMessageFromServer);
   }
 

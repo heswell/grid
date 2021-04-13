@@ -75,7 +75,9 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
             setData(msg.rows);
           } else if (sizeChanged){
             // force a render to reflect the size change
-            forceUpdate({})
+            // forceUpdate({})
+            data.current = dataWindow.data.slice().sort(byKey);
+            hasUpdated.current = true;
           }
         } else if (messageType === 'sort'){
           callbackRef.current(messageType, msg.sort);
@@ -87,7 +89,7 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
         } else if (messageType === 'VP_VISUAL_LINKS_RESP'){
           callbackRef.current(messageType, msg.links);
         } else if (messageType === 'visual-link-created'){
-          dataSource.emit('visual-link-created');
+          callbackRef.current(messageType, msg);
         }
       }
     );

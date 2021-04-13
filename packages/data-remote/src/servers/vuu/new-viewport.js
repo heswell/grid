@@ -20,6 +20,7 @@ export class Viewport {
     filter = '',
     sort = [],
     groupBy = [],
+    visualLink
   }) {
     this.clientViewportId = viewport;
     this.table = tablename;
@@ -35,6 +36,8 @@ export class Viewport {
     this.filterSpec = {
       filter,
     };
+    // TODO merge this with the parentLink we create later
+    this.visualLink = visualLink;
     this.isTree = false;
     this.dataWindow = undefined;
     this.rowCountChanged = false;
@@ -138,15 +141,18 @@ export class Viewport {
     } else if (type === 'enable') {
       this.suspended = false;
     } else if (type === Message.CREATE_VISUAL_LINK){
-      console.log('visual link vreatewd, inform UI')
-      const [colName, parentVpId, parentColName] = params;
+      const [colName, parentViewportId, parentColName] = params;
       this.linkedParent = {
-        viewportId : parentVpId,
         colName,
+        parentViewportId,
         parentColName
       };
       return {
-        type: 'visual-link-created', clientViewportId
+        type: 'visual-link-created',
+        clientViewportId,
+        colName,
+        parentViewportId,
+        parentColName
       }
     }
   }

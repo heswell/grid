@@ -188,6 +188,11 @@ const Viewport = forwardRef(function Viewport(
           onConfigChange(action);
         }
           break;
+
+        case 'visual-link-created':
+          onConfigChange({ type, ...options });
+          break;
+
         case "size":
           // How do we handle this withoput having this dependency on gridModel ?
           // This is the important one, it comes with every rowSet
@@ -258,7 +263,7 @@ const Viewport = forwardRef(function Viewport(
         if (firstRow !== firstVisibleRow.current) {
           firstVisibleRow.current = firstRow;
           const lastRow = firstRow + gridModel.viewportRowCount;
-          if (lastRow > rowCount.current){
+          if (lastRow > rowCount.current) {
             setRange(rowCount.current - gridModel.viewportRowCount, rowCount.current);
           } else {
             setRange(firstRow, firstRow + gridModel.viewportRowCount);
@@ -293,15 +298,15 @@ const Viewport = forwardRef(function Viewport(
 
   const scrollEnd = useCallback((startOrEnd) => {
     suspendScrollHandling(true);
-    const {rowHeight, viewportHeight} = gridModel;
+    const { rowHeight, viewportHeight } = gridModel;
 
     const scrollPos = startOrEnd === 'start'
       ? 0
       : rowCount.current * rowHeight - viewportHeight;
     viewportEl.current.scrollTop = scrollPos;
     suspendScrollHandling(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gridModel.rowHeight,  gridModel.viewportHeight, suspendScrollHandling]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gridModel.rowHeight, gridModel.viewportHeight, suspendScrollHandling]);
 
   const handleKeyDown = useCallback(evt => {
     console.log(`key ${evt.key}`)

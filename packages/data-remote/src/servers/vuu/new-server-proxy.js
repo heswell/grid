@@ -132,6 +132,7 @@ export class ServerProxy {
 
       case 'disable':
         {
+          console.log(`%cDISABLE`,'color:red;font-weight: bold;')
           const requestId = nextRequestId();
           const request = viewport.disable(requestId);
           this.sendIfReady(request, requestId, isReady);
@@ -324,10 +325,11 @@ export class ServerProxy {
 
       case Message.CREATE_VISUAL_LINK_SUCCESS: {
         const { childVpId, childColumnName, parentVpId, parentColumnName } = body;
+        const {clientViewportId: parentViewportId} = this.viewports.get(parentVpId);
         const response = this.viewports.get(childVpId).completeOperation(
           requestId,
           childColumnName,
-          parentVpId,
+          parentViewportId,
           parentColumnName
         );
         if (response){

@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import cx from 'classnames';
-import { ActionButton, TextField, ToggleButton } from '@adobe/react-spectrum';
+import { ActionButton, ToggleButton } from '@adobe/react-spectrum';
 import CloseCircle from "@spectrum-icons/workflow/CloseCircle";
 import FilterIcon from "@spectrum-icons/workflow/Filter";
 import { Toolbar, Tooltray, useLayoutContext } from "@heswell/layout";
@@ -31,8 +31,8 @@ const QueryFilter = ({ onChange }) => {
 
   const [filterValue, setFilterValue] = useState('');
 
-  const handleFilterValueChange = (value) => {
-    setFilterValue(value)
+  const handleFilterValueChange = (e) => {
+    setFilterValue(e.target.value)
   }
 
   const addFilter = filter => {
@@ -136,9 +136,9 @@ const QueryFilter = ({ onChange }) => {
   return (
     <Toolbar className={cx(classBase)}>
       <FilterIcon />
-      <TextField
+      <input
         aria-label="filter text"
-        labelPosition="side"
+        className="hwFilterInput"
         onChange={handleFilterValueChange}
         onKeyDown={handleKeyDown}
         placeholder="filter query [as name]"

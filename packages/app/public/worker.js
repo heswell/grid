@@ -503,6 +503,7 @@ class Viewport {
     filter = '',
     sort = [],
     groupBy = [],
+    visualLink
   }) {
     this.clientViewportId = viewport;
     this.table = tablename;
@@ -518,6 +519,8 @@ class Viewport {
     this.filterSpec = {
       filter,
     };
+    // TODO merge this with the parentLink we create later
+    this.visualLink = visualLink;
     this.isTree = false;
     this.dataWindow = undefined;
     this.rowCountChanged = false;
@@ -621,15 +624,18 @@ class Viewport {
     } else if (type === 'enable') {
       this.suspended = false;
     } else if (type === CREATE_VISUAL_LINK){
-      console.log('visual link vreatewd, inform UI');
-      const [colName, parentVpId, parentColName] = params;
+      const [colName, parentViewportId, parentColName] = params;
       this.linkedParent = {
-        viewportId : parentVpId,
         colName,
+        parentViewportId,
         parentColName
       };
       return {
-        type: 'visual-link-created', clientViewportId
+        type: 'visual-link-created',
+        clientViewportId,
+        colName,
+        parentViewportId,
+        parentColName
       }
     }
   }
@@ -983,6 +989,7 @@ class ServerProxy {
 
       case 'disable':
         {
+          console.log(`%cDISABLE`,'color:red;font-weight: bold;');
           const requestId = nextRequestId();
           const request = viewport.disable(requestId);
           this.sendIfReady(request, requestId, isReady);
@@ -1173,10 +1180,11 @@ class ServerProxy {
 
       case CREATE_VISUAL_LINK_SUCCESS: {
         const { childVpId, childColumnName, parentVpId, parentColumnName } = body;
+        const {clientViewportId: parentViewportId} = this.viewports.get(parentVpId);
         const response = this.viewports.get(childVpId).completeOperation(
           requestId,
           childColumnName,
-          parentVpId,
+          parentViewportId,
           parentColumnName
         );
         if (response){
