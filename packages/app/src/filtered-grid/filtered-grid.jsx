@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useLayoutContext } from "@heswell/layout";
 import { Button } from "@heswell/ui-controls"
 import { Grid } from "@vuu-ui/datagrid";
@@ -19,14 +19,9 @@ export const FilteredGrid = ({ schema }) => {
     return ds;
   }, [config, loadSession, saveSession, schema]);
 
-  useEffect(() => () => dataSource.disable(), [dataSource])
-
   useEffect(() => {
-    console.log(`filtered grid mounted `)
     dataSource.enable();
-    return () => {
-      console.log(`filtered grid unmounted`)
-    }
+    return () => dataSource.disable()
   }, [dataSource])
 
 
@@ -58,8 +53,6 @@ export const FilteredGrid = ({ schema }) => {
         console.log(`unknown config change type ${type}`);
     }
   }, [dispatch, save]);
-
-  console.log(`restored config ${JSON.stringify(config)}`)
 
   return (
     <>

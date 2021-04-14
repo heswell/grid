@@ -1208,9 +1208,7 @@ class ServerProxy {
 
       case VP_VISUAL_LINKS_RESP: {
         const links = this.getActiveLinks(body.links);
-        console.log({ links });
         if (links.length) {
-          console.log(`${links.length} active links identified`);
           const { clientViewportId } = this.viewports.get(body.vpId);
           // console.log({links: body.links})
           // //-------------------
@@ -1275,11 +1273,6 @@ class ServerProxy {
     });
   }
 }
-
-/* eslint-disable no-restricted-globals */
-const url = new URL(self.location);
-const urlParams = url.hash.slice(2);
-console.log(`urlParams: ${urlParams}`);
 
 const logger = createLogger('Worker', logColor.brown);
 

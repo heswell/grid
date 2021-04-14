@@ -131,7 +131,6 @@ export default class RemoteDataSource extends EventEmitter {
   }
 
   disable() {
-    console.log(`disable VP`)
     this.suspended = true;
     this.server.handleMessageFromClient({
       viewport: this.viewport,
@@ -141,7 +140,6 @@ export default class RemoteDataSource extends EventEmitter {
   }
 
   enable() {
-    console.log(`enable suspended ? ${this.suspended}`)
     if (this.suspended) {
       // should we await this ?s
       this.server.handleMessageFromClient({

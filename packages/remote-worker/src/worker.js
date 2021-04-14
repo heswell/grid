@@ -4,11 +4,6 @@ import { getTestMessages } from '@vuu-ui/data-remote/src/test-data-collection';
 import { ServerProxy } from '@vuu-ui/data-remote/src/servers/vuu/new-server-proxy';
 import { createLogger, logColor } from '@heswell/utils/src/logging';
 
-/* eslint-disable no-restricted-globals */
-const url = new URL(self.location);
-const urlParams = url.hash.slice(2);
-console.log(`urlParams: ${urlParams}`);
-
 const logger = createLogger('Worker', logColor.brown);
 
 let server;

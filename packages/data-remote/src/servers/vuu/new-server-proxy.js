@@ -353,9 +353,7 @@ export class ServerProxy {
 
       case Message.VP_VISUAL_LINKS_RESP: {
         const links = this.getActiveLinks(body.links);
-        console.log({ links })
         if (links.length) {
-          console.log(`${links.length} active links identified`)
           const { clientViewportId } = this.viewports.get(body.vpId);
           // console.log({links: body.links})
           // //-------------------

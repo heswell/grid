@@ -17,6 +17,7 @@ const byKey = (row1, row2) => row1[RENDER_IDX] - row2[RENDER_IDX];
 export default function useDataSource(dataSource, subscriptionDetails, renderBufferSize, callback) {
 
   const [, forceUpdate] = useState(null);
+  const isMounted = useRef(true);
   const hasUpdated = useRef(false);
   const rafHandle = useRef(null);
   const callbackRef = useRef(callback);
@@ -24,12 +25,22 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
     callbackRef.current = callback;
   }
 
-  const refreshIfUpdated = useCallback(() => {
-    if (hasUpdated.current){
-      forceUpdate({});
-      hasUpdated.current = false;
+  useEffect(() => () => {
+    if (rafHandle.current){
+      cancelAnimationFrame(rafHandle.current);
+      rafHandle.current = null;
     }
-    rafHandle.current = requestAnimationFrame(refreshIfUpdated);
+    isMounted.current = false;
+  },[])
+
+  const refreshIfUpdated = useCallback(() => {
+    if (isMounted.current){
+      if (hasUpdated.current){
+        forceUpdate({});
+        hasUpdated.current = false;
+      }
+      rafHandle.current = requestAnimationFrame(refreshIfUpdated);
+    }
   },[forceUpdate])
 
   useEffect(() => {
@@ -60,7 +71,7 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
   }, [dataSource, dataWindow, renderBufferSize]);
 
   useEffect(() => {
-    console.log(`subscribe datasource status ${dataSource.status} (suspended = ${dataSource.suspended}) with `, subscriptionDetails)
+    // console.log(`subscribe datasource status ${dataSource.status} (suspended = ${dataSource.suspended}) with `, subscriptionDetails)
     dataSource.subscribe(subscriptionDetails,
       function datasourceMessageHandler({ type: messageType, ...msg }) {
         if (messageType === 'subscribed') {
@@ -101,11 +112,6 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataSource]);
-
-  useEffect(() => {
-    console.log(`subscription details seem to have changed`)
-  },[subscriptionDetails])
-
 
   return [data.current, setRange];
 }
