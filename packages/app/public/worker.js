@@ -519,13 +519,13 @@ class Viewport {
     this.filterSpec = {
       filter,
     };
-    // TODO merge this with the parentLink we create later
-    this.visualLink = visualLink;
     this.isTree = false;
     this.dataWindow = undefined;
     this.rowCountChanged = false;
     this.keys = new KeySet(range);
+    this.links = null;
     this.linkedParent = null;
+    this.pendingLinkedParent = visualLink;
     this.pendingOperations = new Map();
     this.pendingRangeRequest = null;
     this.hasUpdates = false;
@@ -572,20 +572,20 @@ class Viewport {
       this.bufferSize,
     );
 
-    // console.log(
-    //   `%cViewport subscribed
-    //     clientVpId: ${this.clientViewportId}
-    //     serverVpId: ${this.serverViewportId}
-    //     table: ${this.table}
-    //     columns: ${columns.join(',')}
-    //     range: ${JSON.stringify(range)}
-    //     sort: ${JSON.stringify(sort)}
-    //     groupBy: ${JSON.stringify(groupBy)}
-    //     filterSpec: ${JSON.stringify(filterSpec)}
-    //     bufferSize: ${this.bufferSize}
-    //   `,
-    //   'color: blue',
-    // );
+    console.log(
+      `%cViewport subscribed
+        clientVpId: ${this.clientViewportId}
+        serverVpId: ${this.serverViewportId}
+        table: ${this.table}
+        columns: ${columns.join(',')}
+        range: ${JSON.stringify(range)}
+        sort: ${JSON.stringify(sort)}
+        groupBy: ${JSON.stringify(groupBy)}
+        filterSpec: ${JSON.stringify(filterSpec)}
+        bufferSize: ${this.bufferSize}
+      `,
+      'color: blue',
+    );
   }
 
   awaitOperation(requestId, type) {
@@ -630,6 +630,7 @@ class Viewport {
         parentViewportId,
         parentColName
       };
+      this.pendingLinkedParent = null;
       return {
         type: 'visual-link-created',
         clientViewportId,
@@ -692,7 +693,14 @@ class Viewport {
     }
   }
 
-
+  setLinks(links){
+    this.links = links;
+    return [{
+      type: "VP_VISUAL_LINKS_RESP",
+      links,
+      clientViewportId: this.clientViewportId
+     }, this.pendingLinkedParent]
+  }
 
   createLink(requestId, colName, parentVpId,  parentColumnName) {
     const message = {
@@ -1209,25 +1217,19 @@ class ServerProxy {
       case VP_VISUAL_LINKS_RESP: {
         const links = this.getActiveLinks(body.links);
         if (links.length) {
-          const { clientViewportId } = this.viewports.get(body.vpId);
-          // console.log({links: body.links})
-          // //-------------------
-          // console.group(`links for (${this.viewportStatus[body.vpId].table})`);
-          // body.links.forEach(({parentVpId, link}) => {
-          //   console.log(`link parentVpId = ${parentVpId}`);
-          //   const vp = this.viewportStatus[parentVpId];
-          //   if (vp){
-          //     console.log(`   parent table = ${vp.table}`)
-          //     console.log(JSON.stringify(link,null,2))
-          //   }
-          // })
-          // console.groupEnd();
-          //--------------------
-          this.postMessageToClient({ type: "VP_VISUAL_LINKS_RESP", links, clientViewportId });
-
+          const viewport = this.viewports.get(body.vpId);
+          const [clientMessage, pendingLink] = viewport.setLinks(links);
+          this.postMessageToClient(clientMessage);
+          if (pendingLink){
+            console.log({pendingLink});
+            const {colName, parentViewportId, parentColName} = pendingLink;
+            const requestId = nextRequestId();
+            const serverViewportId = this.mapClientToServerViewport.get(parentViewportId);
+            const message = viewport.createLink(requestId, colName, serverViewportId, parentColName);
+            this.sendMessageToServer(message, requestId);
+          }
         }
       }
-
         break;
 
       case "ERROR":

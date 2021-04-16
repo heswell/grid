@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@heswell/layout": "3.2.16",
+    "@heswell/layout": "3.2.18",
     "@heswell/theme": "1.0.0",
     "@heswell/ui-controls": "2.0.19"
   },

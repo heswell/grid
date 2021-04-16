@@ -35,6 +35,7 @@ export default class RemoteDataSource extends EventEmitter {
     tableName,
     serverName = AvailableProxies.Viewserver,
     serverUrl,
+    viewport,
     "visual-link": visualLink
   }) {
     super();
@@ -45,7 +46,7 @@ export default class RemoteDataSource extends EventEmitter {
     this.server = NullServer;
     this.columns = columns;
     this.subscription = null;
-    this.viewport = null;
+    this.viewport = viewport;
     this.visualLink = visualLink;
     this.filterDataCallback = null;
     this.filterDataMessage = null;
@@ -66,7 +67,7 @@ export default class RemoteDataSource extends EventEmitter {
   }
 
   async subscribe({
-    viewport = uuid(),
+    viewport = this.viewport ?? uuid(),
     tableName = this.tableName,
     columns = this.columns || [],
     range = defaultRange,

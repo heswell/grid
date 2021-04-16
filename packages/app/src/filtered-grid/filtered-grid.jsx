@@ -14,10 +14,10 @@ export const FilteredGrid = ({ schema }) => {
     if (ds) {
       return ds;
     }
-    ds = createDataSource(schema.table, schema, config);
+    ds = createDataSource(id, schema.table, schema, config);
     saveSession(ds, "data-source");
     return ds;
-  }, [config, loadSession, saveSession, schema]);
+  }, [config, id, loadSession, saveSession, schema]);
 
   useEffect(() => {
     dataSource.enable();
@@ -62,7 +62,7 @@ export const FilteredGrid = ({ schema }) => {
         columns={schema.columns}
         groupBy={config?.group}
         onConfigChange={handleConfigChange}
-        renderBufferSize={10}
+        renderBufferSize={80}
         sort={config?.sort}
         showLineNumbers />
     </>

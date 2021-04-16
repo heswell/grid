@@ -354,25 +354,19 @@ export class ServerProxy {
       case Message.VP_VISUAL_LINKS_RESP: {
         const links = this.getActiveLinks(body.links);
         if (links.length) {
-          const { clientViewportId } = this.viewports.get(body.vpId);
-          // console.log({links: body.links})
-          // //-------------------
-          // console.group(`links for (${this.viewportStatus[body.vpId].table})`);
-          // body.links.forEach(({parentVpId, link}) => {
-          //   console.log(`link parentVpId = ${parentVpId}`);
-          //   const vp = this.viewportStatus[parentVpId];
-          //   if (vp){
-          //     console.log(`   parent table = ${vp.table}`)
-          //     console.log(JSON.stringify(link,null,2))
-          //   }
-          // })
-          // console.groupEnd();
-          //--------------------
-          this.postMessageToClient({ type: "VP_VISUAL_LINKS_RESP", links, clientViewportId });
-
+          const viewport = this.viewports.get(body.vpId);
+          const [clientMessage, pendingLink] = viewport.setLinks(links);
+          this.postMessageToClient(clientMessage);
+          if (pendingLink){
+            console.log({pendingLink});
+            const {colName, parentViewportId, parentColName} = pendingLink;
+            const requestId = nextRequestId();
+            const serverViewportId = this.mapClientToServerViewport.get(parentViewportId);
+            const message = viewport.createLink(requestId, colName, serverViewportId, parentColName);
+            this.sendMessageToServer(message, requestId);
+          }
         }
       }
-
         break;
 
       case "ERROR":

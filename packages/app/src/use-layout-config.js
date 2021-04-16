@@ -8,8 +8,6 @@ const useLayoutConfig = (url) => {
 
   useEffect(() => {
 
-    // setLayout(staticLayout);
-
     const load = async() => {
       fetch(`${url}/latest`, {
       })

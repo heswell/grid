@@ -8,7 +8,7 @@ import {useForkRef} from "@heswell/utils"
 import cx from "classnames";
 import GridContext from "./grid-context";
 import { MenuProvider } from "./context-menu/menu-context";
-import RowHeightCanary from "./row-height-canary";
+// import RowHeightCanary from "./row-height-canary";
 import { ComponentProvider } from "./component-context";
 import {useGridModel} from "./use-grid-model";
 import useDataSourceModelBindings from "./use-datasource-model-bindings";

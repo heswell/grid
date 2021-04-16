@@ -72,7 +72,12 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
 
   useEffect(() => {
     // console.log(`subscribe datasource status ${dataSource.status} (suspended = ${dataSource.suspended}) with `, subscriptionDetails)
-    dataSource.subscribe(subscriptionDetails,
+    const {range, ...rest} = subscriptionDetails;
+    const {from: lo, to: hi} = getFullRange(range, renderBufferSize)
+    dataSource.subscribe({
+      ...rest,
+      range: {lo,hi}
+    },
       function datasourceMessageHandler({ type: messageType, ...msg }) {
         if (messageType === 'subscribed') {
           return callbackRef.current(messageType, msg);
