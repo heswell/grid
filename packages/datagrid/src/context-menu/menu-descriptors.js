@@ -14,6 +14,10 @@ export function buildMenuDescriptors(gridModel, location, options){
     })
   }
 
+  if (options?.selectedRowCount){
+    menuItems.push({label: `Create Orders`, action: Action.RpcCall})
+  }
+
   return menuItems;
 
 }

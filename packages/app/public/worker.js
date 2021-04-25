@@ -223,6 +223,8 @@ const LOGIN = 'LOGIN';
 const LOGIN_SUCCESS = 'LOGIN_SUCCESS';
 const OPEN_TREE_NODE = "OPEN_TREE_NODE";
 const OPEN_TREE_SUCCESS = "OPEN_TREE_SUCCESS";
+const RPC_CALL = "RPC_CALL";
+const RPC_RESP = "RPC_RESP";
 const SET_SELECTION = 'SET_SELECTION';
 const SET_SELECTION_SUCCESS = 'SET_SELECTION_SUCCESS';
 const TABLE_META_RESP = 'TABLE_META_RESP';
@@ -908,8 +910,8 @@ class ServerProxy {
   }
 
   subscribe(message) {
-    // Client sends a spurious subscribe message when a viewport is enabled
-    if (!this.mapClientToServerViewport.has(message.viewport)){
+    // guard against subscribe message when a viewport is already subscribed
+    if (!this.mapClientToServerViewport.has(message.viewport)) {
       const viewport = new Viewport(message);
       this.viewports.set(message.viewport, viewport);
       // use client side viewport as request id, so that when we process the response,
@@ -1008,7 +1010,7 @@ class ServerProxy {
 
       case 'disable':
         {
-          console.log(`%cDISABLE`,'color:red;font-weight: bold;');
+          console.log(`%cDISABLE`, 'color:red;font-weight: bold;');
           const requestId = nextRequestId();
           const request = viewport.disable(requestId);
           this.sendIfReady(request, requestId, isReady);
@@ -1072,6 +1074,19 @@ class ServerProxy {
         }
         break;
 
+      case RPC_CALL: {
+        const requestId = nextRequestId();
+        this.sendMessageToServer({
+          type,
+          service: "OrderEntryRpcHandler",
+          method: "addRowsFromInstruments",
+          params: [viewport.serverViewportId],
+          namedParams: {}
+        }, requestId, "SIMUL");
+      }
+
+        break;
+
       default:
         console.log(
           `Vuu ServerProxy Unexpected message from client ${JSON.stringify(
@@ -1092,14 +1107,14 @@ class ServerProxy {
     return isReady;
   }
 
-  sendMessageToServer(body, requestId = _requestId++) {
+  sendMessageToServer(body, requestId = _requestId++, module="CORE") {
     // const { clientId } = this.connection;
     this.connection.send({
       requestId,
       sessionId: this.sessionId,
       token: this.loginToken,
       user: 'user',
-      module: 'CORE',
+      module,
       body,
     });
   }
@@ -1201,14 +1216,14 @@ class ServerProxy {
 
       case CREATE_VISUAL_LINK_SUCCESS: {
         const { childVpId, childColumnName, parentVpId, parentColumnName } = body;
-        const {clientViewportId: parentViewportId} = this.viewports.get(parentVpId);
+        const { clientViewportId: parentViewportId } = this.viewports.get(parentVpId);
         const response = this.viewports.get(childVpId).completeOperation(
           requestId,
           childColumnName,
           parentViewportId,
           parentColumnName
         );
-        if (response){
+        if (response) {
           this.postMessageToClient(response);
         }
       }
@@ -1233,9 +1248,9 @@ class ServerProxy {
           const viewport = this.viewports.get(body.vpId);
           const [clientMessage, pendingLink] = viewport.setLinks(links);
           this.postMessageToClient(clientMessage);
-          if (pendingLink){
-            console.log({pendingLink});
-            const {colName, parentViewportId, parentColName} = pendingLink;
+          if (pendingLink) {
+            console.log({ pendingLink });
+            const { colName, parentViewportId, parentColName } = pendingLink;
             const requestId = nextRequestId();
             const serverViewportId = this.mapClientToServerViewport.get(parentViewportId);
             const message = viewport.createLink(requestId, colName, serverViewportId, parentColName);
@@ -1244,6 +1259,10 @@ class ServerProxy {
         }
       }
         break;
+
+      case RPC_RESP:
+         console.log(`RPC_RESP ${JSON.stringify(body, null,2)}`);
+      break;
 
       case "ERROR":
         console.error(body.msg);

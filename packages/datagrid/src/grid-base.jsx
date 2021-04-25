@@ -8,6 +8,7 @@ import {useForkRef} from "@heswell/utils"
 import cx from "classnames";
 import GridContext from "./grid-context";
 import { MenuProvider } from "./context-menu/menu-context";
+import * as MenuAction from "./context-menu/context-menu-actions"
 // import RowHeightCanary from "./row-height-canary";
 import { ComponentProvider } from "./component-context";
 import {useGridModel} from "./use-grid-model";
@@ -75,8 +76,10 @@ const GridBase = forwardRef(function GridBase(props, ref){
         return dataSource.closeTreeNode(operation.key);
       case "sort":
         return dataSource.sort(operation.columns);
-      case "link-table":
+      case MenuAction.LinkTable:
         return dataSource.createLink(operation.link);
+      case MenuAction.RpcCall:
+        return dataSource.rpcCall();
       default:
         console.log(
           `[GridBase] dataSourceOperation: unknown operation ${operation.type}`
@@ -90,7 +93,8 @@ const GridBase = forwardRef(function GridBase(props, ref){
       openTreeNode: invokeDataSourceOperation,
       closeTreeNode: invokeDataSourceOperation,
       sort: invokeDataSourceOperation,
-      'link-table': invokeDataSourceOperation,
+      [MenuAction.LinkTable]: invokeDataSourceOperation,
+      [MenuAction.RpcCall]: invokeDataSourceOperation,
       deselection: handleSelectionChange,
       selection: handleSelectionChange,
       "scroll-end-horizontal": handleHorizontalScrollEnd,

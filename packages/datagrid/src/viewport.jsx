@@ -9,7 +9,7 @@ import React, {
   useRef,
   useMemo,
 } from "react";
-import { useEffectSkipFirst } from "@heswell/utils";
+import { metadataKeys, useEffectSkipFirst } from "@heswell/utils";
 import useScroll from "./use-scroll";
 import useUpdate from "./use-update";
 import useDataSource from "./use-data-source";
@@ -33,6 +33,17 @@ const getToggleStrategy = (dataSource) => {
     return DEFAULT_TOGGLE_STRATEGY;
   }
 };
+
+// Temp, until we manage selection properly
+const countSelectedRows = data => {
+  let count = 0;
+  for (let row of data){
+    if (row && row[metadataKeys.SELECTED]){
+      count += 1;
+    }
+  }
+  return count;
+}
 
 /** @type {Viewport} */
 const Viewport = forwardRef(function Viewport(
@@ -288,7 +299,11 @@ const Viewport = forwardRef(function Viewport(
     dataSource,
   ]);
 
-  const handleContextMenu = useContextMenu("grid");
+
+  const contextMenuOptions = useMemo(() => {
+    return {selectedRowCount: countSelectedRows(data)}
+  }, [data])
+  const handleContextMenu = useContextMenu("grid", contextMenuOptions);
 
   const scrollBy = useCallback((rows) => {
     const scrollTop = viewportEl.current.scrollTop + rows * gridModel.rowHeight;

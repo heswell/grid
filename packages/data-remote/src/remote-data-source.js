@@ -288,6 +288,13 @@ export default class RemoteDataSource extends EventEmitter {
 
   }
 
+  rpcCall(){
+    this.server?.handleMessageFromClient({
+      viewport: this.viewport,
+      type: "RPC_CALL"
+    });
+  }
+
   subscribeToFilterData(column, range, callback) {
     logger.log(`<subscribeToFilterData> ${column.name}`)
     this.filterDataCallback = callback;

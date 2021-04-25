@@ -91,7 +91,11 @@ const MenuContextProvider = ({children, showMenu}) => {
         return dispatchGridModelAction({type: 'column-hide', column});
       }
       case Action.LinkTable:
-        dispatchGridAction({type: 'link-table', link: options})
+        dispatchGridAction({type, link: options})
+      break;
+
+      case Action.RpcCall:
+        dispatchGridAction({type})
       break;
 
       default:
