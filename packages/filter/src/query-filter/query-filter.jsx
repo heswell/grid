@@ -1,9 +1,10 @@
 import React, { useRef, useState } from 'react';
 import cx from 'classnames';
-import { ActionButton, ToggleButton } from '@adobe/react-spectrum';
+import { ActionButton } from '@adobe/react-spectrum';
 import CloseCircle from "@spectrum-icons/workflow/CloseCircle";
 import FilterIcon from "@spectrum-icons/workflow/Filter";
 import { Toolbar, Tooltray, useLayoutContext } from "@heswell/layout";
+import {StateButton} from "@heswell/ui-controls";
 
 import "./query-filter.css";
 
@@ -102,7 +103,7 @@ const QueryFilter = ({ onChange }) => {
 
   }
 
-  const toggleOr = (value) => {
+  const toggleOr = (evt, value) => {
     const op = joinOp === "or" ? "and" : "or";
     if (joinOp !== op) {
       onChange(buildFilterQuery(filters, op));
@@ -124,12 +125,12 @@ const QueryFilter = ({ onChange }) => {
   }
 
   const ToggleBoolean = () =>
-    <ToggleButton width={25} UNSAFE_className={cx(
+    <StateButton width={25} className={cx(
       `${classBase}-andor`, {
       [`${classBase}-andor-selected`]: joinOp === 'or'
     })}
-      isSelected={joinOp === 'or'}
-      onChange={toggleOr} >{joinOp}</ToggleButton>
+      checked={joinOp === 'or'}
+      onChange={toggleOr} >{joinOp}</StateButton>
 
   const classBase = "hwQueryFilter";
   const filterKeys = Object.keys(filters);
@@ -149,16 +150,14 @@ const QueryFilter = ({ onChange }) => {
         <Tooltray>
           {filterKeys.reduce((list, filterName, i, arr) => {
               list.push(
-              <ToggleButton
-                UNSAFE_className={cx(`${classBase}-pill`, {
-                  [`${classBase}-pill-selected`]: filters[filterName].enabled
-                })}
-                isSelected={filters[filterName].enabled}
+              <StateButton
+                className={cx(`${classBase}-pill`)}
+                checked={filters[filterName].enabled}
                 key={i}
                 onChange={() => toggleFilter(filterName)}
                 onKeyDown={(e) => handleFilterTagKeyDown(e, filterName)}>
                 <span>{filterName}</span>
-              </ToggleButton>);
+              </StateButton>);
               if (i < arr.length - 1){
                 list.push(<ToggleBoolean />)
               }

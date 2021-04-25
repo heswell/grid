@@ -7,19 +7,13 @@
 }
 
 .hwQueryFilter-pill {
+  --checked-bg: var(--hw-button-active-bg, var(--hw-digital-blue, red));
   border-radius: 2px;
   --spectrum-global-color-gray-50: var(--spectrum-global-color-static-gray-300); /* Hover */
   --spectrum-global-color-gray-75: var(--spectrum-global-color-static-gray-400);
   border-style: none;
   padding: 2px 3px;
   text-transform: uppercase;
-}
-
-.hwQueryFilter-pill-selected {
-  --spectrum-global-color-gray-200: var(--spectrum-global-color-static-blue-500);
-  --spectrum-alias-text-color: white;
-  --spectrum-alias-text-color-hover: white;
-  font-weight: bold;
 }
 
 .hwQueryFilter-andor {

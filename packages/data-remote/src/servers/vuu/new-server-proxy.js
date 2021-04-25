@@ -35,12 +35,16 @@ export class ServerProxy {
   }
 
   subscribe(message) {
-    const viewport = new Viewport(message);
-    this.viewports.set(message.viewport, viewport);
-    // use client side viewport as request id, so that when we process the response,
-    // with the serverside viewport we can establish a mapping between the two
-    const isReady = this.sessionId !== '';
-    this.sendIfReady(viewport.subscribe(), message.viewport, isReady);
+    // guard against subscribe message when a viewport is already subscribed
+    if (!this.mapClientToServerViewport.has(message.viewport)){
+      const viewport = new Viewport(message);
+      this.viewports.set(message.viewport, viewport);
+      // use client side viewport as request id, so that when we process the response,
+      // with the serverside viewport we can establish a mapping between the two
+      const isReady = this.sessionId !== '';
+      this.sendIfReady(viewport.subscribe(), message.viewport, isReady);
+    }
+
   }
 
   handleMessageFromClient(message) {
@@ -260,8 +264,10 @@ export class ServerProxy {
           viewports.set(serverViewportId, viewport);
           viewports.delete(requestId);
           this.mapClientToServerViewport.set(requestId, serverViewportId);
-          viewport.handleSubscribed(body);
-
+          const response = viewport.handleSubscribed(body);
+          if (response) {
+            this.postMessageToClient(response);
+          }
           this.sendMessageToServer({
             type: Message.GET_VP_VISUAL_LINKS,
             vpId: serverViewportId

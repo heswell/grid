@@ -58,6 +58,8 @@ export default class RemoteDataSource extends EventEmitter {
     this.initialSort = sort;
     this.initialFilter = filter;
 
+    console.log('brand new data source created')
+
     if (!serverUrl) {
       throw Error('RemoteDataSource expects serverUrl')
     }
@@ -132,6 +134,7 @@ export default class RemoteDataSource extends EventEmitter {
   }
 
   disable() {
+    logger.log(`disable datasource ${this.viewport}`)
     this.suspended = true;
     this.server.handleMessageFromClient({
       viewport: this.viewport,
@@ -141,6 +144,7 @@ export default class RemoteDataSource extends EventEmitter {
   }
 
   enable() {
+    logger.log(`enable datasource ${this.viewport}`)
     if (this.suspended) {
       // should we await this ?s
       this.server.handleMessageFromClient({

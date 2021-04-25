@@ -1,7 +1,5 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import "@heswell/theme";
-
 
 import App from './App';
 import './index.css';

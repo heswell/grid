@@ -20,8 +20,12 @@ export const FilteredGrid = ({ schema }) => {
   }, [config, id, loadSession, saveSession, schema]);
 
   useEffect(() => {
+    console.log(`FilteredGrid mounted, enable dataSource`)
     dataSource.enable();
-    return () => dataSource.disable()
+    return () => {
+      console.log(`FilteredGrid unmounted, disable dataSource`)
+      dataSource.disable()
+    }
   }, [dataSource])
 
 

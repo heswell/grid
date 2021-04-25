@@ -586,6 +586,11 @@ class Viewport {
       `,
       'color: blue',
     );
+
+    return {
+      type: 'subscribed',
+      columns
+    }
   }
 
   awaitOperation(requestId, type) {
@@ -715,6 +720,7 @@ class Viewport {
   }
 
   enable(requestId) {
+    console.log(`Viewport enable ${this.serverViewportId}`);
     this.awaitOperation(requestId, { type: 'enable' });
     return {
       type: ENABLE_VP,
@@ -723,6 +729,7 @@ class Viewport {
   }
 
   disable(requestId) {
+    console.log(`Viewport disable ${this.serverViewportId}`);
     this.awaitOperation(requestId, { type: 'disable' });
     return {
       type: DISABLE_VP,
@@ -901,12 +908,16 @@ class ServerProxy {
   }
 
   subscribe(message) {
-    const viewport = new Viewport(message);
-    this.viewports.set(message.viewport, viewport);
-    // use client side viewport as request id, so that when we process the response,
-    // with the serverside viewport we can establish a mapping between the two
-    const isReady = this.sessionId !== '';
-    this.sendIfReady(viewport.subscribe(), message.viewport, isReady);
+    // Client sends a spurious subscribe message when a viewport is enabled
+    if (!this.mapClientToServerViewport.has(message.viewport)){
+      const viewport = new Viewport(message);
+      this.viewports.set(message.viewport, viewport);
+      // use client side viewport as request id, so that when we process the response,
+      // with the serverside viewport we can establish a mapping between the two
+      const isReady = this.sessionId !== '';
+      this.sendIfReady(viewport.subscribe(), message.viewport, isReady);
+    }
+
   }
 
   handleMessageFromClient(message) {
@@ -1125,8 +1136,10 @@ class ServerProxy {
           viewports.set(serverViewportId, viewport);
           viewports.delete(requestId);
           this.mapClientToServerViewport.set(requestId, serverViewportId);
-          viewport.handleSubscribed(body);
-
+          const response = viewport.handleSubscribed(body);
+          if (response) {
+            this.postMessageToClient(response);
+          }
           this.sendMessageToServer({
             type: GET_VP_VISUAL_LINKS,
             vpId: serverViewportId

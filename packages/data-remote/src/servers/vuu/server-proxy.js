@@ -216,11 +216,15 @@ export class ServerProxy {
     const isReady = this.sessionId !== "";
     // TODO we need to explicitly store all the viewport attributes here
     const { viewport, tablename, columns, range: { lo, hi }, sort = [], groupBy = [], filter = "" } = message;
+
+
+
+
     this.viewportStatus[viewport] = new Viewport(viewport, message);
 
     // use client side viewport as request id, so that when we process the response,
     // with the serverside viewport we can establish a mapping between the two
-    this.sendIdReady(viewport.subscribe())
+    // this.sendIdReady(viewport.subscribe())
     this.sendIfReady({
       type: Message.CREATE_VP,
       table: tablename,
