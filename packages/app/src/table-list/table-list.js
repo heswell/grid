@@ -6,7 +6,7 @@ import {FilteredGrid} from "../filtered-grid";
 
 const TableList = ({className,  ...props}) => {
 
-  const tables = useTables();
+  const {tables} = useTables();
   const tableList = Object.values(tables);
 
   return (

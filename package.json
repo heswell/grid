@@ -32,9 +32,9 @@
     "proseWrap": "always"
   },
   "dependencies": {
-    "@heswell/layout": "3.3.1",
+    "@heswell/layout": "3.4.4",
     "@heswell/popup": "2.1.15",
-    "@heswell/ui-controls": "2.0.23",
+    "@heswell/ui-controls": "2.0.24",
     "@testing-library/dom": "^7.29.4",
     "@testing-library/jest-dom": "^5.11.9",
     "@testing-library/react": "^11.2.5",
@@ -45,17 +45,17 @@
     "@types/react-dom": "^17.0.1",
     "eslint": "^7.20.0",
     "eslint-config-modular-app": "^0.4.2",
-    "modular-scripts": "^0.9.10",
+    "modular-scripts": "0.9.10",
     "prettier": "^2.2.1",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "typescript": "^4.1.2"
   },
   "devDependencies": {
-    "@storybook/addon-actions": "^6.1.18",
-    "@storybook/addon-essentials": "^6.1.18",
-    "@storybook/addon-links": "^6.1.18",
-    "@storybook/node-logger": "^6.1.18",
-    "@storybook/react": "^6.1.18"
+    "@storybook/addon-actions": "~6.1.18",
+    "@storybook/addon-essentials": "~6.1.18",
+    "@storybook/addon-links": "~6.1.18",
+    "@storybook/node-logger": "~6.1.18",
+    "@storybook/react": "~6.1.18"
   }
 }

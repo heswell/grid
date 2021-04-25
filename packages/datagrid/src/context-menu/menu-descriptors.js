@@ -1,4 +1,5 @@
 import * as Action from './context-menu-actions';
+import {getRpcActions} from "./rpc-actions";
 
 export function buildMenuDescriptors(gridModel, location, options){
   const menuItems = [];
@@ -15,7 +16,11 @@ export function buildMenuDescriptors(gridModel, location, options){
   }
 
   if (options?.selectedRowCount){
-    menuItems.push({label: `Create Orders`, action: Action.RpcCall})
+    // TODO pass the table name
+    const rpcActions = getRpcActions();
+    for (let {label, method} of rpcActions){
+      menuItems.push({action: Action.RpcCall, label,  options: {method}})
+    }
   }
 
   return menuItems;
@@ -104,7 +109,6 @@ function buildGroupMenuItems(groupBy, options){
 
 export function getMenuOptions(menuDescriptors, action){
     const menuItem = findMenuItem(menuDescriptors, action)
-    // eslint-disable-next-line
     return menuItem?.options ?? null;
 }
 

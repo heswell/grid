@@ -1,5 +1,7 @@
 import * as Message from './messages';
 import { Viewport } from './new-viewport';
+import {getRpcService} from "./rpc-services";
+
 // TEST_DATA_COLLECTION
 // import { saveTestData } from '../../test-data-collection';
 
@@ -201,14 +203,16 @@ export class ServerProxy {
         break;
 
       case Message.RPC_CALL: {
+        const {method} = message;
         const requestId = nextRequestId();
+        const [service, module] = getRpcService(method);
         this.sendMessageToServer({
           type,
-          service: "OrderEntryRpcHandler",
-          method: "addRowsFromInstruments",
+          service,
+          method: message.method,
           params: [viewport.serverViewportId],
           namedParams: {}
-        }, requestId, "SIMUL");
+        }, requestId, module);
       }
 
         break;
@@ -388,8 +392,18 @@ export class ServerProxy {
       }
         break;
 
-      case Message.RPC_RESP:
-         console.log(`RPC_RESP ${JSON.stringify(body, null,2)}`)
+      case Message.RPC_RESP: {
+        const {method, result} = body;
+        // check to see if the orderEntry is already open on the page
+        let orderEntryOpen = false;
+        for (let viewport of this.viewports.values()){
+          if (!viewport.suspended && viewport.table === 'orderEntry'){
+            orderEntryOpen = true;
+            break;
+          }
+        }
+        this.postMessageToClient({type, method, result, orderEntryOpen})
+      }
       break;
 
       case "ERROR":

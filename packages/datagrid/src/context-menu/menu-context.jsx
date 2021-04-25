@@ -95,7 +95,7 @@ const MenuContextProvider = ({children, showMenu}) => {
       break;
 
       case Action.RpcCall:
-        dispatchGridAction({type})
+        dispatchGridAction({type, ...options})
       break;
 
       default:

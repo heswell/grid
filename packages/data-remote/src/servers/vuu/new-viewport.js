@@ -237,7 +237,6 @@ export class Viewport {
   }
 
   enable(requestId) {
-    console.log(`Viewport enable ${this.serverViewportId}`)
     this.awaitOperation(requestId, { type: 'enable' });
     return {
       type: Message.ENABLE_VP,
@@ -246,7 +245,6 @@ export class Viewport {
   }
 
   disable(requestId) {
-    console.log(`Viewport disable ${this.serverViewportId}`)
     this.awaitOperation(requestId, { type: 'disable' });
     return {
       type: Message.DISABLE_VP,

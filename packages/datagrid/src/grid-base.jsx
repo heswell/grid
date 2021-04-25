@@ -79,7 +79,7 @@ const GridBase = forwardRef(function GridBase(props, ref){
       case MenuAction.LinkTable:
         return dataSource.createLink(operation.link);
       case MenuAction.RpcCall:
-        return dataSource.rpcCall();
+        return dataSource.rpcCall(operation);
       default:
         console.log(
           `[GridBase] dataSourceOperation: unknown operation ${operation.type}`

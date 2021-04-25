@@ -74,6 +74,11 @@ const useTables = () => {
   }
   ,[forceUpdate])
 
+  const rpcCall = useCallback((options) => {
+    console.log(`make RPC call ${JSON.stringify(options)}`)
+  },[])
+
+
   useEffect(() => {
 
     async function fetchTableMetadata(){
@@ -86,7 +91,7 @@ const useTables = () => {
 
   },[setTables])
 
-  return _tables;
+  return {tables: _tables, rpcCall};
 }
 
 export default useTables;

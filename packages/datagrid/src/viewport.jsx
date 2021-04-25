@@ -20,6 +20,7 @@ import useContextMenu from "./context-menu/use-context-menu";
 import Canvas from "./canvas";
 import ColumnBearer from "./column-bearer";
 import InsertIndicator from "./insert-indicator";
+import * as Message from "./vuu-messages";
 
 import "./viewport.css";
 
@@ -223,9 +224,13 @@ const Viewport = forwardRef(function Viewport(
           break;
 
         // TODO how do we abstract these concepts away from the grid itself ?
-        case "VP_VISUAL_LINKS_RESP":
+        case Message.VisualLinksResp:
           dispatchGridModelAction({ type: "visual-links", links: options });
           break;
+
+        case Message.RpcResp:
+          console.log(`RPC Resp ${JSON.stringify(options)}`)
+        break;
 
         default:
       }

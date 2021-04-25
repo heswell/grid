@@ -1,4 +1,5 @@
 import { createLogger, logColor, EventEmitter, uuid } from '@heswell/utils';
+import * as Message from "./servers/vuu/messages";
 
 // import {storeData, setDataCollectionMethod} from "./test-data-capture";
 
@@ -31,7 +32,8 @@ const getWorker = async (url, server) => {
 const messagesToRelayToClient = {
   'table-row': true,
   'visual-link-created': true,
-  VP_VISUAL_LINKS_RESP: true,
+  [Message.VP_VISUAL_LINKS_RESP]: true,
+  [Message.RPC_RESP]: true,
   sort: true,
   groupBy: true,
   filter: true

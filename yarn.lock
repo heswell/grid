@@ -1505,12 +1505,12 @@
   dependencies:
     "@hapi/hoek" "^8.3.0"
 
-"@heswell/layout@3.3.1":
-  version "3.3.1"
-  resolved "https://registry.yarnpkg.com/@heswell/layout/-/layout-3.3.1.tgz#c9d3968f00b67c3f73452159f50d78dc402bccaa"
-  integrity sha512-WUJmRLrwSSPv2dogeH0j5/mNxs+aeP0AbyJLySnrWO/mlEJemtWXDhxnjONLZkKSFzPxv+3YB9Ee3NTa2PIvKw==
+"@heswell/layout@3.4.4":
+  version "3.4.4"
+  resolved "https://registry.yarnpkg.com/@heswell/layout/-/layout-3.4.4.tgz#7bf219b438d8ee3068104bb7922601cc7d36de77"
+  integrity sha512-XlBpRJIAotplPLl6HpUXpY/EdnH0oFN6FKuUuPNnLBVmn7zck71XEYHio9XQRUtAQxpD6anPEksj8256se/XyQ==
   dependencies:
-    "@heswell/ui-controls" "2.0.20"
+    "@heswell/ui-controls" "2.0.24"
     classnames "^2.2.6"
 
 "@heswell/popup@2.1.15":
@@ -1525,18 +1525,10 @@
   dependencies:
     react "^17.0.1"
 
-"@heswell/ui-controls@2.0.20":
-  version "2.0.20"
-  resolved "https://registry.yarnpkg.com/@heswell/ui-controls/-/ui-controls-2.0.20.tgz#8f057aa55db74fe8030b5c57a0a4ee36dabad6ce"
-  integrity sha512-ofN2BHLrK4dPD5aKJJymjv44eZdEFILqDc/hLB4+HHmjm0ZYZ7guhWNljK2Jk6wtm39go1EYuJGd4mLKuSHfGQ==
-  dependencies:
-    date-fns "^2.19.0"
-    xstate "^4.16.2"
-
-"@heswell/ui-controls@2.0.23":
-  version "2.0.23"
-  resolved "https://registry.yarnpkg.com/@heswell/ui-controls/-/ui-controls-2.0.23.tgz#eb5975bb944367977a5c4bc33169ba4c8e2e3697"
-  integrity sha512-Ed93DjrU9JahaQQ6F2mjI/S0oulLcrQnM9NIRElrhcFG91pSdb6aG45G0nVXhUmIizsc8rEGvlsTMzMOZHWRJg==
+"@heswell/ui-controls@2.0.24":
+  version "2.0.24"
+  resolved "https://registry.yarnpkg.com/@heswell/ui-controls/-/ui-controls-2.0.24.tgz#57c3f542b6cb95417c55fef5827c17d15c62f5d4"
+  integrity sha512-s0Ony5LdntB60uCOTq+BdPn/pykiapv8ncJtajCkOILpxuH6g0fj4KBx4cMOikzpPxYY4RglgB84+wzCrHS6Nw==
   dependencies:
     date-fns "^2.19.0"
     xstate "^4.16.2"
@@ -3313,7 +3305,7 @@
     "@adobe/react-spectrum-workflow" "^1.0.0"
     "@react-spectrum/icon" "^3.2.0"
 
-"@storybook/addon-actions@6.1.21", "@storybook/addon-actions@^6.1.18":
+"@storybook/addon-actions@6.1.21", "@storybook/addon-actions@~6.1.18":
   version "6.1.21"
   resolved "https://registry.yarnpkg.com/@storybook/addon-actions/-/addon-actions-6.1.21.tgz#881dceb0ed650fe28086d9993703f8081b29f4ce"
   integrity sha512-H+nhSgK3X5L+JfArsC9ufvgJzQwPN9UXBxhMl74faEDCo9RGmq9ywNcjn9XlZGGnJ3jCaYrI/T1u0J7F6PBrTA==
@@ -3414,7 +3406,7 @@
     ts-dedent "^2.0.0"
     util-deprecate "^1.0.2"
 
-"@storybook/addon-essentials@^6.1.18":
+"@storybook/addon-essentials@~6.1.18":
   version "6.1.21"
   resolved "https://registry.yarnpkg.com/@storybook/addon-essentials/-/addon-essentials-6.1.21.tgz#ed528fbdebbc841459a8264f74e517c04b0e1a27"
   integrity sha512-kdQ/hnfwwodWVFvMdvSbhOyLv/cUJyhgVRyIamrURP9I0OlWhpOAHhwMjAT2KKceutN3UjNpSCqFNSL4dMu25g==
@@ -3432,7 +3424,7 @@
     regenerator-runtime "^0.13.7"
     ts-dedent "^2.0.0"
 
-"@storybook/addon-links@^6.1.18":
+"@storybook/addon-links@~6.1.18":
   version "6.1.21"
   resolved "https://registry.yarnpkg.com/@storybook/addon-links/-/addon-links-6.1.21.tgz#59b04c4a0bd1c8dc86fecea64a2531154df382e6"
   integrity sha512-DFPK6aYs9VIs1tO0PJ+mBwg64ZLv6NcVwFJ083ghCj/hR+0+3NRox+oRHXCWq7RHtnJeU4VKEiRx2EpE9L9Bkg==
@@ -3720,7 +3712,7 @@
   dependencies:
     lodash "^4.17.15"
 
-"@storybook/node-logger@6.1.21", "@storybook/node-logger@^6.1.18":
+"@storybook/node-logger@6.1.21", "@storybook/node-logger@~6.1.18":
   version "6.1.21"
   resolved "https://registry.yarnpkg.com/@storybook/node-logger/-/node-logger-6.1.21.tgz#bcf882209697acfe4fc60bc224676400bce260ed"
   integrity sha512-wQZZw4n1PG3kGOsczWCBC6+8RagYkrGYDqsVOpUcs5shGbPg5beCXDuzP4nxz2IlsoP9ZtTSaX741H791OIOjA==
@@ -3738,7 +3730,7 @@
   dependencies:
     core-js "^3.0.1"
 
-"@storybook/react@^6.1.18":
+"@storybook/react@~6.1.18":
   version "6.1.21"
   resolved "https://registry.yarnpkg.com/@storybook/react/-/react-6.1.21.tgz#1c4d01dba8d8f130f9b7da4038a380eeb9c61f38"
   integrity sha512-j3gq/ssWxRCCH5iCHbP3ihXSGS7lVWh1HpmBmGbbhHGHgdmSPsRjwDXiQGE81EmE7bzbC8NECBhU3zHJ6h1TvA==
@@ -11694,7 +11686,7 @@ mkdirp@^1.0.3, mkdirp@^1.0.4:
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-1.0.4.tgz#3eb5ed62622756d79a5f0e2a221dfebad75c2f7e"
   integrity sha512-vVqVZQyf3WLx2Shd0qJ9xuvqgAyKPLAiqITEtqW0oIUjzo3PePDd6fW9iFz30ef7Ysp/oiWqbhszeGWW2T6Gzw==
 
-modular-scripts@^0.9.10:
+modular-scripts@0.9.10:
   version "0.9.10"
   resolved "https://registry.yarnpkg.com/modular-scripts/-/modular-scripts-0.9.10.tgz#6f2e7e637bc430d1f43fd319f5c733c72c623548"
   integrity sha512-klRTkN1z5iEfJiuOTKisWEMJzneL0s3thhybEPe5BevgNl3wg5nJyKZYnXjPWBZG/YcxKi8dw0cj+um1wh7AOA==

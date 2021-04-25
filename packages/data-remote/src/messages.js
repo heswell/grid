@@ -5,6 +5,9 @@ export const ServerApiMessageTypes = {
   unsubscribe: 'TerminateSubscription'
 }
 
+export const VP_VISUAL_LINKS_RESP = "VP_VISUAL_LINKS_RESP";
+export const RPC_RESP = "RPC_RESP";
+
 export const CONNECT = 'connect';
 export const COLUMN_LIST = 'ColumnList';
 export const DATA = 'data';

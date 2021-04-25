@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { metadataKeys } from "@heswell/utils/src/column-utils";
 import { WindowRange, getFullRange } from "@heswell/utils/src/range-utils";
+import * as Message from "./vuu-messages";
 const { RENDER_IDX } = metadataKeys;
 
 const byKey = (row1, row2) => row1[RENDER_IDX] - row2[RENDER_IDX];
@@ -102,9 +103,11 @@ export default function useDataSource(dataSource, subscriptionDetails, renderBuf
         } else if (messageType === 'filter'){
           callbackRef.current(messageType, msg.filter);
           dataSource.emit('filter', msg.filter);
-        } else if (messageType === 'VP_VISUAL_LINKS_RESP'){
+        } else if (messageType === Message.VisualLinksResp){
           callbackRef.current(messageType, msg.links);
         } else if (messageType === 'visual-link-created'){
+          callbackRef.current(messageType, msg);
+        } else if (messageType === Message.RpcResp){
           callbackRef.current(messageType, msg);
         }
       }

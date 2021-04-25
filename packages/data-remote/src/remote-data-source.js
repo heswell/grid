@@ -288,10 +288,11 @@ export default class RemoteDataSource extends EventEmitter {
 
   }
 
-  rpcCall(){
+  rpcCall({type, method}){
     this.server?.handleMessageFromClient({
       viewport: this.viewport,
-      type: "RPC_CALL"
+      type,
+      method
     });
   }
 
