@@ -1,7 +1,6 @@
 import React, { useMemo, useRef, useState } from "react";
 
 import { Grid } from "@vuu-ui/datagrid";
-import { LocalDataSource } from "@heswell/data-source";
 import { RemoteDataSource, Servers } from "@vuu-ui/data-remote";
 
 import "../assets/material-design.css";
@@ -96,6 +95,8 @@ const schema = {
     { name: "Industry" },
   ],
 };
+
+
 const dataConfig = { bufferSize: 10, dataUrl: "/data/instruments.js", schema };
 
 export const EmptyGrid = () => <Grid />;
@@ -103,7 +104,23 @@ export const EmptyGrid = () => <Grid />;
 export const BasicGrid = () => {
   const gridRef = useRef(null)
   const [rowHeight, setRowHeight] = useState(24)
-  const dataSource = useMemo(() => new LocalDataSource(dataConfig), []);
+
+  const dataConfig = {
+    bufferSize: 100,
+    columns: schema.columns.map(col => col.name),
+    tableName: 'instruments',
+    configUrl: '/tables/instruments/config.js',
+};
+
+  const dataSource = useMemo(() => new RemoteDataSource(dataConfig), []);
+
+  // const dataSource = useMemo(() => new WorkerDataSource({
+  //   schema,
+  //   configUrl: '/tables/instruments/config.js',
+  //   tableName: "instruments"
+  // }),[]);
+
+  // const dataSource = useMemo(() => new LocalDataSource(dataConfig), []);
 
   const incrementProp = () => {
     setRowHeight(value => value + 1)

@@ -16,6 +16,7 @@
     "build": "modular build app",
     "build:all": "modular build utils && modular build data-store && modular build data-source && modular build data-remote && modular build datagrid && modular build filter && rollup --config packages/remote-worker/rollup.config.js && modular build app",
     "build:worker": "rollup --config packages/remote-worker/rollup.config.js",
+    "build:data-store-worker": "rollup --config packages/data-store-worker/rollup.config.js",
     "test": "modular test",
     "lint": "eslint . --ext .js,.ts,.tsx",
     "prettier": "prettier --write .",

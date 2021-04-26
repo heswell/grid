@@ -13,11 +13,13 @@ const pendingRequests = new Map();
 
 const getWorker = async (url, server) => {
 
+  const workerUrl = '/worker.js?debug=all-messages'
+
   return pendingWorker || (pendingWorker = new Promise((resolve, reject) => {
-    const worker = new Worker('/worker.js?debug=all-messages', { type: 'module' });
+    const worker = new Worker(workerUrl, { type: 'module' });
     worker.onmessage = ({ data: message }) => {
       if (message.type === 'ready') {
-        worker.postMessage({ type: 'connect', url });
+        worker.postMessage({ type: 'connect', url, useWebsocket: !!server});
       } else if (message.type === "connected") {
         resolve(worker);
       } else {
@@ -87,7 +89,6 @@ const asyncRequest = (msg) => {
 
 const methods = {
   subscribe : (message, callback) => {
-    // the session should live at the connection level
     viewports.set(message.viewport, {
       status: 'subscribing',
       request: message,

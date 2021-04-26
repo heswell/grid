@@ -9,7 +9,8 @@ import React, {
   useRef,
   useMemo,
 } from "react";
-import { metadataKeys, useEffectSkipFirst } from "@heswell/utils";
+import { useEffectSkipFirst } from "@heswell/react-utils";
+import { metadataKeys } from "@heswell/utils";
 import useScroll from "./use-scroll";
 import useUpdate from "./use-update";
 import useDataSource from "./use-data-source";

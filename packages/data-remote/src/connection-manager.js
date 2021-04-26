@@ -44,16 +44,16 @@ const connectServer = async (serverName, url, onConnectionStatusMessage) => {
             server.disconnected();
           } else if (msg.status === 'reconnected'){
             server.resubscribeAll();
-          } 
+          }
         }
       );
-      
+
       const [{ServerProxy}, connection] = [await proxyModule, await pendingConnection];
       invariant(typeof ServerProxy === 'function', 'Unable to load ServerProxy class for ${serverName}');
       invariant(connection !== undefined, 'unable to open connection to ${url}');
-      // if the connection breaks, the serverPrtoxy will continue top 'send' messages 
+      // if the connection breaks, the serverPrtoxy will continue top 'send' messages
       const server = new ServerProxy(connection);
-      
+
       // How do we handle authentication, login
       if (typeof server.authenticate === 'function'){
         await server.authenticate('steve', 'pword');
@@ -61,19 +61,19 @@ const connectServer = async (serverName, url, onConnectionStatusMessage) => {
       if (typeof server.login === 'function'){
         await server.login();
       }
-  
+
       resolve(server);
     }))
     }
 }
-  
+
 class ConnectionManager extends EventEmitter {
 
   async connect(url, serverName){
     logger.log(`ConnectionManager.connect ${serverName} ${url}`);
     return connectServer(
-      serverName, 
-      url, 
+      serverName,
+      url,
       msg => this.onConnectionStatusChanged(serverName, url, msg)
     );
   }

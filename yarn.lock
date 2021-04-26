@@ -1533,6 +1533,14 @@
     date-fns "^2.19.0"
     xstate "^4.16.2"
 
+"@heswell/utils@4.2.0":
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/@heswell/utils/-/utils-4.2.0.tgz#3723ee421d51d73233b6ea52cbb760b27240a544"
+  integrity sha512-SUU34uMKXRAkuPYex0CqiVJyZBltVtFCr3iZt2xmqz8oOKC5Xv8v91XIByiywvcr3OgDJj7Ixdd6FnWFK/wllw==
+  dependencies:
+    nanoid "^3.1.20"
+    react "^17.0.1"
+
 "@icons/material@^0.2.4":
   version "0.2.4"
   resolved "https://registry.yarnpkg.com/@icons/material/-/material-0.2.4.tgz#e90c9f71768b3736e76d7dd6783fc6c2afa88bc8"

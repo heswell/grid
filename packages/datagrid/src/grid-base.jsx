@@ -4,7 +4,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import {useForkRef} from "@heswell/utils"
+import {useForkRef} from "@heswell/react-utils"
 import cx from "classnames";
 import GridContext from "./grid-context";
 import { MenuProvider } from "./context-menu/menu-context";

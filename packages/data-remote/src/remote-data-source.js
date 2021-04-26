@@ -1,14 +1,12 @@
 import { createLogger, DataTypes, EventEmitter, logColor, uuid } from '@heswell/utils';
-import {
-  msgType as Msg
-} from './constants';
+import { msgType as Msg} from './constants';
 
 // TODO make this dynamic
 import ConnectionManager from './connection-manager-worker';
 
 const { ROW_DATA } = DataTypes;
 
-const logger = createLogger('RemoteDataView', logColor.blue);
+const logger = createLogger('RemoteDataSource', logColor.blue);
 
 export const AvailableProxies = {
   Viewserver: 'viewserver',
@@ -33,21 +31,25 @@ export default class RemoteDataSource extends EventEmitter {
     group,
     sort,
     tableName,
-    serverName = AvailableProxies.Viewserver,
+    configUrl,
+    serverName,
     serverUrl,
     viewport,
     "visual-link": visualLink
   }) {
     super();
     this.bufferSize = bufferSize;
-    this.url = serverUrl;
-    this.serverName = serverName;
     this.tableName = tableName;
-    this.server = NullServer;
     this.columns = columns;
     this.subscription = null;
     this.viewport = viewport;
+
+    this.server = NullServer;
+    this.url = serverUrl || configUrl;
+    this.serverName = serverName;
     this.visualLink = visualLink;
+
+
     this.filterDataCallback = null;
     this.filterDataMessage = null;
     this.status = 'initialising'
@@ -60,8 +62,8 @@ export default class RemoteDataSource extends EventEmitter {
 
     console.log('brand new data source created')
 
-    if (!serverUrl) {
-      throw Error('RemoteDataSource expects serverUrl')
+    if (!serverUrl && !configUrl) {
+      throw Error('RemoteDataSource expects serverUrl or configUrl')
     }
 
     this.server = null;

@@ -1,0 +1,13 @@
+{
+  "name": "@heswell/react-utils",
+  "version": "0.0.1",
+  "main": "src/index.js",
+  "license": "UNLICENSED",
+  "files": [
+    "/src"
+  ],
+  "peerDepencencies": {
+    "react": "latest",
+    "react-dom": "latest"
+  }
+}

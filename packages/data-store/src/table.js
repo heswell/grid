@@ -1,5 +1,5 @@
 /*global fetch */
-import { EventEmitter } from '@heswell/utils';
+import { EventEmitter } from '@heswell/utils/src/event-emitter';
 
 const defaultUpdateConfig = {
     applyUpdates: false,
@@ -18,7 +18,7 @@ function buildColumnMap(columns){
         return null;
     }
   }
-  
+
 export default class Table extends EventEmitter {
 
     constructor(config){

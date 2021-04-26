@@ -220,7 +220,7 @@ export default class DataStore {
             // }
         }
     }
-    
+
     sort(sortCriteria) {
         this._sortCriteria = sortCriteria;
         this.rowSet.sort(sortCriteria);
@@ -231,12 +231,12 @@ export default class DataStore {
     // filter may be called directly from client, in which case changes should be propagated, where
     // appropriate, to any active filterSet(s). However, if the filterset has been changed, e.g. selection
     // within a set, then filter applied here in consequence must not attempt to reset the same filterSet
-    // that originates the change. 
+    // that originates the change.
     filter(filter, dataType="rowData", incremental=false, ignoreFilterRowset=false) {
         if (dataType === DataTypes.FILTER_DATA){
 
             return [undefined,this.filterFilterData(filter)];
-        
+
         } else {
             if (incremental){
                 filter = addFilter(this._filter, filter);
@@ -245,7 +245,7 @@ export default class DataStore {
             const { range } = rowSet;
             this._filter = filter;
             let filterResultset;
-    
+
             if (filter === null && _filter) {
                 rowSet.clearFilter();
             } else if (filter){
@@ -253,7 +253,7 @@ export default class DataStore {
             } else {
                 throw Error(`InMemoryView.filter setting null filter when we had no filter anyway`);
             }
-    
+
             if (filterRowSet && dataType === DataTypes.ROW_DATA && !ignoreFilterRowset) {
                 if (filter){
                     if (filterRowSet.type === DataTypes.FILTER_DATA){
@@ -269,12 +269,12 @@ export default class DataStore {
                     filterResultset = this.filterRowSet.setRange(range, false);
                 }
             }
-    
+
             const resultSet = {
                 ...(this.rowSet.setRange(resetRange(range), false)),
                 filter
             }
-    
+
             return filterResultset
                 ? [resultSet, filterResultset]
                 : [resultSet];
@@ -294,7 +294,7 @@ export default class DataStore {
             }
 
             return filterRowSet.setRange(resetRange(filterRowSet.range), false, WITH_STATS);
-    
+
         } else {
             console.error(`[InMemoryView] filterfilterRowSet no filterRowSet`)
         }
@@ -350,10 +350,10 @@ export default class DataStore {
     getFilterData(column, range) {
         const { rowSet, filterRowSet, _filter: filter } = this;
         // If our own dataset has been filtered by the column we want values for, we cannot use it, we have
-        // to go back to the source, using a filter which excludes the one in place on the target column. 
+        // to go back to the source, using a filter which excludes the one in place on the target column.
         const columnName = column.name;
         const colDef = this.columns.find(col => col.name === columnName);
-        // No this should be decided beforehand (on client) 
+        // No this should be decided beforehand (on client)
         const type = getFilterType(colDef);
 
         if (type === 'number') {

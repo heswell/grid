@@ -1,4 +1,5 @@
-import connect from '@vuu-ui/data-remote/src/remote-websocket-connection';
+import connectWebsocket from '@vuu-ui/data-remote/src/remote-websocket-connection';
+import connectDataStore from '@heswell/data-store/src/data-store-connection';
 // TEST DATA COLLECTION
 import { getTestMessages } from '@vuu-ui/data-remote/src/test-data-collection';
 import { ServerProxy } from '@vuu-ui/data-remote/src/servers/vuu/new-server-proxy';
@@ -8,8 +9,9 @@ const logger = createLogger('Worker', logColor.brown);
 
 let server;
 
-async function connectToServer(url) {
-  const connection = await connect(
+async function connectToServer(url,useWebsocket) {
+  const makeConnection = useWebsocket ? connectWebsocket : connectDataStore;
+  const connection = await makeConnection(
     url,
     // if this was called during connect, we would get a ReferenceError, but it will
     // never be called until subscriptions have been made, so this is safe.
@@ -26,10 +28,10 @@ async function connectToServer(url) {
   );
   server = new ServerProxy(connection, (msg) => sendMessageToClient(msg));
   // TODO handle authentication, login
-  if (typeof server.authenticate === 'function') {
+  if (connection.requiresAuthentication) {
     await server.authenticate('steve', 'pword');
   }
-  if (typeof server.login === 'function') {
+  if (connection.requiresLogin) {
     await server.login();
   }
 }
@@ -54,7 +56,7 @@ function sendMessageToClient(message){
 const handleMessageFromClient = async ({ data: message }) => {
   switch (message.type) {
     case 'connect':
-      await connectToServer(message.url);
+      await connectToServer(message.url, message.useWebsocket);
       postMessage({ type: 'connected' });
       break;
     case 'subscribe':

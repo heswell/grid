@@ -23,9 +23,9 @@ export default class Table extends BaseTable {
             const {default: data} = await import(`${dataUrl}`);
             if (data) {
                 this.setData(data);
-            } 
+            }
         } catch(e){
-            console.error(`failed to load data from path '${dataPath}'`, e)
+            console.error(`failed to load data from path '${dataUrl}'`, e)
         }
     }
 

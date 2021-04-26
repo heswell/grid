@@ -6,7 +6,7 @@ import {
   useState
 } from "react";
 
-import {useEffectSkipFirst} from "@heswell/utils"
+import {useEffectSkipFirst} from "@heswell/react-utils"
 import useAdornments from "./use-adornments";
 import modelReducer, { initModel } from "./grid-model-reducer";
 import { ROW_HEIGHT } from "./grid-model-actions";

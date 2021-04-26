@@ -1,5 +1,5 @@
-import react from "react";
-import reactDom from "react-dom";
+import * as react from 'react';
+import * as reactDom from 'react-dom';
 
 export const commonJsConfig = {
   include: "../../node_modules/**",

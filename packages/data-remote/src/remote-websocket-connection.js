@@ -102,6 +102,8 @@ class Connection {
     this[connectionCallback] = callback;
     this[setWebsocket](ws);
     this.status = 'ready';
+    this.requiresAuthentication = true;
+    this.requiresLogin = true;
   }
 
   reconnect() {

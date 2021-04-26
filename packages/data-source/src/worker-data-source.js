@@ -1,4 +1,5 @@
 import {createLogger, DataTypes, EventEmitter, logColor, uuid} from '@heswell/utils';
+import { msgType as Msg} from './constants';
 
 const {ROW_DATA} = DataTypes;
 
@@ -14,36 +15,49 @@ const workerQueue = () => ({
   }
 });
 
-/*-----------------------------------------------------------------
- A RemoteDataView manages a single subscription via the ServerProxy
-  ----------------------------------------------------------------*/
+const defaultRange = { lo: 0, hi: 0 };
+
 export default class WorkerDataSource extends EventEmitter {
 
   constructor({
     bufferSize=100,
-    schema,
+    columns,
+    filter,
+    group,
+    sort,
     tableName,
     configUrl,
+    viewport
   }) {
     super();
-
     this.bufferSize = bufferSize;
-    this.columns = schema.columns;
-
     this.tableName = tableName;
+    this.columns = columns;
     this.subscription = null;
-    this.viewport = null;
+    this.viewport = viewport;
+
     this.filterDataCallback = null;
     this.filterDataMessage = null;
+    this.status = 'initialising'
+    this.remoteId = null;
+    this.suspended = false;
+
+    this.initialGroup = group;
+    this.initialSort = sort;
+    this.initialFilter = filter;
+
     this.worker = workerQueue();
-    this.pendingWorker = new Worker(`worker.js#?${configUrl}`, {type: 'module'});
+    this.pendingWorker = new Worker(`data-store-worker.js#?${configUrl}`, {type: 'module'});
   }
 
   async subscribe({
-    viewport = uuid(),
+    viewport = this.viewport ?? uuid(),
     tableName = this.tableName,
     columns=this.columns || [],
-    range = defaultRange
+    range = defaultRange,
+    sort = this.initialSort,
+    groupBy = this.initialGroup,
+    filter = this.initialFilter,
   }, callback) {
 
     const {worker: {queue: pendingQueue}, pendingWorker: worker} = this;

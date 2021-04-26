@@ -1,4 +1,4 @@
-import { useEffectSkipFirst } from "@heswell/utils";
+import { useEffectSkipFirst } from "@heswell/react-utils";
 
 export default function useDataSourceModelBindings(dataSource, gridModel) {
   useEffectSkipFirst(() => {
