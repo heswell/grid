@@ -1,5 +1,5 @@
-import { indexOfCol, metadataKeys } from '@heswell/utils'
-import { SortDescending } from './context-menu/context-menu-actions';
+import { metadataKeys } from '@heswell/utils'
+import {SortType} from "./constants"
 
 export const getHorizontalScrollbarHeight = columnGroups =>
   columnGroups
@@ -304,7 +304,7 @@ function addGroupColumn({ groupBy }, column) {
   }
 }
 
-function addSortColumn({ sort }, {name: columnName}, sortType='A') {
+function addSortColumn({ sort }, {name: columnName}, sortType=SortType.ASC) {
   const sortEntry = {column: columnName, sortType};
   if (sort) {
     return sort.concat(sortEntry);
@@ -313,12 +313,12 @@ function addSortColumn({ sort }, {name: columnName}, sortType='A') {
   }
 }
 
-function setSortColumn({ sort }, {name: columnName}, sortType='A') {
+function setSortColumn({ sort }, {name: columnName}, sortType=SortType.ASC) {
   const byColumn = item => item.column === columnName;
   if (sort && sort.length === 1 && sort.some(byColumn)) {
     const {sortType} = sort.find(byColumn);
     return [
-      {column: columnName, sortType: sortType === 'A' ? 'D' : 'A'}
+      {column: columnName, sortType: sortType === SortType.ASC ? SortType.DSC : SortType.ASC}
     ];
   } else {
     return [{column: columnName, sortType}];

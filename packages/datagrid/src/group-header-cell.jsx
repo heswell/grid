@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useCallback } from "react";
 import cx from "classnames";
-import useContextMenu from "./context-menu/use-context-menu";
+import {useContextMenu} from "./context-menu";
 import Draggable from "./draggable";
 import { expandStatesfromGroupState } from "./grid-model-utils";
 
@@ -80,7 +80,11 @@ const GroupHeaderCell = ({
     return right - left;
   };
 
-  const handleContextMenu = useContextMenu("header", { column });
+  const showContextMenu = useContextMenu();
+  const handleContextMenu = e => {
+    showContextMenu(e, "header", {column})
+  }
+
 
   const { columns, resizing, width } = groupCol;
   const className = cx(

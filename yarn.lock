@@ -1505,12 +1505,12 @@
   dependencies:
     "@hapi/hoek" "^8.3.0"
 
-"@heswell/layout@3.4.4":
-  version "3.4.4"
-  resolved "https://registry.yarnpkg.com/@heswell/layout/-/layout-3.4.4.tgz#7bf219b438d8ee3068104bb7922601cc7d36de77"
-  integrity sha512-XlBpRJIAotplPLl6HpUXpY/EdnH0oFN6FKuUuPNnLBVmn7zck71XEYHio9XQRUtAQxpD6anPEksj8256se/XyQ==
+"@heswell/layout@3.4.5":
+  version "3.4.5"
+  resolved "https://registry.yarnpkg.com/@heswell/layout/-/layout-3.4.5.tgz#6701547f58ce5636597a402a1d51e7c415078eeb"
+  integrity sha512-xUMx6Tcz0g0vLzJeClvLmBacF/webRUsrnzjy4H0bS213ujWaDpj/2ljKDE6emXtGjbG/IlAFCb9ZDOgzqhOyw==
   dependencies:
-    "@heswell/ui-controls" "2.0.24"
+    "@heswell/ui-controls" "2.0.25"
     classnames "^2.2.6"
 
 "@heswell/popup@2.1.15":
@@ -1525,13 +1525,14 @@
   dependencies:
     react "^17.0.1"
 
-"@heswell/ui-controls@2.0.24":
-  version "2.0.24"
-  resolved "https://registry.yarnpkg.com/@heswell/ui-controls/-/ui-controls-2.0.24.tgz#57c3f542b6cb95417c55fef5827c17d15c62f5d4"
-  integrity sha512-s0Ony5LdntB60uCOTq+BdPn/pykiapv8ncJtajCkOILpxuH6g0fj4KBx4cMOikzpPxYY4RglgB84+wzCrHS6Nw==
+"@heswell/ui-controls@2.0.25":
+  version "2.0.25"
+  resolved "https://registry.yarnpkg.com/@heswell/ui-controls/-/ui-controls-2.0.25.tgz#66520c7a0093471cfa4aec4837205fe910470389"
+  integrity sha512-qYcS7HuLV0t6W8RRpYlaFYFg2YYsvcnQbTgU1AS0SUu88cTK1I47fHUdRv8TT7mZRjGR4JBghx2yDpjFOMTu0A==
   dependencies:
+    "@heswell/react-utils" "0.0.1"
     date-fns "^2.19.0"
-    xstate "^4.16.2"
+    xstate "^4.18.0"
 
 "@heswell/utils@4.2.0":
   version "4.2.0"
@@ -17236,10 +17237,10 @@ xmlchars@^2.2.0:
   resolved "https://registry.yarnpkg.com/xmlchars/-/xmlchars-2.2.0.tgz#060fe1bcb7f9c76fe2a17db86a9bc3ab894210cb"
   integrity sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw==
 
-xstate@^4.16.2:
-  version "4.17.1"
-  resolved "https://registry.yarnpkg.com/xstate/-/xstate-4.17.1.tgz#f027b51ee35dae28954d27ad09f37b4d5d5ce40f"
-  integrity sha512-3q7so9qAKFnz9/t7BNQXQtV+9fwDATCOkC+0tAvVqczboEbu6gz2dvPPVCCkj55Hyzgro9aSOntGSPGLei82BA==
+xstate@^4.18.0:
+  version "4.19.0"
+  resolved "https://registry.yarnpkg.com/xstate/-/xstate-4.19.0.tgz#32a2699d159c1b4368aea4a8e16d990671fb623b"
+  integrity sha512-4/p8LeIo8sttBWZht1KulqEm8mEjYShiHxI7crVjAFchr0F8YCU93k7MFE6zr3lwksyHJO/8QrYb/sBgGGl0wg==
 
 xtend@^4.0.0, xtend@^4.0.1, xtend@~4.0.1:
   version "4.0.2"

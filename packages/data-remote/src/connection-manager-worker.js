@@ -111,9 +111,11 @@ const methods = {
     // TODO kill all subscriptions
   },
 
-  getTableList: async() => asyncRequest({type: "GET_TABLE_LIST"}),
+  rpcCall: async(message) => asyncRequest({type: Message.RPC_CALL, ...message}),
 
-  getTableMeta: async(table) => asyncRequest({type: "GET_TABLE_META", table}),
+  getTableList: async() => asyncRequest({type: Message.GET_TABLE_LIST}),
+
+  getTableMeta: async(table) => asyncRequest({type: Message.GET_TABLE_META, table}),
 
 }
 

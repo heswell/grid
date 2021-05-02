@@ -6,7 +6,7 @@
   "peerDependencies": {
     "@heswell/data-source": "latest",
     "@heswell/popup": "latest",
-    "@heswell/react-utils": "0.0.1",
+    "@heswell/react-utils": "0.0.2",
     "@heswell/utils": "4.2.0",
     "classnames": "^2.2.6"
   },

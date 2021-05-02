@@ -15,8 +15,6 @@ const workerQueue = () => ({
   }
 });
 
-const defaultRange = { lo: 0, hi: 0 };
-
 export default class WorkerDataSource extends EventEmitter {
 
   constructor({

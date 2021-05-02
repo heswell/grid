@@ -10,7 +10,7 @@ import {useEffectSkipFirst} from "@heswell/react-utils"
 import useAdornments from "./use-adornments";
 import modelReducer, { initModel } from "./grid-model-reducer";
 import { ROW_HEIGHT } from "./grid-model-actions";
-import useResizeObserver, {WidthHeight } from "./use-resize-observer"/*from "@heswell/layout";*/
+import {useResizeObserver, WidthHeight } from "@heswell/react-utils";
 
 const sizeOr100Percent = value => (value === null || value === undefined || value === 'auto') ? '100%' : value;
 
@@ -56,6 +56,7 @@ export const useGridModel = (props) => {
   );
 
   useEffectSkipFirst(() => {
+      console.log('dispatcGridModel resize')
       dispatchGridModel({
         type: "resize",
         // The totalHeaderHeight will be set as top padding, which will not be included
@@ -79,12 +80,14 @@ export const useGridModel = (props) => {
       }
       firstRender.current = false;
     } else {
+      console.log(`dispatchGridModel rowHeight`)
       dispatchGridModel({type: ROW_HEIGHT, rowHeight: props.rowHeight})
     }
   }, [props.rowHeight, gridModel.rowHeight]);
 
   //TODO do we need to useCallback here - can we ever send stale props ?
   useEffectSkipFirst(() => {
+    console.log(`dispatchGridModel initialize`)
     dispatchGridModel({ type: "initialize", props });
     if (props.dataSource !== dataSource) {
       setDataSource(props.dataSource);

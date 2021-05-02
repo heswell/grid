@@ -9,6 +9,7 @@ import cx from "classnames";
 import GridContext from "./grid-context";
 import { GridModel } from "./grid-model-utils";
 import ColumnGroupContext from "./column-group-context";
+import {SortType} from './constants';
 
 import HeaderCell from "./header-cell";
 import GroupHeaderCell from "./group-header-cell";
@@ -45,8 +46,8 @@ const ColumnGroupHeader = React.memo(
         return sortEntry === undefined
           ? undefined
           : multiColumnSort
-          ? (sort.indexOf(sortEntry) + 1) * (sortEntry.sortType === 'D' ? -1 : 1)
-          : sortEntry.sortType === 'A'
+          ? (sort.indexOf(sortEntry) + 1) * (sortEntry.sortType === SortType.DSC ? -1 : 1)
+          : sortEntry.sortType === SortType.ASC
           ? "asc"
           : "dsc";
       }

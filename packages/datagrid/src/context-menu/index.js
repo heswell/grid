@@ -1,2 +1,2 @@
-export * from './menu-descriptors';
-export {default} from './menu-context';
+export {default as ContextMenuContext} from './context-menu-provider';
+export * from './context-menu-provider';

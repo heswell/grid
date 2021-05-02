@@ -1,3 +1,4 @@
+export const Sort = 'sort';
 export const SortAscending = 'sort-asc';
 export const SortDescending = 'sort-dsc';
 export const SortAddAscending = 'sort-add-asc';
@@ -10,4 +11,3 @@ export const ColumnHide = 'column-hide';
 export const Pivot = 'pivot';
 export const PivotAdd = 'pivot-add';
 export const LinkTable = 'link-table';
-export const RpcCall = 'RPC_CALL';

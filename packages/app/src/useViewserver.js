@@ -3,6 +3,13 @@ import {useCallback, useEffect, useState} from 'react';
 import ConnectionManager from '@vuu-ui/data-remote/src/connection-manager-worker';
 import {serverUrl} from "./create-data-source"
 
+export const addRowsFromInstruments = "addRowsFromInstruments";
+export const RpcCall = 'RPC_CALL';
+
+const Servers = {
+  Vuu: "vuu"
+}
+
 const _tables = {};
 
 const columnConfig = {
@@ -62,7 +69,26 @@ const extendSchema = schema => {
   }
 }
 
-const useTables = () => {
+export const buildRpcMenuOptions = (options) => {
+  const {viewport} = options;
+  const results = [];
+  if (options?.selectedRowCount){
+    // TODO pass the table name
+    results.push({
+      action: RpcCall,
+      label: "Create Order Entries",
+      options: {
+        method: addRowsFromInstruments,
+        viewport
+      },
+
+    });
+  }
+  return results;
+}
+
+
+const useViewserver = () => {
 
   const [, forceUpdate] = useState();
 
@@ -74,15 +100,18 @@ const useTables = () => {
   }
   ,[forceUpdate])
 
-  const rpcCall = useCallback((options) => {
+  const makeRpcCall = useCallback(async (options) => {
     console.log(`make RPC call ${JSON.stringify(options)}`)
+    const server = await ConnectionManager.connect(serverUrl, Servers.Vuu);
+    const response= await server.rpcCall(options);
+    console.log({rpcResp: response})
   },[])
 
 
   useEffect(() => {
 
     async function fetchTableMetadata(){
-      const server = await ConnectionManager.connect(serverUrl);
+      const server = await ConnectionManager.connect(serverUrl, Servers.Vuu);
       const {tables} = await server.getTableList();
       setTables(await Promise.all(tables.map(table => server.getTableMeta(table))))
     }
@@ -91,7 +120,7 @@ const useTables = () => {
 
   },[setTables])
 
-  return {tables: _tables, rpcCall};
+  return {tables: _tables, makeRpcCall};
 }
 
-export default useTables;
+export default useViewserver;

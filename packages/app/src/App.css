@@ -42,6 +42,11 @@ body {
   height: 18px;
 }
 
+.hwView {
+  /* until we sort out the creeping grid height issue */
+  overflow: hidden;
+}
+
 .hwView-main {
   overflow: hidden;
 }

@@ -1,7 +1,11 @@
+/* eslint-disable no-sequences */
 import React, { useCallback } from 'react';
 import { ThemeProvider } from "@heswell/theme";
+import { ContextMenuProvider } from "@vuu-ui/datagrid";
 
 import useLayoutConfig from "./use-layout-config";
+import useViewserver, {buildRpcMenuOptions, RpcCall}  from "./useViewserver";
+
 
 import { Chest, DraggableLayout, Drawer, FlexboxLayout as Flexbox, registerComponent, Stack, View } from "@heswell/layout";
 
@@ -13,15 +17,32 @@ import './App.css';
 registerComponent("FilteredGrid", FilteredGrid);
 
 
+const buildMenuOptions = (location, options) => {
+  const results = [];
+  if (location === 'grid'){
+    results.push(...buildRpcMenuOptions(options))
+  }
+  return results;
+}
+
 function App() {
   const [layoutConfig, setLayoutConfig] = useLayoutConfig("https://localhost:8443/api/vui/steve")
-
+  const {makeRpcCall} = useViewserver();
   const handleLayoutChange = useCallback((layout) => {
     setLayoutConfig(layout)
   }, [setLayoutConfig])
 
+  const handleContextMenuAction = (type, options) => {
+    switch(type){
+      case RpcCall: return makeRpcCall(options), true;
+      default: return false;
+    }
+  }
+
+
   return (
     <ThemeProvider>
+      {/* <ContextMenuProvider label="App" menuActionHandler={handleContextMenuAction} menuBuilder={buildMenuOptions}> */}
       <DraggableLayout className="hw" style={{ width: '100vw', height: "100vh" }} onLayoutChange={handleLayoutChange} layout={layoutConfig}>
         <Flexbox className="App" style={{ flexDirection: 'column', height: '100%' }}>
           <div style={{ height: 40, borderBottom: 'solid 1px #ccc' }}>
@@ -43,6 +64,7 @@ function App() {
           </Chest>
         </Flexbox>
       </DraggableLayout>
+      {/* </ContextMenuProvider> */}
     </ThemeProvider>
   );
 }

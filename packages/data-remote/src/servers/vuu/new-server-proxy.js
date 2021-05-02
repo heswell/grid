@@ -204,15 +204,18 @@ export class ServerProxy {
 
       case Message.RPC_CALL: {
         const {method} = message;
-        const requestId = nextRequestId();
         const [service, module] = getRpcService(method);
-        this.sendMessageToServer({
-          type,
-          service,
-          method: message.method,
-          params: [viewport.serverViewportId],
-          namedParams: {}
-        }, requestId, module);
+        this.sendMessageToServer(
+          {
+            type,
+            service,
+            method: message.method,
+            params: [viewport.serverViewportId],
+            namedParams: {}
+          },
+          message.requestId,
+          module
+        );
       }
 
         break;
@@ -402,7 +405,7 @@ export class ServerProxy {
             break;
           }
         }
-        this.postMessageToClient({type, method, result, orderEntryOpen})
+        this.postMessageToClient({type, method, result, orderEntryOpen, requestId})
       }
       break;
 

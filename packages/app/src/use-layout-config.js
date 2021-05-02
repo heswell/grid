@@ -4,7 +4,14 @@ import {useCallback, useEffect, useState} from "react";
 
 const useLayoutConfig = (url) => {
 
-  const [layout, setLayout] = useState(undefined);
+  const [layout, _setLayout] = useState(undefined);
+
+  const setLayout = layout => {
+    console.log('set LAyout')
+    _setLayout(layout)
+  }
+
+
 
   useEffect(() => {
 

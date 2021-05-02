@@ -11,7 +11,7 @@ import "./grid.css";
 
 /** @type {Grid} */
 const Grid = forwardRef(function Grid(props, ref){
-
+  console.log('Render Grid')
   if (!props.dataSource) {
     return <PropHelper style={{ height: props.height, width: props.width }} />;
   } else {

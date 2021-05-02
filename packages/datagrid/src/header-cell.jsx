@@ -2,7 +2,8 @@ import React, { useCallback, useContext, useRef } from "react";
 import cx from "classnames";
 import GridContext from "./grid-context";
 import { GridModel } from "./grid-model-utils";
-import useContextMenu from "./context-menu/use-context-menu";
+import {useContextMenu} from "./context-menu";
+import {buildContextMenuDescriptors} from './context-menu/grid-context-menu-descriptors.js';
 import { useDragStart } from "./use-drag";
 import SortIndicator from "./sort-indicator";
 import Draggable from "./draggable";
@@ -69,7 +70,11 @@ const HeaderCell = function HeaderCell({
     onResize("end", col.current, getWidthFromMouseEvent(e));
   };
 
-  const handleContextMenu = useContextMenu("header", { column });
+  const showContextMenu = useContextMenu();
+
+  const handleContextMenu = e => {
+    showContextMenu(e, "header", {column})
+  }
 
   const getWidthFromMouseEvent = (e) => {
     const right = e.pageX;

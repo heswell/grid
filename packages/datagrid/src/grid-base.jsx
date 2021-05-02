@@ -1,36 +1,42 @@
+/* eslint-disable no-sequences */
 import React, {
   forwardRef,
   useCallback,
   useRef,
   useState,
 } from "react";
-import {useForkRef} from "@heswell/react-utils"
+import { useForkRef } from "@heswell/react-utils"
 import cx from "classnames";
 import GridContext from "./grid-context";
-import { MenuProvider } from "./context-menu/menu-context";
-import * as MenuAction from "./context-menu/context-menu-actions"
+import { ContextMenuProvider } from "./context-menu";
+import { buildContextMenuDescriptors } from './context-menu/grid-context-menu-descriptors';
+import * as Action from "./context-menu/context-menu-actions"
 // import RowHeightCanary from "./row-height-canary";
 import { ComponentProvider } from "./component-context";
-import {useGridModel} from "./use-grid-model";
+import { useGridModel } from "./use-grid-model";
 import useDataSourceModelBindings from "./use-datasource-model-bindings";
 import Viewport from "./viewport";
 import { measureColumns } from "./grid-model-utils";
 import components from "./standard-renderers";
+import {SortType} from './constants';
+
+// for now ...
+import {GridModel} from './grid-model-utils';
 
 import "./grid-base.css";
 
 const noop = () => undefined;
 
 /** @type {GridBase} */
-const GridBase = forwardRef(function GridBase(props, ref){
+const GridBase = forwardRef(function GridBase(props, ref) {
   const viewportRef = useRef(null);
   // const scrollableHeader = useRef(null);
   const [columnDragData, setColumnDragData] = useState(null);
   const draggingColumn = useRef(false);
-  const {className, onConfigChange=noop, onRowClick} = props;
+  const { className, onConfigChange = noop, onRowClick } = props;
   const [rootRef, gridModel, dataSource, dispatchGridModel, custom] = useGridModel(props);
 
-
+  console.log(`Render GridBase`)
 
   const handleSelectionChange = useCallback(
     ({ row, rangeSelect, keepExistingSelection }) => {
@@ -45,7 +51,7 @@ const GridBase = forwardRef(function GridBase(props, ref){
       rootRef.current.classList.add("scrolling-x");
       rootRef.current.style.paddingTop = gridModel.customHeaderHeight + "px";
     }
-  },[gridModel.customHeaderHeight, rootRef]);
+  }, [gridModel.customHeaderHeight, rootRef]);
 
   const handleHorizontalScrollEnd = useCallback(() => {
     if (!draggingColumn.current) {
@@ -63,23 +69,14 @@ const GridBase = forwardRef(function GridBase(props, ref){
         customInlineHeaderHeight;
       rootRef.current.style.paddingTop = totalHeaderHeight + "px";
     }
-  },[gridModel, rootRef]);
+  }, [gridModel, rootRef]);
 
   const invokeDataSourceOperation = (operation) => {
     switch (operation.type) {
-      case "group":
-        dataSource.group(operation.columns);
-        break;
       case "openTreeNode":
         return dataSource.openTreeNode(operation.key);
       case "closeTreeNode":
         return dataSource.closeTreeNode(operation.key);
-      case "sort":
-        return dataSource.sort(operation.columns);
-      case MenuAction.LinkTable:
-        return dataSource.createLink(operation.link);
-      case MenuAction.RpcCall:
-        return dataSource.rpcCall(operation);
       default:
         console.log(
           `[GridBase] dataSourceOperation: unknown operation ${operation.type}`
@@ -88,20 +85,40 @@ const GridBase = forwardRef(function GridBase(props, ref){
   };
 
   const dispatchGridAction = (action) =>
-    ({
-      group: invokeDataSourceOperation,
-      openTreeNode: invokeDataSourceOperation,
-      closeTreeNode: invokeDataSourceOperation,
-      sort: invokeDataSourceOperation,
-      [MenuAction.LinkTable]: invokeDataSourceOperation,
-      [MenuAction.RpcCall]: invokeDataSourceOperation,
-      deselection: handleSelectionChange,
-      selection: handleSelectionChange,
-      "scroll-end-horizontal": handleHorizontalScrollEnd,
-      "scroll-start-horizontal": handleHorizontalScrollStart,
-    }[action.type](action));
+  ({
+    [Action.Sort]: action => dataSource.sort(action.columns),
+    openTreeNode: invokeDataSourceOperation,
+    closeTreeNode: invokeDataSourceOperation,
+    deselection: handleSelectionChange,
+    selection: handleSelectionChange,
+    "scroll-end-horizontal": handleHorizontalScrollEnd,
+    "scroll-start-horizontal": handleHorizontalScrollStart,
+  }[action.type](action));
 
 
+  const handleContextMenuAction = (type, options) => {
+    switch (type){
+      case Action.SortAscending:
+        return dataSource.sort(GridModel.setSortColumn(gridModel, options.column, SortType.ASC)), true;
+      case Action.SortDescending:
+        return dataSource.sort(GridModel.setSortColumn(gridModel, options.column, SortType.DSC)), true;
+      case Action.SortAddAscending:
+        return dataSource.sort(GridModel.addSortColumn(gridModel, options.column, SortType.ASC)), true;
+      case Action.SortAddDescending:
+        return dataSource.sort(GridModel.addSortColumn(gridModel, options.column, SortType.DSC)), true;
+      // case Action.SortRemove: {
+      case Action.Group:
+        return dataSource.group(GridModel.addGroupColumn({}, options.column)), true;
+      case Action.GroupAdd:
+        return dataSource.group(GridModel.addGroupColumn(gridModel,options.column)), true;
+      case Action.ColumnHide:
+        return dispatchGridModel({type: 'column-hide', column: options.column}), true;
+      case Action.LinkTable:
+        return dataSource.createLink(options), true;
+      default:
+        return false;
+    }
+  }
 
   useDataSourceModelBindings(dataSource, gridModel);
 
@@ -128,7 +145,6 @@ const GridBase = forwardRef(function GridBase(props, ref){
   const handleColumnDrop = useCallback(
     (phase, ...args) => {
       const [column, insertIdx] = args;
-      debugger;
       setColumnDragData(null);
       draggingColumn.current = false;
       // TODO we need the final scrollLeft here
@@ -137,7 +153,6 @@ const GridBase = forwardRef(function GridBase(props, ref){
     },
     [dispatchGridModel, handleHorizontalScrollEnd]
   );
-
 
   const { assignedWidth, assignedHeight, width, height, totalHeaderHeight } = gridModel;
 
@@ -152,17 +167,17 @@ const GridBase = forwardRef(function GridBase(props, ref){
         gridModel,
       }}
     >
-      <MenuProvider>
+      <ContextMenuProvider label="Grid" menuActionHandler={handleContextMenuAction} menuBuilder={buildContextMenuDescriptors(gridModel)}>
         <ComponentProvider components={components}>
           <div
             className={cx("Grid", className)}
             ref={useForkRef(ref, rootRef)}
-            style={{ width: assignedWidth, height: assignedHeight, paddingTop: totalHeaderHeight}}
+            style={{ width: assignedWidth, height: assignedHeight, paddingTop: totalHeaderHeight }}
           >
             {/* <RowHeightCanary/> */}
             {
-                height == null || width === null ? null : (
-                  <>
+              height == null || width === null ? null : (
+                <>
                   {custom.header.component}
                   <Viewport
                     custom={custom}
@@ -176,12 +191,12 @@ const GridBase = forwardRef(function GridBase(props, ref){
                     ref={viewportRef}
                   />
                   {custom.footer.component}
-                  </>
-                )
+                </>
+              )
             }
           </div>
         </ComponentProvider>
-      </MenuProvider>
+      </ContextMenuProvider>
     </GridContext.Provider>
   );
 });

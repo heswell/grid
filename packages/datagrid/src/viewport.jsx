@@ -16,7 +16,7 @@ import useUpdate from "./use-update";
 import useDataSource from "./use-data-source";
 import GridContext from "./grid-context";
 import { getColumnGroupColumnIdx } from "./grid-model-utils.js";
-import useContextMenu from "./context-menu/use-context-menu";
+import {useContextMenu} from "./context-menu";
 
 import Canvas from "./canvas";
 import ColumnBearer from "./column-bearer";
@@ -307,9 +307,16 @@ const Viewport = forwardRef(function Viewport(
 
 
   const contextMenuOptions = useMemo(() => {
-    return {selectedRowCount: countSelectedRows(data)}
-  }, [data])
-  const handleContextMenu = useContextMenu("grid", contextMenuOptions);
+    return {
+      selectedRowCount: countSelectedRows(data),
+      viewport: dataSource.viewport,
+    }
+  }, [data, dataSource])
+
+  const showContextMenu = useContextMenu();
+  const handleContextMenu = e => {
+    showContextMenu(e, "grid", contextMenuOptions)
+  }
 
   const scrollBy = useCallback((rows) => {
     const scrollTop = viewportEl.current.scrollTop + rows * gridModel.rowHeight;
