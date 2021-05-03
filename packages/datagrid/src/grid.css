@@ -5,7 +5,8 @@
   --hw-grid-row-selected-bg: #2b8bf8;
   --header-cell-highlight-bg: green;
   --hw-activation-indicator-thumb-bg: #2c2c2c;
-
+  --hw-grid-flex-size:  1 1 0px;
+  --hw-grid-flex-align: stretch;
   --cell-bg: var(--grid-cell-bg, var(--background));
   --cell-border-color: var(--grid-cell-border-color, #d4d4d4);
   --cell-highlight-bg: var(--grid-cell-highlight-bg);

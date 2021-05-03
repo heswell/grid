@@ -12,13 +12,13 @@ import modelReducer, { initModel } from "./grid-model-reducer";
 import { ROW_HEIGHT } from "./grid-model-actions";
 import {useResizeObserver, WidthHeight } from "@heswell/react-utils";
 
-const sizeOr100Percent = value => (value === null || value === undefined || value === 'auto') ? '100%' : value;
+const sizeOrUndefined = value => (value == null || value === 'auto') ? undefined : value;
 
 const useSize = (props) => {
   const [size, _setSize] = useState({
-    height: sizeOr100Percent(props.style?.height ?? props.height),
+    height: sizeOrUndefined(props.style?.height ?? props.height),
     measuredHeight: null,
-    width: sizeOr100Percent(props.style?.width ?? props.width),
+    width: sizeOrUndefined(props.style?.width ?? props.width),
     measuredWidth: null,
   });
 

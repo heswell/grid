@@ -1,6 +1,8 @@
 .Grid {
   background-color: var(--hw-grid-background);
   box-sizing: border-box;
+  align-self: var(--hw-grid-flex-align);
+  flex: var(--hw-grid-flex-size);
   position: relative;
   font-family: var(--app-font-family, Roboto);
   font-size: var(--font-size);
