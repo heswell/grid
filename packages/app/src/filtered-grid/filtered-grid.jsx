@@ -8,7 +8,6 @@ import { createDataSource } from "../create-data-source"
 export const FilteredGrid = ({ schema }) => {
   const { id, dispatch, load, save, loadSession, saveSession } = useLayoutContext();
   const config = useMemo(() => load(), [load]);
-  console.log(`Render FilteredGrid`)
   const dataSource = useMemo(() => {
     let ds = loadSession('data-source');
     if (ds) {

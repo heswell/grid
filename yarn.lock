@@ -1505,18 +1505,25 @@
   dependencies:
     "@hapi/hoek" "^8.3.0"
 
-"@heswell/layout@3.4.5":
-  version "3.4.5"
-  resolved "https://registry.yarnpkg.com/@heswell/layout/-/layout-3.4.5.tgz#6701547f58ce5636597a402a1d51e7c415078eeb"
-  integrity sha512-xUMx6Tcz0g0vLzJeClvLmBacF/webRUsrnzjy4H0bS213ujWaDpj/2ljKDE6emXtGjbG/IlAFCb9ZDOgzqhOyw==
+"@heswell/layout@3.4.16":
+  version "3.4.16"
+  resolved "https://registry.yarnpkg.com/@heswell/layout/-/layout-3.4.16.tgz#38298ff9f0c22acad9e1ca264af97dae8c373f17"
+  integrity sha512-PpjwdIUKxM22nlUqzt+3qC0GZGPQeXrxaF9mb9cGyZg/b0zZF4erj7wnppxL75zExLG6krcjxNGc2sCvvwkSuw==
   dependencies:
     "@heswell/ui-controls" "2.0.25"
     classnames "^2.2.6"
 
-"@heswell/popup@2.1.15":
-  version "2.1.15"
-  resolved "https://registry.yarnpkg.com/@heswell/popup/-/popup-2.1.15.tgz#9666af1a1a280dcf173d38dbc09b42a8b312b085"
-  integrity sha512-/+3PzluZYQLzNda3MLyUpSftPnS2NFz4CUq449IVfHTB/QUAP0n+YkD14RamNMuXThF9ck+Y/46DhWLfXdSsSA==
+"@heswell/popup@2.1.16":
+  version "2.1.16"
+  resolved "https://registry.yarnpkg.com/@heswell/popup/-/popup-2.1.16.tgz#c0f406c1588eefdee2d457172acd0a2263f9d67e"
+  integrity sha512-lbC5pgI1OBQ5oJS3BzS1wUX5aj67WIPaVva+wYVyRSVbzkWq97JnsNDvmNLYo6rICdWYA0Mjt6LHrS+StWpp1w==
+
+"@heswell/react-utils@0.0.1":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@heswell/react-utils/-/react-utils-0.0.1.tgz#9f05769adb4ad109c904375ec7501aa6e065c096"
+  integrity sha512-AKUdiUvzpIhRrtDnQsNRvDLypBJFidiEw2L7BHmxdykw/HlsrxM9WypKeZamO1y+8zL0oX/SlA9nanrcjyLIhg==
+  dependencies:
+    react "^17.0.1"
 
 "@heswell/theme@1.1.1":
   version "1.1.1"

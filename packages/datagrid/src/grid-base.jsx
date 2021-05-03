@@ -5,10 +5,10 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { ContextMenuProvider } from "@heswell/popup";
 import { useForkRef } from "@heswell/react-utils"
 import cx from "classnames";
 import GridContext from "./grid-context";
-import { ContextMenuProvider } from "./context-menu";
 import { buildContextMenuDescriptors } from './context-menu/grid-context-menu-descriptors';
 import * as Action from "./context-menu/context-menu-actions"
 // import RowHeightCanary from "./row-height-canary";
@@ -35,8 +35,6 @@ const GridBase = forwardRef(function GridBase(props, ref) {
   const draggingColumn = useRef(false);
   const { className, onConfigChange = noop, onRowClick } = props;
   const [rootRef, gridModel, dataSource, dispatchGridModel, custom] = useGridModel(props);
-
-  console.log(`Render GridBase`)
 
   const handleSelectionChange = useCallback(
     ({ row, rangeSelect, keepExistingSelection }) => {

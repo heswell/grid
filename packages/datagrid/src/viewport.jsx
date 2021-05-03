@@ -9,6 +9,7 @@ import React, {
   useRef,
   useMemo,
 } from "react";
+import {useContextMenu} from "@heswell/popup";
 import { useEffectSkipFirst } from "@heswell/react-utils";
 import { metadataKeys } from "@heswell/utils";
 import useScroll from "./use-scroll";
@@ -16,7 +17,6 @@ import useUpdate from "./use-update";
 import useDataSource from "./use-data-source";
 import GridContext from "./grid-context";
 import { getColumnGroupColumnIdx } from "./grid-model-utils.js";
-import {useContextMenu} from "./context-menu";
 
 import Canvas from "./canvas";
 import ColumnBearer from "./column-bearer";

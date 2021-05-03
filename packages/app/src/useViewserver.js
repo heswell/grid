@@ -11,6 +11,7 @@ const Servers = {
 }
 
 const _tables = {};
+let _status = "";
 
 const columnConfig = {
   ask: {
@@ -97,26 +98,40 @@ const useViewserver = () => {
       _tables[schema.table] = extendSchema(schema);
     });
     forceUpdate({});
+    _status = "tables-loaded";
   }
   ,[forceUpdate])
 
   const makeRpcCall = useCallback(async (options) => {
-    console.log(`make RPC call ${JSON.stringify(options)}`)
     const server = await ConnectionManager.connect(serverUrl, Servers.Vuu);
     const response= await server.rpcCall(options);
-    console.log({rpcResp: response})
+    switch(response.method){
+      case addRowsFromInstruments:
+        if (!response.orderEntrOpen){
+          console.log('display orderEntry')
+        } else {
+          console.log('select entries in orderEntry')
+        }
+      break;
+      default:
+        console.log(`response from unexpected meyhod ${response.method}`);
+
+    }
   },[])
 
 
   useEffect(() => {
 
     async function fetchTableMetadata(){
+      _status = "tables-loading";
       const server = await ConnectionManager.connect(serverUrl, Servers.Vuu);
       const {tables} = await server.getTableList();
       setTables(await Promise.all(tables.map(table => server.getTableMeta(table))))
     }
 
-    fetchTableMetadata();
+    if (_status === ""){
+      fetchTableMetadata();
+    }
 
   },[setTables])
 

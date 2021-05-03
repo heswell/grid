@@ -1,13 +1,13 @@
 /* eslint-disable no-sequences */
 import React, { useCallback } from 'react';
 import { ThemeProvider } from "@heswell/theme";
-import { ContextMenuProvider } from "@vuu-ui/datagrid";
+import { ContextMenuProvider } from "@heswell/popup";
 
 import useLayoutConfig from "./use-layout-config";
 import useViewserver, {buildRpcMenuOptions, RpcCall}  from "./useViewserver";
 
 
-import { Chest, DraggableLayout, Drawer, FlexboxLayout as Flexbox, registerComponent, Stack, View } from "@heswell/layout";
+import { Chest, DraggableLayout, Drawer, FlexboxLayout as Flexbox, registerComponent, View } from "@heswell/layout";
 
 import { TableList } from "./table-list";
 import { FilteredGrid } from "./filtered-grid"
@@ -16,6 +16,26 @@ import './App.css';
 
 registerComponent("FilteredGrid", FilteredGrid);
 
+
+const defaultLayout = {
+  type: "Stack",
+  props: {
+    style: {
+      width: "100%",
+      height: "100%"
+    },
+    showTabs: true,
+    enableAddTab: true,
+    preserve: true,
+    active: 0
+  },
+  children: [
+    {
+      type : "View",
+      title: "Page 1"
+    }
+  ]
+}
 
 const buildMenuOptions = (location, options) => {
   const results = [];
@@ -26,23 +46,24 @@ const buildMenuOptions = (location, options) => {
 }
 
 function App() {
-  const [layoutConfig, setLayoutConfig] = useLayoutConfig("https://localhost:8443/api/vui/steve")
+  const [layoutConfig, setLayoutConfig] = useLayoutConfig("https://localhost:8443/api/vui/steve", defaultLayout)
   const {makeRpcCall} = useViewserver();
   const handleLayoutChange = useCallback((layout) => {
     setLayoutConfig(layout)
   }, [setLayoutConfig])
 
-  const handleContextMenuAction = (type, options) => {
+  const handleContextMenuAction = useCallback((type, options) => {
     switch(type){
       case RpcCall: return makeRpcCall(options), true;
       default: return false;
     }
-  }
+  },[makeRpcCall]);
 
+  console.log(`render App`)
 
   return (
     <ThemeProvider>
-      {/* <ContextMenuProvider label="App" menuActionHandler={handleContextMenuAction} menuBuilder={buildMenuOptions}> */}
+      <ContextMenuProvider label="App" menuActionHandler={handleContextMenuAction} menuBuilder={buildMenuOptions}>
       <DraggableLayout className="hw" style={{ width: '100vw', height: "100vh" }} onLayoutChange={handleLayoutChange} layout={layoutConfig}>
         <Flexbox className="App" style={{ flexDirection: 'column', height: '100%' }}>
           <div style={{ height: 40, borderBottom: 'solid 1px #ccc' }}>
@@ -57,14 +78,14 @@ function App() {
               </View>
             </Drawer>
             <DraggableLayout dropTarget style={{ width: '100%', height: '100%' }}>
-              <Stack style={{ width: '100%', height: '100%' }} showTabs enableAddTab preserve>
+              {/* <Stack style={{ width: '100%', height: '100%' }} showTabs enableAddTab preserve>
                 <View title="Page 1" />
-              </Stack>
+              </Stack> */}
             </DraggableLayout>
           </Chest>
         </Flexbox>
       </DraggableLayout>
-      {/* </ContextMenuProvider> */}
+      </ContextMenuProvider>
     </ThemeProvider>
   );
 }

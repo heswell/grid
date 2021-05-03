@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useCallback } from "react";
 import cx from "classnames";
-import {useContextMenu} from "./context-menu";
+import {useContextMenu} from "@heswell/popup";
 import Draggable from "./draggable";
 import { expandStatesfromGroupState } from "./grid-model-utils";
 

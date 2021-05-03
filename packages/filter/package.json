@@ -4,7 +4,7 @@
   "main": "src/index.js",
   "license": "UNLICENSED",
   "peerDependencies": {
-    "@heswell/popup": "2.1.15"
+    "@heswell/popup": "2.1.16"
   },
   "dependencies": {
     "@adobe/react-spectrum": "^3.8.0",

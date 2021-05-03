@@ -1,9 +1,9 @@
 import React, { useCallback, useContext, useRef } from "react";
 import cx from "classnames";
+import {useContextMenu} from "@heswell/popup";
+
 import GridContext from "./grid-context";
 import { GridModel } from "./grid-model-utils";
-import {useContextMenu} from "./context-menu";
-import {buildContextMenuDescriptors} from './context-menu/grid-context-menu-descriptors.js';
 import { useDragStart } from "./use-drag";
 import SortIndicator from "./sort-indicator";
 import Draggable from "./draggable";

@@ -2,7 +2,7 @@ import {useCallback, useEffect, useState} from "react";
 
 // import staticLayout from "./layout1";
 
-const useLayoutConfig = (url) => {
+const useLayoutConfig = (url, defaultLayout) => {
 
   const [layout, _setLayout] = useState(undefined);
 
@@ -21,7 +21,7 @@ const useLayoutConfig = (url) => {
         .then(response => {
           return response.ok
             ? response.json()
-            : undefined
+            : defaultLayout
         })
         .then(setLayout)
     }
@@ -29,7 +29,7 @@ const useLayoutConfig = (url) => {
     load();
 
 
-  },[url])
+  },[defaultLayout, url])
 
 
   const saveData = useCallback((data) => {
@@ -46,7 +46,7 @@ const useLayoutConfig = (url) => {
       .then(response => {
         return response.ok
           ? response.json()
-          : ""
+          : defaultLayout
       })
       .then(data => console.log(data))
 
