@@ -1,6 +1,5 @@
 import {useCallback, useEffect, useState} from "react";
 
-// import staticLayout from "./layout1";
 
 const useLayoutConfig = (url, defaultLayout) => {
 
@@ -50,7 +49,7 @@ const useLayoutConfig = (url, defaultLayout) => {
       })
       .then(data => console.log(data))
 
-  },[url])
+  },[defaultLayout, url])
 
   return [layout, saveData]
 

@@ -33,7 +33,7 @@
     "proseWrap": "always"
   },
   "dependencies": {
-    "@heswell/layout": "3.4.16",
+    "@heswell/layout": "3.4.18",
     "@heswell/popup": "2.1.16",
     "@heswell/ui-controls": "2.0.25",
     "@testing-library/dom": "^7.29.4",

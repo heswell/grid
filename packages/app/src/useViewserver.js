@@ -2,6 +2,7 @@
 import {useCallback, useEffect, useState} from 'react';
 import ConnectionManager from '@vuu-ui/data-remote/src/connection-manager-worker';
 import {serverUrl} from "./create-data-source"
+import {FilteredGrid} from "./filtered-grid";
 
 export const addRowsFromInstruments = "addRowsFromInstruments";
 export const RpcCall = 'RPC_CALL';
@@ -88,8 +89,8 @@ export const buildRpcMenuOptions = (options) => {
   return results;
 }
 
-
-const useViewserver = () => {
+// TODO openDialog feels out of place here ?
+const useViewserver = ({openDialog}={}) => {
 
   const [, forceUpdate] = useState();
 
@@ -108,7 +109,9 @@ const useViewserver = () => {
     switch(response.method){
       case addRowsFromInstruments:
         if (!response.orderEntrOpen){
-          console.log('display orderEntry')
+          openDialog && openDialog(
+            <FilteredGrid  schema={_tables.orderEntry} width={700} height={400}/>
+          )
         } else {
           console.log('select entries in orderEntry')
         }

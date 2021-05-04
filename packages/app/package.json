@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@heswell/layout": "3.4.16",
-    "@heswell/theme": "1.1.1",
+    "@heswell/layout": "3.4.18",
+    "@heswell/theme": "1.1.2",
     "@heswell/ui-controls": "2.0.25"
   },
   "browserslist": {

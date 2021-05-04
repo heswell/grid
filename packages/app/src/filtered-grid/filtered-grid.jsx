@@ -5,7 +5,7 @@ import { Grid } from "@vuu-ui/datagrid";
 import { QueryFilter } from "@vuu-ui/filter";
 import { createDataSource } from "../create-data-source"
 
-export const FilteredGrid = ({ schema }) => {
+export const FilteredGrid = ({ schema, ...props }) => {
   const { id, dispatch, load, save, loadSession, saveSession } = useLayoutContext();
   const config = useMemo(() => load(), [load]);
   const dataSource = useMemo(() => {
@@ -61,6 +61,7 @@ export const FilteredGrid = ({ schema }) => {
     <>
       <QueryFilter onChange={q => dataSource.filterQuery(q)} />
       <Grid
+        {...props}
         dataSource={dataSource}
         columns={schema.columns}
         groupBy={config?.group}

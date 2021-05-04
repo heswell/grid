@@ -1505,10 +1505,10 @@
   dependencies:
     "@hapi/hoek" "^8.3.0"
 
-"@heswell/layout@3.4.16":
-  version "3.4.16"
-  resolved "https://registry.yarnpkg.com/@heswell/layout/-/layout-3.4.16.tgz#38298ff9f0c22acad9e1ca264af97dae8c373f17"
-  integrity sha512-PpjwdIUKxM22nlUqzt+3qC0GZGPQeXrxaF9mb9cGyZg/b0zZF4erj7wnppxL75zExLG6krcjxNGc2sCvvwkSuw==
+"@heswell/layout@3.4.18":
+  version "3.4.18"
+  resolved "https://registry.yarnpkg.com/@heswell/layout/-/layout-3.4.18.tgz#f8f04bfb8713c7551ead53c430c386218a93630b"
+  integrity sha512-WMx2qp0Zcq2FSCL/0L0FF4+l7hBW/m+TLSLvbDbj6Q5k/z1oDGBUfl69s3Ne6e4ODM3tSh9UDNU4x3pV+2FUSA==
   dependencies:
     "@heswell/ui-controls" "2.0.25"
     classnames "^2.2.6"
@@ -1525,10 +1525,10 @@
   dependencies:
     react "^17.0.1"
 
-"@heswell/theme@1.1.1":
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/@heswell/theme/-/theme-1.1.1.tgz#0fef2c32c000d96f23dab647e4d54eaa5a35a828"
-  integrity sha512-UmuUs4bdCQRHzrE4ZJo7P520LevWFGiCHvtS+p+HO6pCkWY7UkCGyPbT9yBtlLwm6zpIQoAFthXebwtsEiAavA==
+"@heswell/theme@1.1.2":
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/@heswell/theme/-/theme-1.1.2.tgz#cdef2f34aef6e074937082002eee5ada50709227"
+  integrity sha512-ZYdG6lwn3tooxyCXEQr25nxNAiayrRleLHNXr7RSpVKnckXSSlAuPtQchSGkQ4GUyBv/SqU2fndldJow3AVc8g==
   dependencies:
     react "^17.0.1"
 

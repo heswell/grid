@@ -1,5 +1,5 @@
 /* eslint-disable no-sequences */
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { ThemeProvider } from "@heswell/theme";
 import { ContextMenuProvider } from "@heswell/popup";
 
@@ -7,7 +7,7 @@ import useLayoutConfig from "./use-layout-config";
 import useViewserver, {buildRpcMenuOptions, RpcCall}  from "./useViewserver";
 
 
-import { Chest, DraggableLayout, Drawer, FlexboxLayout as Flexbox, registerComponent, View } from "@heswell/layout";
+import { Chest, Dialog, DraggableLayout, Drawer, FlexboxLayout as Flexbox, registerComponent, View } from "@heswell/layout";
 
 import { TableList } from "./table-list";
 import { FilteredGrid } from "./filtered-grid"
@@ -47,7 +47,8 @@ const buildMenuOptions = (location, options) => {
 
 function App() {
   const [layoutConfig, setLayoutConfig] = useLayoutConfig("https://localhost:8443/api/vui/steve", defaultLayout)
-  const {makeRpcCall} = useViewserver();
+  const [dialogContent, setDialogContent] = useState(null);
+  const {makeRpcCall} = useViewserver({openDialog: setDialogContent});
   const handleLayoutChange = useCallback((layout) => {
     setLayoutConfig(layout)
   }, [setLayoutConfig])
@@ -59,11 +60,15 @@ function App() {
     }
   },[makeRpcCall]);
 
-  console.log(`render App`)
+
+  const handleClose = () => setDialogContent(null);
 
   return (
     <ThemeProvider>
       <ContextMenuProvider label="App" menuActionHandler={handleContextMenuAction} menuBuilder={buildMenuOptions}>
+      <Dialog className="vuDialog" isOpen={dialogContent !== null} onClose={handleClose}>
+          {dialogContent}
+        </Dialog>
       <DraggableLayout className="hw" style={{ width: '100vw', height: "100vh" }} onLayoutChange={handleLayoutChange} layout={layoutConfig}>
         <Flexbox className="App" style={{ flexDirection: 'column', height: '100%' }}>
           <div style={{ height: 40, borderBottom: 'solid 1px #ccc' }}>
