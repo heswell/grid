@@ -2,102 +2,26 @@ import React, { useMemo, useRef, useState } from "react";
 
 import { Grid } from "@vuu-ui/datagrid";
 import { RemoteDataSource, Servers } from "@vuu-ui/data-remote";
+import {
+  instrumentPriceColumns,
+  instrumentSchema,
+  instrumentSchemaFixed,
+  instrumentSchemaLabels,
+  instrumentSchemaHeaders,
+  orderColumns,
+  pricesColumns} from './columnMetaData';
 
 import "../assets/material-design.css";
 import "../assets/fonts.css"
 import "./Grid.stories.css"
 
 
+// eslint-disable-next-line import/no-anonymous-default-export
 export default {
   title: "Grid/Default",
   component: Grid,
 };
 
-const pricesColumns = [
-  { name: 'ric', width: 100} ,
-  { name: 'bid',
-    type: {
-      name: 'number',
-      renderer: {name: 'background', flashStyle:'arrow-bg'},
-      formatting: { decimals:2, zeroPad: true }
-    },
-    aggregate: 'avg'
-  },
-  { name: 'ask',
-    type: {
-      name: 'number',
-      renderer: {name: 'background', flashStyle:'arrow-bg'},
-      formatting: { decimals:2, zeroPad: true }
-    },
-    aggregate: 'avg'
-  },
-  { name: 'last', type: {name: 'number' }},
-  { name: 'open', type: {name: 'number' }},
-  { name: 'close', type: {name: 'number' }},
-  {name: 'scenario'}
-];
-
-const orderColumns = [
-  { name: 'orderId', width: 120} ,
-  { name: 'side', width: 100} ,
-  { name: 'ric', width: 100} ,
-  { name: 'ccy', width: 100} ,
-  { name: 'quantity', width: 100} ,
-  { name: 'filledQuantity', width: 100} ,
-  { name: 'trader', width: 100} ,
-  { name: 'lastUpdate', width: 100} ,
-];
-
-const instrumentPriceColumns = [
-  { name: 'ric', width: 120} ,
-  { name: 'description', width: 200} ,
-  { name: 'currency'},
-  { name: 'exchange'},
-  { name: 'lotSize', type: {name: 'number' }},
-  { name: 'bid',
-    type: {
-      name: 'number',
-      renderer: {name: 'background', flashStyle:'arrow-bg'},
-      formatting: { decimals:2, zeroPad: true }
-    },
-    aggregate: 'avg'
-  },
-  { name: 'ask',
-    type: {
-      name: 'number',
-      renderer: {name: 'background', flashStyle:'arrow-bg'},
-      formatting: { decimals:2, zeroPad: true }
-    },
-    aggregate: 'avg'
-  },
-  { name: 'last', type: {name: 'number' }},
-  { name: 'open', type: {name: 'number' }},
-  { name: 'close', type: {name: 'number' }},
-  {name: 'scenario'}
-];
-
-const schema = {
-  columns: [
-    { name: "Symbol", width: 120 },
-    { name: "Name", width: 200 },
-    {
-      name: "Price",
-      type: {
-        name: "number",
-        renderer: { name: "background", flashStyle: "arrow-bg" },
-        formatting: { decimals: 2, zeroPad: true },
-      },
-      aggregate: "avg",
-    },
-    { name: "MarketCap", type: "number", aggregate: "sum" },
-    { name: "IPO" },
-    { name: "Sector" },
-    { name: "Industry" },
-  ],
-};
-
-
-const dataConfig = { bufferSize: 10, dataUrl: "/data/instruments.js", schema };
 
 export const EmptyGrid = () => <Grid />;
 
@@ -105,22 +29,14 @@ export const BasicGrid = () => {
   const gridRef = useRef(null)
   const [rowHeight, setRowHeight] = useState(24)
 
-  const dataConfig = {
+  const dataConfig = useMemo(() => ({
     bufferSize: 100,
-    columns: schema.columns.map(col => col.name),
+    columns: instrumentSchema.columns.map(col => col.name),
     tableName: 'instruments',
     configUrl: '/tables/instruments/config.js',
-};
+  }),[]);
 
-  const dataSource = useMemo(() => new RemoteDataSource(dataConfig), []);
-
-  // const dataSource = useMemo(() => new WorkerDataSource({
-  //   schema,
-  //   configUrl: '/tables/instruments/config.js',
-  //   tableName: "instruments"
-  // }),[]);
-
-  // const dataSource = useMemo(() => new LocalDataSource(dataConfig), []);
+  const dataSource = useMemo(() => new RemoteDataSource(dataConfig), [dataConfig]);
 
   const incrementProp = () => {
     setRowHeight(value => value + 1)
@@ -132,45 +48,133 @@ export const BasicGrid = () => {
 
   const incrementCssProperty = () => {
     const rowHeight = parseInt(getComputedStyle(gridRef.current).getPropertyValue("--hw-grid-row-height"));
-    gridRef.current.style.setProperty("--grid-row-height",`${rowHeight+1}px`)
+    gridRef.current.style.setProperty("--grid-row-height", `${rowHeight + 1}px`)
   }
 
   const decrementCssProperty = () => {
     const rowHeight = parseInt(getComputedStyle(gridRef.current).getPropertyValue("--hw-grid-row-height"));
-    gridRef.current.style.setProperty("--grid-row-height",`${rowHeight-1}px`)
+    gridRef.current.style.setProperty("--grid-row-height", `${rowHeight - 1}px`)
   }
 
   const setLowDensity = () => {
-    gridRef.current.style.setProperty("--grid-row-height",`32px`)
+    gridRef.current.style.setProperty("--grid-row-height", `32px`)
   }
   const setHighDensity = () => {
-    gridRef.current.style.setProperty("--grid-row-height",`20px`)
+    gridRef.current.style.setProperty("--grid-row-height", `20px`)
   }
 
   return <>
     <div>
-      <input defaultValue="Life is"/>
+      <input defaultValue="Life is" />
     </div>
-    <Grid dataSource={dataSource} columns={schema.columns} height={600} ref={gridRef} renderBufferSize={20} style={{margin: 10, border: 'solid 1px #ccc'}}/>
-    <br/>
+    <Grid
+      dataSource={dataSource}
+      columns={instrumentSchema.columns}
+      height={600}
+      ref={gridRef}
+      renderBufferSize={20}
+      style={{ margin: 10, border: 'solid 1px #ccc' }}
+    />
+    <br />
     <button onClick={incrementProp}>Increase row height prop</button>
     <button onClick={decrementProp}>Decrease row height prop</button>
     <button onClick={incrementCssProperty}>Increase row height custom property</button>
     <button onClick={decrementCssProperty}>Decrease row height custom property</button>
-    <br/>
+    <br />
     <button onClick={setHighDensity}>High Density</button>
     <button onClick={setLowDensity}>Low Density</button>
+  </>;
+};
+
+export const BasicGridColumnLabels = () => {
+  const gridRef = useRef(null)
+
+  const dataConfig = useMemo(() => ({
+    bufferSize: 100,
+    columns: instrumentSchemaLabels.columns.map(col => col.name),
+    tableName: 'instruments',
+    configUrl: '/tables/instruments/config.js',
+  }),[]);
+
+  const dataSource = useMemo(() => new RemoteDataSource(dataConfig), [dataConfig]);
+
+  return <>
+    <div>
+      <input defaultValue="Life is" />
+    </div>
+    <Grid
+      dataSource={dataSource}
+      columns={instrumentSchemaLabels.columns}
+      height={600}
+      ref={gridRef}
+      renderBufferSize={20}
+      style={{ margin: 10, border: 'solid 1px #ccc' }}
+    />
+  </>;
+};
+
+export const BasicGridColumnFixedCols = () => {
+  const gridRef = useRef(null)
+
+  const dataConfig = useMemo(() => ({
+    bufferSize: 100,
+    columns: instrumentSchemaFixed.columns.map(col => col.name),
+    tableName: 'instruments',
+    configUrl: '/tables/instruments/config.js',
+  }),[]);
+
+  const dataSource = useMemo(() => new RemoteDataSource(dataConfig), [dataConfig]);
+
+  return <>
+    <div>
+      <input defaultValue="Life is" />
+    </div>
+    <Grid
+      dataSource={dataSource}
+      columns={instrumentSchemaFixed.columns}
+      height={600}
+      ref={gridRef}
+      renderBufferSize={20}
+      style={{ margin: 10, border: 'solid 1px #ccc' }}
+    />
+  </>;
+};
+
+export const BasicGridColumnHeaders = () => {
+  const gridRef = useRef(null)
+
+  const dataConfig = useMemo(() => ({
+    bufferSize: 100,
+    columns: instrumentSchemaHeaders.columns.map(col => col.name),
+    tableName: 'instruments',
+    configUrl: '/tables/instruments/config.js',
+  }),[]);
+
+  const dataSource = useMemo(() => new RemoteDataSource(dataConfig), [dataConfig]);
+
+  return <>
+    <div>
+      <input defaultValue="Life is" />
+    </div>
+    <Grid
+      dataSource={dataSource}
+      columns={instrumentSchemaHeaders.columns}
+      height={600}
+      ref={gridRef}
+      renderBufferSize={20}
+      style={{ margin: 10, border: 'solid 1px #ccc' }}
+    />
   </>;
 };
 
 export const VuuInstruments = () => {
   const gridRef = useRef(null)
   const instrumentColumns = [
-    {name: 'ric'},
-    {name: 'description'},
-    {name: 'currency'},
-    {name: 'exchange'},
-    {name: 'lotSize'}
+    { name: 'ric' },
+    { name: 'description' },
+    { name: 'currency' },
+    { name: 'exchange' },
+    { name: 'lotSize' }
   ]
 
   const dataConfig = {
@@ -184,7 +188,7 @@ export const VuuInstruments = () => {
   const dataSource = useMemo(() => new RemoteDataSource(dataConfig), []);
 
   return <>
-    <Grid dataSource={dataSource} columns={instrumentColumns} height={600} ref={gridRef}/>
+    <Grid dataSource={dataSource} columns={instrumentColumns} height={600} ref={gridRef} />
   </>;
 };
 
@@ -203,7 +207,7 @@ export const VuuInstrumentPrices = () => {
   const dataSource = useMemo(() => new RemoteDataSource(dataConfig), []);
 
   return <>
-    <Grid dataSource={dataSource} columns={instrumentPriceColumns} height={600} ref={gridRef}/>
+    <Grid dataSource={dataSource} columns={instrumentPriceColumns} height={600} ref={gridRef} />
   </>;
 };
 
@@ -231,19 +235,19 @@ export const VuuInstrumentPricesOrders = () => {
   const dataSourcePrices = useMemo(() => new RemoteDataSource(dataConfigPrices), []);
   const dataSourceOrders = useMemo(() => new RemoteDataSource(dataConfigOrders), []);
 
-  const vp = useRef({orders: null, prices: null});
+  const vp = useRef({ orders: null, prices: null });
 
   const setViewPort = (name, viewPortId) => {
     console.log(`${name} VP = ${viewPortId}`)
     vp.current[name] = viewPortId;
-    if (vp.current.orders && vp.current.prices){
-      const {orders, prices} = vp.current;
-      dataSourceOrders.createLink(prices, orders,  'ric');
+    if (vp.current.orders && vp.current.prices) {
+      const { orders, prices } = vp.current;
+      dataSourceOrders.createLink(prices, orders, 'ric');
     }
   }
 
-  const handleOrdersSubscribed = (_ , {viewPortId}) => setViewPort('orders', viewPortId);
-  const handlePricesSubscribed = (_ , {viewPortId}) => setViewPort('prices', viewPortId);
+  const handleOrdersSubscribed = (_, { viewPortId }) => setViewPort('orders', viewPortId);
+  const handlePricesSubscribed = (_, { viewPortId }) => setViewPort('prices', viewPortId);
 
 
   dataSourcePrices.on("subscribed", handlePricesSubscribed);
@@ -255,9 +259,9 @@ export const VuuInstrumentPricesOrders = () => {
   }
 
   return <>
-    <div style={{display: 'flex', height: 600}}>
-      <Grid dataSource={dataSourcePrices} columns={pricesColumns} height={600} ref={gridRef} onRowClick={handleRowClick}/>
-      <Grid dataSource={dataSourceOrders} columns={orderColumns} height={600} ref={gridRef}/>
+    <div style={{ display: 'flex', height: 600 }}>
+      <Grid dataSource={dataSourcePrices} columns={pricesColumns} height={600} ref={gridRef} onRowClick={handleRowClick} />
+      <Grid dataSource={dataSourceOrders} columns={orderColumns} height={600} ref={gridRef} />
     </div>
   </>;
 };

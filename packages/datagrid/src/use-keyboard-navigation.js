@@ -12,6 +12,7 @@ const ColNavKey = {
 }
 
 const NavKey = {
+  Tab: true,
   ...RowNavKey,
   ...ColNavKey
 }
@@ -37,14 +38,12 @@ export const useKeyboardNavigation = (rootRef, gridModel) => {
 
   const setRange = useCallback(value => {
     // remove focus from cell out of window
-    const fullRange = getFullRange({lo:value.from, hi:value.to}, gridModel.renderBufferSize);
-    console.log(`useKeyboardNavigation setRange ${value.from} - ${value.to} full range ${JSON.stringify(fullRange)}`)
     range.current = value;
     if (focusState.current.row < value.from || focusState.current.row >= value.to){
       // shift focus to placehgolder
       rootRef.current.focus();
     }
-  },[gridModel.renderBufferSize, rootRef]);
+  },[rootRef]);
 
 
   const focusHeaderCell = useCallback((row, col=focusState.current.col) => {
@@ -140,10 +139,25 @@ export const useKeyboardNavigation = (rootRef, gridModel) => {
     }
   },[focusCell,focusHeaderCell, gridModel.columns, gridModel.renderBufferSize])
 
+  const handleClick = useCallback(e => {
+    const cellEl = e.target.closest(".GridCell, .vuHeaderCell");
+    if (cellEl){
+      // what about row selection
+      e.stopPropagation();
+      const rowEl = cellEl.parentNode;
+      const col = Array.from(rowEl.childNodes).indexOf(cellEl);
+      const row = parseInt(rowEl.dataset.idx);
+      focusCell(row, col);
+    }
+
+  },[focusCell])
+
   const handleFocus = useCallback(e => {
     const {current: {hasFocus}} = focusState;
+    console.log(`handle Focus`)
     if (!hasFocus){
       focusState.current.hasFocus = true;
+      // do this in a timeout, so we can cancel it if it turns out to have been a click
       focusHeaderCell(0, 0);
     }
   },[focusHeaderCell])
@@ -158,17 +172,19 @@ export const useKeyboardNavigation = (rootRef, gridModel) => {
 
   useEffect(() => {
     const rootEl = rootRef.current;
-    rootEl.addEventListener('keydown', handleKeyDown, true);
     rootEl.addEventListener('blur', handleBlur, true);
+    rootEl.addEventListener('click', handleClick, true);
+    rootEl.addEventListener('keydown', handleKeyDown, true);
     rootEl.addEventListener('focus', handleFocus, true);
 
     return () => {
       console.log('remove event listener')
       rootEl.removeEventListener('blur', handleBlur, true);
+      rootEl.removeEventListener('click', handleClick, true);
       rootEl.removeEventListener('focus', handleFocus, true);
       rootEl.removeEventListener('keydown', handleKeyDown, true);
     }
-  },[handleBlur, handleFocus, handleKeyDown, rootRef])
+  },[handleBlur, handleClick, handleFocus, handleKeyDown, rootRef])
 
 
   return setRange;

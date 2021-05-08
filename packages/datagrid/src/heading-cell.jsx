@@ -43,7 +43,7 @@ const HeadingCell = function HeaderCell({
   const { name, label = name, resizing, width } = column;
   return (
     <div
-      className={cx("HeaderCell", className, { resizing })}
+      className={cx("vuHeaderCell", className, { resizing })}
       ref={el}
       style={{ width }}
     >
