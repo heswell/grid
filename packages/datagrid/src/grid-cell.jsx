@@ -50,6 +50,7 @@ const GridCell = React.memo(function GridCell({ column, columnMap, row }) {
       <div
         className={className}
         style={{ marginLeft: column.marginLeft, width: column.width }}
+        tabIndex={-1}
       >
         {format(row[column.key])}
       </div>

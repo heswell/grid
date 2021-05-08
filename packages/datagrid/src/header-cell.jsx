@@ -98,6 +98,7 @@ const HeaderCell = function HeaderCell({
       ref={el}
       role="columnheader"
       style={{ marginLeft, width }}
+      tabIndex={-1}
     >
       <div className="innerHeaderCell">
         <div className="cellWrapper">{label}</div>

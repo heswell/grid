@@ -43,6 +43,7 @@ const Row = memo(function Row({
 
   return (
     <div
+      data-idx={idx}
       className={className}
       onClick={handleClick}
       style={{

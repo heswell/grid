@@ -49,7 +49,7 @@ const countSelectedRows = data => {
 
 /** @type {Viewport} */
 const Viewport = forwardRef(function Viewport(
-  { columnDragData, gridModel, onColumnDragStart, onColumnDrop, onConfigChange, onRowClick },
+  { columnDragData, gridModel, onColumnDragStart, onColumnDrop, onConfigChange, onChangeRange, onRowClick },
   ref
 ) {
   const viewportEl = useRef(null);
@@ -163,7 +163,7 @@ const Viewport = forwardRef(function Viewport(
   const { columnNames, viewportRowCount } = gridModelRef.current;
   const subscriptionDetails = useRef({
     columnNames,
-    range: { lo: 0, hi: viewportRowCount },
+    range: { lo: 0, hi: Math.ceil(viewportRowCount) },
   });
 
   const dataSourceCallback = useCallback(
@@ -212,12 +212,12 @@ const Viewport = forwardRef(function Viewport(
           rowCount.current = options;
           contentHeight.current = rowCount.current * gridModel.rowHeight;
           if (
-            options >= gridModel.viewportRowCount &&
+            options >= Math.ceil(gridModel.viewportRowCount) &&
             verticalScrollbarWidth.current === 0
           ) {
             verticalScrollbarWidth.current = 15;
           } else if (
-            options < gridModel.viewportRowCount &&
+            options < Math.ceil(gridModel.viewportRowCount) &&
             verticalScrollbarWidth.current === 15
           ) {
             verticalScrollbarWidth.current = 0;
@@ -239,18 +239,22 @@ const Viewport = forwardRef(function Viewport(
     [dispatchGridModelAction, gridModel.viewportRowCount, gridModel.rowHeight, onConfigChange]
   );
 
-  const [data, setRange] = useDataSource(
+  const [data, _setRange] = useDataSource(
     dataSource,
     subscriptionDetails.current,
     gridModel.renderBufferSize,
     dataSourceCallback
   );
 
+  const setRange = useCallback((from, to) => {
+    _setRange(Math.floor(from), Math.ceil(to));
+    onChangeRange && onChangeRange({from, to})
+  },[_setRange, onChangeRange])
+
   useUpdate(() => {
     setRange(
       firstVisibleRow.current,
-      firstVisibleRow.current +
-      gridModel.viewportRowCount
+      firstVisibleRow.current + gridModel.viewportRowCount
     );
   }, [gridModel.viewportRowCount]);
 
@@ -276,10 +280,12 @@ const Viewport = forwardRef(function Viewport(
   const scrollCallback = useCallback(
     (scrollEvent, scrollTop) => {
       if (scrollEvent === "scroll") {
-        const firstRow = Math.floor(scrollTop / gridModel.rowHeight);
+        // const firstRow = Math.floor(scrollTop / gridModel.rowHeight);
+        const firstRow = scrollTop / gridModel.rowHeight;
         if (firstRow !== firstVisibleRow.current) {
           firstVisibleRow.current = firstRow;
           const lastRow = firstRow + gridModel.viewportRowCount;
+          // const lastRow = firstRow + Math.ceil(gridModel.viewportRowCount);
           if (lastRow > rowCount.current) {
             setRange(rowCount.current - gridModel.viewportRowCount, rowCount.current);
           } else {
@@ -319,10 +325,16 @@ const Viewport = forwardRef(function Viewport(
   }
 
   const scrollBy = useCallback((rows) => {
-    const scrollTop = viewportEl.current.scrollTop + rows * gridModel.rowHeight;
-    const diff = scrollTop % gridModel.rowHeight;
-    viewportEl.current.scrollTop = scrollTop - diff;
-  }, [gridModel.rowHeight]);
+    const {scrollTop} = viewportEl.current;
+    const {rowHeight, viewportHeight} = gridModel;
+    const scrollAmt = rows === 1
+      ? (rowHeight - (viewportHeight + scrollTop) % rowHeight) || rowHeight
+      : rows === -1
+        ? -(scrollTop % rowHeight) || -rowHeight
+        : scrollTop + rows * gridModel.rowHeight - (scrollTop % rowHeight);
+    viewportEl.current.scrollTop = scrollTop + scrollAmt;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gridModel.rowHeight, gridModel.viewportHeight]);
 
   const scrollEnd = useCallback((startOrEnd) => {
     suspendScrollHandling(true);
@@ -337,9 +349,9 @@ const Viewport = forwardRef(function Viewport(
   }, [gridModel.rowHeight, gridModel.viewportHeight, suspendScrollHandling]);
 
   const handleKeyDown = useCallback(evt => {
-    console.log(`key ${evt.key}`)
     switch (evt.key) {
       case 'ArrowDown':
+        console.log(`%cViewPort ArrowDown`,'color:blue;font-weight:bold')
         evt.preventDefault();
         scrollBy(1);
         break;

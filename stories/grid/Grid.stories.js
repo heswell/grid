@@ -148,7 +148,10 @@ export const BasicGrid = () => {
   }
 
   return <>
-    <Grid dataSource={dataSource} columns={schema.columns} height={600} ref={gridRef} />
+    <div>
+      <input defaultValue="Life is"/>
+    </div>
+    <Grid dataSource={dataSource} columns={schema.columns} height={600} ref={gridRef} renderBufferSize={20} style={{margin: 10, border: 'solid 1px #ccc'}}/>
     <br/>
     <button onClick={incrementProp}>Increase row height prop</button>
     <button onClick={decrementProp}>Decrease row height prop</button>

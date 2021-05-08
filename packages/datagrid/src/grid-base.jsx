@@ -15,6 +15,7 @@ import * as Action from "./context-menu/context-menu-actions"
 import { ComponentProvider } from "./component-context";
 import { useGridModel } from "./use-grid-model";
 import useDataSourceModelBindings from "./use-datasource-model-bindings";
+import { useKeyboardNavigation } from './use-keyboard-navigation';
 import Viewport from "./viewport";
 import { measureColumns } from "./grid-model-utils";
 import components from "./standard-renderers";
@@ -119,6 +120,7 @@ const GridBase = forwardRef(function GridBase(props, ref) {
   }
 
   useDataSourceModelBindings(dataSource, gridModel);
+  const handleChangeRange = useKeyboardNavigation(rootRef, gridModel);
 
   const handleColumnDragStart = useCallback(
     (phase, ...args) => {
@@ -170,7 +172,8 @@ const GridBase = forwardRef(function GridBase(props, ref) {
           <div
             className={cx("Grid", className)}
             ref={useForkRef(ref, rootRef)}
-            style={{ width: assignedWidth, height: assignedHeight, paddingTop: totalHeaderHeight }}
+            style={{ ...props.style, width: assignedWidth, height: assignedHeight, paddingTop: totalHeaderHeight }}
+            tabIndex={0}
           >
             {/* <RowHeightCanary/> */}
             {
@@ -185,6 +188,7 @@ const GridBase = forwardRef(function GridBase(props, ref) {
                     onColumnDragStart={handleColumnDragStart}
                     onColumnDrop={handleColumnDrop}
                     onConfigChange={onConfigChange}
+                    onChangeRange={handleChangeRange}
                     onRowClick={onRowClick}
                     ref={viewportRef}
                   />

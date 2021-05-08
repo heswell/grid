@@ -51,7 +51,7 @@ const BackgroundCell = React.memo(function BackgroundCell({column, row}){
   return (
     <div
       className={cx("GridCell", "Background-cell", dirClass, arrowClass)}
-      style={{ marginLeft: column.marginLeft, width }}>
+      style={{ marginLeft: column.marginLeft, width }} tabIndex={-1}>
       <div className='flasher'>{arrow}</div>
       {format(row[column.key])}
     </div>

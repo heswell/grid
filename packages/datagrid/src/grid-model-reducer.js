@@ -153,7 +153,7 @@ function buildColumnsAndApplyMeasurements(state){
   state.horizontalScrollbarHeight = getHorizontalScrollbarHeight(columnGroups);
   state.totalHeaderHeight = totalHeaderHeight;
   state.viewportHeight = height - totalHeaderHeight - customFooterHeight - customInlineHeaderHeight;
-  state.viewportRowCount = Math.ceil((height - totalHeaderHeight) / rowHeight) + 1;
+  state.viewportRowCount = (height - totalHeaderHeight) / rowHeight;
 
   return state;
 }
@@ -212,13 +212,16 @@ function resizeGrid(state, { height, width }) {
         }
       });
     }
+
+    const actualRowCount = (height - totalHeaderHeight) / rowHeight;
+    console.log(`actualRowCount ${actualRowCount}`)
     return {
       ...state,
       columnGroups,
       height,
       width,
       viewportHeight,
-      viewportRowCount: Math.ceil((height - totalHeaderHeight) / rowHeight) + 1
+      viewportRowCount: actualRowCount
     }
 
   }
@@ -237,7 +240,7 @@ function setAvailableColumns(state, action) {
       headingDepth,
       horizontalScrollbarHeight: getHorizontalScrollbarHeight(columnGroups),
       viewportHeight: state.height - totalHeaderHeight,
-      viewportRowCount: Math.ceil((state.height - totalHeaderHeight) / state.rowHeight) + 1
+      viewportRowCount: (state.height - totalHeaderHeight) / state.rowHeight
     };
 
   } else {
@@ -390,7 +393,7 @@ function setRowHeight(state, { rowHeight }) {
   return {
     ...state,
     rowHeight,
-    viewportRowCount: Math.ceil((height - totalHeaderHeight) / rowHeight) + 1
+    viewportRowCount: (height - totalHeaderHeight) / rowHeight
   }
 
   //TODO what abl=our scroll bar calculations
