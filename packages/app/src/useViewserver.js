@@ -120,7 +120,7 @@ const useViewserver = ({openDialog}={}) => {
         console.log(`response from unexpected meyhod ${response.method}`);
 
     }
-  },[])
+  },[openDialog])
 
 
   useEffect(() => {
