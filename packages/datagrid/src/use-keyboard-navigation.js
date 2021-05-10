@@ -27,7 +27,8 @@ export const useKeyboardNavigation = (rootRef, gridModel) => {
     isHeaderCell: false,
     row:-1,
     cell:-1
-  })
+  });
+  const allowCellSelection = gridModel.cellSelectionModel !== 'none';
 
   useEffect(() => {
     if (gridModel.viewportRowCount){
@@ -172,19 +173,23 @@ export const useKeyboardNavigation = (rootRef, gridModel) => {
 
   useEffect(() => {
     const rootEl = rootRef.current;
-    rootEl.addEventListener('blur', handleBlur, true);
-    rootEl.addEventListener('click', handleClick, true);
-    rootEl.addEventListener('keydown', handleKeyDown, true);
-    rootEl.addEventListener('focus', handleFocus, true);
+    if (allowCellSelection){
+      rootEl.addEventListener('blur', handleBlur, true);
+      rootEl.addEventListener('click', handleClick, true);
+      rootEl.addEventListener('keydown', handleKeyDown, true);
+      rootEl.addEventListener('focus', handleFocus, true);
+    }
 
     return () => {
-      console.log('remove event listener')
-      rootEl.removeEventListener('blur', handleBlur, true);
-      rootEl.removeEventListener('click', handleClick, true);
-      rootEl.removeEventListener('focus', handleFocus, true);
-      rootEl.removeEventListener('keydown', handleKeyDown, true);
+      if (allowCellSelection){
+        rootEl.removeEventListener('blur', handleBlur, true);
+        rootEl.removeEventListener('click', handleClick, true);
+        rootEl.removeEventListener('focus', handleFocus, true);
+        rootEl.removeEventListener('keydown', handleKeyDown, true);
+
+      }
     }
-  },[handleBlur, handleClick, handleFocus, handleKeyDown, rootRef])
+  },[allowCellSelection, handleBlur, handleClick, handleFocus, handleKeyDown, rootRef])
 
 
   return setRange;

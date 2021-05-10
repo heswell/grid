@@ -71,6 +71,7 @@ const reducerActionHandlers = {
 
 export const initModel = ([gridProps, size, custom]) => {
   const {
+    cellSelectionModel='none',
     columns,
     columnSizing = 'static',
     defaultColumnWidth = DEFAULT_COLUMN_WIDTH,
@@ -104,6 +105,7 @@ export const initModel = ([gridProps, size, custom]) => {
   const state = {
     assignedHeight,
     assignedWidth,
+    cellSelectionModel,
     columnNames: null,
     columnGroups: undefined,
     columns,

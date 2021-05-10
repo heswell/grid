@@ -110,7 +110,7 @@ const useViewserver = ({openDialog}={}) => {
       case addRowsFromInstruments:
         if (!response.orderEntrOpen){
           openDialog && openDialog(
-            <FilteredGrid  schema={_tables.orderEntry} width={700} height={400}/>
+            <FilteredGrid cellSelectionModel='single-cell' schema={_tables.orderEntry} width={700} height={400}/>
           )
         } else {
           console.log('select entries in orderEntry')
