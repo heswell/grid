@@ -54,7 +54,7 @@ export default class RemoteDataSource extends EventEmitter {
     this.filterDataMessage = null;
     this.status = 'initialising'
     this.remoteId = null;
-    this.suspended = false;
+    this.disabled = false;
 
     this.initialGroup = group;
     this.initialSort = sort;
@@ -125,8 +125,8 @@ export default class RemoteDataSource extends EventEmitter {
   }
 
   unsubscribe() {
-    if (this.suspended) {
-      logger.log(`unsubscribe whilst suspended, ignore - ${this?.tableName ?? 'no table'} (viewport ${this?.viewport})`);
+    if (this.disabled) {
+      logger.log(`unsubscribe whilst disabled, ignore - ${this?.tableName ?? 'no table'} (viewport ${this?.viewport})`);
     } else {
       logger.log(`unsubscribe from ${this?.tableName ?? 'no table'} (viewport ${this?.viewport})`);
       this.server?.unsubscribe(this.viewport);
@@ -135,9 +135,17 @@ export default class RemoteDataSource extends EventEmitter {
     }
   }
 
+  suspend(){
+    console.log(`suspend data`)
+  }
+
+  resume(){
+    console.log(`resume data`)
+  }
+
   disable() {
     logger.log(`disable datasource ${this.viewport}`)
-    this.suspended = true;
+    this.disabled = true;
     this.server.handleMessageFromClient({
       viewport: this.viewport,
       type: Msg.disable,
@@ -146,14 +154,13 @@ export default class RemoteDataSource extends EventEmitter {
   }
 
   enable() {
-    logger.log(`enable datasource ${this.viewport}`)
-    if (this.suspended) {
+    if (this.disabled) {
       // should we await this ?s
       this.server.handleMessageFromClient({
         viewport: this.viewport,
         type: Msg.enable,
       });
-      this.suspended = false;
+      this.disabled = false;
 
     }
     return this;

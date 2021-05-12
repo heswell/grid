@@ -56,7 +56,6 @@ export const useGridModel = (props) => {
   );
 
   useEffectSkipFirst(() => {
-      console.log('dispatcGridModel resize')
       dispatchGridModel({
         type: "resize",
         // The totalHeaderHeight will be set as top padding, which will not be included

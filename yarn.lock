@@ -1505,10 +1505,10 @@
   dependencies:
     "@hapi/hoek" "^8.3.0"
 
-"@heswell/layout@3.4.18":
-  version "3.4.18"
-  resolved "https://registry.yarnpkg.com/@heswell/layout/-/layout-3.4.18.tgz#f8f04bfb8713c7551ead53c430c386218a93630b"
-  integrity sha512-WMx2qp0Zcq2FSCL/0L0FF4+l7hBW/m+TLSLvbDbj6Q5k/z1oDGBUfl69s3Ne6e4ODM3tSh9UDNU4x3pV+2FUSA==
+"@heswell/layout@3.4.21":
+  version "3.4.21"
+  resolved "https://registry.npmjs.org/@heswell/layout/-/layout-3.4.21.tgz#c6718a3d9e5300cb1a402844e50fd502c1ef8a18"
+  integrity sha512-RK3wlOk0yXvC2NJJVd6YpZfIvPkSEyUgM+W4SbnQexw1p2/ooAz0wLIjkVTwd+xNRBp59sSugd+kaocGoID+lg==
   dependencies:
     "@heswell/ui-controls" "2.0.25"
     classnames "^2.2.6"

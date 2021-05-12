@@ -1,5 +1,7 @@
 .hwQueryFilter {
   display: inline-block;
+  flex-grow: 0;
+  flex-shrink: 0;
 }
 
 .hwQueryFilter .hwTooltray:after {
@@ -33,4 +35,9 @@
 
 .vuFilterInput {
 
+}
+
+.hwToolbar {
+  flex-grow: 0;
+  flex-shrink: 0;
 }

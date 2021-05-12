@@ -6,7 +6,6 @@ const useLayoutConfig = (url, defaultLayout) => {
   const [layout, _setLayout] = useState(undefined);
 
   const setLayout = layout => {
-    console.log('set LAyout')
     _setLayout(layout)
   }
 

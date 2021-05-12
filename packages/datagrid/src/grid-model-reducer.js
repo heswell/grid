@@ -216,7 +216,6 @@ function resizeGrid(state, { height, width }) {
     }
 
     const actualRowCount = (height - totalHeaderHeight) / rowHeight;
-    console.log(`actualRowCount ${actualRowCount}`)
     return {
       ...state,
       columnGroups,

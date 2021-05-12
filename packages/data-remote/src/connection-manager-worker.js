@@ -125,14 +125,9 @@ class ConnectionManager extends EventEmitter {
 
   async connect(url, serverName) {
 
-    logger.log(`ConnectionManager.connect ${serverName} ${url} waiting for worker`);
-
     worker = await getWorker(url, serverName);
 
     worker.onmessage = handleMessageFromWorker;
-
-    logger.log(`worker ready, connected to server`)
-    // return new Promise((resolve, reject) => {
 
     // TEST DATA COLLECTION
       // setDataCollectionMethod(() => {

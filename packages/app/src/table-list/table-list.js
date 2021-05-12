@@ -11,7 +11,7 @@ const TableList = ({className,  ...props}) => {
 
   return (
 
-    <Palette className={cx("TableList", className)} title="View Palette" {...props}>
+    <Palette className={cx("TableList", className)} orientation="vertical" title="View Palette" {...props}>
       {tableList.map((item, idx) =>
          <PaletteItem key={item.table} title={item.table} closeable resizeable resize="defer" header>
           <FilteredGrid  schema={tableList[idx]} />
