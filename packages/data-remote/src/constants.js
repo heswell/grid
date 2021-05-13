@@ -21,6 +21,8 @@ export const msgType = {
   createLink: 'createLink',
   disable: 'disable',
   enable: 'enable',
+  suspend: 'suspend',
+  resume: 'resume',
 
   addSubscription: 'AddSubscription',
   closeTreeNode : 'closeTreeNode',

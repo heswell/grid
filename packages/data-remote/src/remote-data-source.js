@@ -55,12 +55,11 @@ export default class RemoteDataSource extends EventEmitter {
     this.status = 'initialising'
     this.remoteId = null;
     this.disabled = false;
+    this.suspended = false;
 
     this.initialGroup = group;
     this.initialSort = sort;
     this.initialFilter = filter;
-
-    console.log('brand new data source created')
 
     if (!serverUrl && !configUrl) {
       throw Error('RemoteDataSource expects serverUrl or configUrl')
@@ -125,7 +124,7 @@ export default class RemoteDataSource extends EventEmitter {
   }
 
   unsubscribe() {
-    if (this.disabled) {
+    if (this.disabled || this.suspended) {
       logger.log(`unsubscribe whilst disabled, ignore - ${this?.tableName ?? 'no table'} (viewport ${this?.viewport})`);
     } else {
       logger.log(`unsubscribe from ${this?.tableName ?? 'no table'} (viewport ${this?.viewport})`);
@@ -135,12 +134,27 @@ export default class RemoteDataSource extends EventEmitter {
     }
   }
 
-  suspend(){
-    console.log(`suspend data`)
+  suspend() {
+    logger.log(`suspend datasource ${this.viewport}`)
+    this.suspended = true;
+    this.server.handleMessageFromClient({
+      viewport: this.viewport,
+      type: Msg.suspend,
+    });
+    return this;
   }
 
-  resume(){
-    console.log(`resume data`)
+  resume() {
+    if (this.suspended) {
+      // should we await this ?s
+      this.server.handleMessageFromClient({
+        viewport: this.viewport,
+        type: Msg.resume,
+      });
+      this.suspended = false;
+
+    }
+    return this;
   }
 
   disable() {

@@ -5520,6 +5520,7 @@ class Viewport {
     this.clientViewportId = viewport;
     this.table = tablename;
     this.status = '';
+    this.disabled = false;
     this.suspended = false;
     this.columns = columns;
     this.clientRange = range;
@@ -5545,6 +5546,9 @@ class Viewport {
   }
 
   get hasUpdatesToProcess() {
+    if (this.suspended){
+      return false;
+    }
     return this.rowCountChanged || this.hasUpdates;
   }
 
@@ -5637,9 +5641,9 @@ class Viewport {
     } else if (type === 'selection') {
       this.selection = data;
     } else if (type === 'disable') {
-      this.suspended = true; // assuming its _SUCCESS, of cource
+      this.disabled = true; // assuming its _SUCCESS, of cource
     } else if (type === 'enable') {
-      this.suspended = false;
+      this.disabled = false;
     } else if (type === CREATE_VISUAL_LINK){
       const [colName, parentViewportId, parentColName] = params;
       this.linkedParent = {
@@ -5730,6 +5734,23 @@ class Viewport {
     this.awaitOperation(requestId, message);
     return message;
   }
+
+  suspend(){
+    this.suspended = true;
+  }
+
+  resume(){
+    const records = this.dataWindow.getData();
+    const { keys } = this;
+    const toClient = this.isTree ? toClientRowTree(this.groupBy, this.columns) : toClientRow;
+    const out = [];
+    for (let row of records) {
+      if (row) {
+        out.push(toClient(row, keys));
+      }
+    }
+    return out;
+}
 
   enable(requestId) {
     this.awaitOperation(requestId, { type: 'enable' });
@@ -6018,6 +6039,22 @@ class ServerProxy {
         }
         break;
 
+      case 'suspend':
+        viewport.suspend();
+        break
+
+      case 'resume': {
+        const rows = viewport.resume();
+        const clientMessage = {
+          type: 'viewport-updates',
+          viewports: {
+            [viewport.clientViewportId]: { rows },
+          },
+        };
+        this.postMessageToClient(clientMessage);
+
+      }
+        break
       case 'disable':
         {
           console.log(`%cDISABLE`, 'color:red;font-weight: bold;');
@@ -6121,7 +6158,7 @@ class ServerProxy {
     return isReady;
   }
 
-  sendMessageToServer(body, requestId = _requestId++, module="CORE") {
+  sendMessageToServer(body, requestId = _requestId++, module = "CORE") {
     // const { clientId } = this.connection;
     this.connection.send({
       requestId,
@@ -6275,18 +6312,18 @@ class ServerProxy {
         break;
 
       case RPC_RESP: {
-        const {method, result} = body;
+        const { method, result } = body;
         // check to see if the orderEntry is already open on the page
         let orderEntryOpen = false;
-        for (let viewport of this.viewports.values()){
-          if (!viewport.suspended && viewport.table === 'orderEntry'){
+        for (let viewport of this.viewports.values()) {
+          if (!viewport.suspended && viewport.table === 'orderEntry') {
             orderEntryOpen = true;
             break;
           }
         }
-        this.postMessageToClient({type, method, result, orderEntryOpen, requestId});
+        this.postMessageToClient({ type, method, result, orderEntryOpen, requestId });
       }
-      break;
+        break;
 
       case "ERROR":
         console.error(body.msg);

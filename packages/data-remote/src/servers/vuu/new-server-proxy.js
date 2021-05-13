@@ -1,6 +1,6 @@
 import * as Message from './messages';
 import { Viewport } from './new-viewport';
-import {getRpcService} from "./rpc-services";
+import { getRpcService } from "./rpc-services";
 
 // TEST_DATA_COLLECTION
 // import { saveTestData } from '../../test-data-collection';
@@ -136,6 +136,22 @@ export class ServerProxy {
         }
         break;
 
+      case 'suspend':
+        viewport.suspend();
+        break
+
+      case 'resume': {
+        const rows = viewport.resume();
+        const clientMessage = {
+          type: 'viewport-updates',
+          viewports: {
+            [viewport.clientViewportId]: { rows },
+          },
+        };
+        this.postMessageToClient(clientMessage);
+
+      }
+        break
       case 'disable':
         {
           console.log(`%cDISABLE`, 'color:red;font-weight: bold;')
@@ -203,7 +219,7 @@ export class ServerProxy {
         break;
 
       case Message.RPC_CALL: {
-        const {method} = message;
+        const { method } = message;
         const [service, module] = getRpcService(method);
         this.sendMessageToServer(
           {
@@ -240,7 +256,7 @@ export class ServerProxy {
     return isReady;
   }
 
-  sendMessageToServer(body, requestId = _requestId++, module="CORE") {
+  sendMessageToServer(body, requestId = _requestId++, module = "CORE") {
     // const { clientId } = this.connection;
     this.connection.send({
       requestId,
@@ -396,18 +412,18 @@ export class ServerProxy {
         break;
 
       case Message.RPC_RESP: {
-        const {method, result} = body;
+        const { method, result } = body;
         // check to see if the orderEntry is already open on the page
         let orderEntryOpen = false;
-        for (let viewport of this.viewports.values()){
-          if (!viewport.suspended && viewport.table === 'orderEntry'){
+        for (let viewport of this.viewports.values()) {
+          if (!viewport.suspended && viewport.table === 'orderEntry') {
             orderEntryOpen = true;
             break;
           }
         }
-        this.postMessageToClient({type, method, result, orderEntryOpen, requestId})
+        this.postMessageToClient({ type, method, result, orderEntryOpen, requestId })
       }
-      break;
+        break;
 
       case "ERROR":
         console.error(body.msg)

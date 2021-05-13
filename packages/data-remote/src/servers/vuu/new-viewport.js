@@ -25,6 +25,7 @@ export class Viewport {
     this.clientViewportId = viewport;
     this.table = tablename;
     this.status = '';
+    this.disabled = false;
     this.suspended = false;
     this.columns = columns;
     this.clientRange = range;
@@ -50,6 +51,9 @@ export class Viewport {
   }
 
   get hasUpdatesToProcess() {
+    if (this.suspended){
+      return false;
+    }
     return this.rowCountChanged || this.hasUpdates;
   }
 
@@ -142,9 +146,9 @@ export class Viewport {
     } else if (type === 'selection') {
       this.selection = data;
     } else if (type === 'disable') {
-      this.suspended = true; // assuming its _SUCCESS, of cource
+      this.disabled = true; // assuming its _SUCCESS, of cource
     } else if (type === 'enable') {
-      this.suspended = false;
+      this.disabled = false;
     } else if (type === Message.CREATE_VISUAL_LINK){
       const [colName, parentViewportId, parentColName] = params;
       this.linkedParent = {
@@ -235,6 +239,24 @@ export class Viewport {
     this.awaitOperation(requestId, message);
     return message;
   }
+
+  suspend(){
+    this.suspended = true;
+  }
+
+  resume(){
+    this.suspended = false;
+    const records = this.dataWindow.getData();
+    const { keys } = this;
+    const toClient = this.isTree ? toClientRowTree(this.groupBy, this.columns) : toClientRow;
+    const out = [];
+    for (let row of records) {
+      if (row) {
+        out.push(toClient(row, keys));
+      }
+    }
+    return out;
+}
 
   enable(requestId) {
     this.awaitOperation(requestId, { type: 'enable' });
