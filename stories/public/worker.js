@@ -68,7 +68,7 @@ async function makeConnection$1(url, callback, connection) {
     if (reconnecting) {
       connection[setWebsocket](ws);
     } else {
-      connection = new Connection$1(ws, url, callback);
+      connection = new Connection(ws, url, callback);
     }
 
     const status = reconnecting ? 'reconnected' : 'connected';
@@ -107,7 +107,7 @@ const createWebsocket = (connectionString) =>
     ws.onerror = (evt) => reject(evt);
   });
 
-class Connection$1 {
+class Connection {
   constructor(ws, url, callback) {
     this.url = url;
     this[connectionCallback] = callback;
@@ -190,6 +190,285 @@ class Connection$1 {
       this.send = warn;
     };
   }
+}
+
+function ascending(a, b) {
+  return a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN;
+}
+
+function bisector(f) {
+  let delta = f;
+  let compare = f;
+
+  if (f.length === 1) {
+    delta = (d, x) => f(d) - x;
+    compare = ascendingComparator(f);
+  }
+
+  function left(a, x, lo, hi) {
+    if (lo == null) lo = 0;
+    if (hi == null) hi = a.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      if (compare(a[mid], x) < 0) lo = mid + 1;
+      else hi = mid;
+    }
+    return lo;
+  }
+
+  function right(a, x, lo, hi) {
+    if (lo == null) lo = 0;
+    if (hi == null) hi = a.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      if (compare(a[mid], x) > 0) hi = mid;
+      else lo = mid + 1;
+    }
+    return lo;
+  }
+
+  function center(a, x, lo, hi) {
+    if (lo == null) lo = 0;
+    if (hi == null) hi = a.length;
+    const i = left(a, x, lo, hi - 1);
+    return i > lo && delta(a[i - 1], x) > -delta(a[i], x) ? i - 1 : i;
+  }
+
+  return {left, center, right};
+}
+
+function ascendingComparator(f) {
+  return (d, x) => ascending(f(d), x);
+}
+
+function number(x) {
+  return x === null ? NaN : +x;
+}
+
+const ascendingBisect = bisector(ascending);
+const bisectRight = ascendingBisect.right;
+bisector(number).center;
+
+function count(values, valueof) {
+  let count = 0;
+  if (valueof === undefined) {
+    for (let value of values) {
+      if (value != null && (value = +value) >= value) {
+        ++count;
+      }
+    }
+  } else {
+    let index = -1;
+    for (let value of values) {
+      if ((value = valueof(value, ++index, values)) != null && (value = +value) >= value) {
+        ++count;
+      }
+    }
+  }
+  return count;
+}
+
+function extent(values, valueof) {
+  let min;
+  let max;
+  if (valueof === undefined) {
+    for (const value of values) {
+      if (value != null) {
+        if (min === undefined) {
+          if (value >= value) min = max = value;
+        } else {
+          if (min > value) min = value;
+          if (max < value) max = value;
+        }
+      }
+    }
+  } else {
+    let index = -1;
+    for (let value of values) {
+      if ((value = valueof(value, ++index, values)) != null) {
+        if (min === undefined) {
+          if (value >= value) min = max = value;
+        } else {
+          if (min > value) min = value;
+          if (max < value) max = value;
+        }
+      }
+    }
+  }
+  return [min, max];
+}
+
+function identity(x) {
+  return x;
+}
+
+var array = Array.prototype;
+
+var slice = array.slice;
+
+function constant(x) {
+  return function() {
+    return x;
+  };
+}
+
+var e10 = Math.sqrt(50),
+    e5 = Math.sqrt(10),
+    e2 = Math.sqrt(2);
+
+function ticks(start, stop, count) {
+  var reverse,
+      i = -1,
+      n,
+      ticks,
+      step;
+
+  stop = +stop, start = +start, count = +count;
+  if (start === stop && count > 0) return [start];
+  if (reverse = stop < start) n = start, start = stop, stop = n;
+  if ((step = tickIncrement(start, stop, count)) === 0 || !isFinite(step)) return [];
+
+  if (step > 0) {
+    let r0 = Math.round(start / step), r1 = Math.round(stop / step);
+    if (r0 * step < start) ++r0;
+    if (r1 * step > stop) --r1;
+    ticks = new Array(n = r1 - r0 + 1);
+    while (++i < n) ticks[i] = (r0 + i) * step;
+  } else {
+    step = -step;
+    let r0 = Math.round(start * step), r1 = Math.round(stop * step);
+    if (r0 / step < start) ++r0;
+    if (r1 / step > stop) --r1;
+    ticks = new Array(n = r1 - r0 + 1);
+    while (++i < n) ticks[i] = (r0 + i) / step;
+  }
+
+  if (reverse) ticks.reverse();
+
+  return ticks;
+}
+
+function tickIncrement(start, stop, count) {
+  var step = (stop - start) / Math.max(0, count),
+      power = Math.floor(Math.log(step) / Math.LN10),
+      error = step / Math.pow(10, power);
+  return power >= 0
+      ? (error >= e10 ? 10 : error >= e5 ? 5 : error >= e2 ? 2 : 1) * Math.pow(10, power)
+      : -Math.pow(10, -power) / (error >= e10 ? 10 : error >= e5 ? 5 : error >= e2 ? 2 : 1);
+}
+
+function nice(start, stop, count) {
+  let prestep;
+  while (true) {
+    const step = tickIncrement(start, stop, count);
+    if (step === prestep || step === 0 || !isFinite(step)) {
+      return [start, stop];
+    } else if (step > 0) {
+      start = Math.floor(start / step) * step;
+      stop = Math.ceil(stop / step) * step;
+    } else if (step < 0) {
+      start = Math.ceil(start * step) / step;
+      stop = Math.floor(stop * step) / step;
+    }
+    prestep = step;
+  }
+}
+
+function sturges(values) {
+  return Math.ceil(Math.log(count(values)) / Math.LN2) + 1;
+}
+
+function bin() {
+  var value = identity,
+      domain = extent,
+      threshold = sturges;
+
+  function histogram(data) {
+    if (!Array.isArray(data)) data = Array.from(data);
+
+    var i,
+        n = data.length,
+        x,
+        values = new Array(n);
+
+    for (i = 0; i < n; ++i) {
+      values[i] = value(data[i], i, data);
+    }
+
+    var xz = domain(values),
+        x0 = xz[0],
+        x1 = xz[1],
+        tz = threshold(values, x0, x1);
+
+    // Convert number of thresholds into uniform thresholds, and nice the
+    // default domain accordingly.
+    if (!Array.isArray(tz)) {
+      const max = x1, tn = +tz;
+      if (domain === extent) [x0, x1] = nice(x0, x1, tn);
+      tz = ticks(x0, x1, tn);
+
+      // If the last threshold is coincident with the domain’s upper bound, the
+      // last bin will be zero-width. If the default domain is used, and this
+      // last threshold is coincident with the maximum input value, we can
+      // extend the niced upper bound by one tick to ensure uniform bin widths;
+      // otherwise, we simply remove the last threshold. Note that we don’t
+      // coerce values or the domain to numbers, and thus must be careful to
+      // compare order (>=) rather than strict equality (===)!
+      if (tz[tz.length - 1] >= x1) {
+        if (max >= x1 && domain === extent) {
+          const step = tickIncrement(x0, x1, tn);
+          if (isFinite(step)) {
+            if (step > 0) {
+              x1 = (Math.floor(x1 / step) + 1) * step;
+            } else if (step < 0) {
+              x1 = (Math.ceil(x1 * -step) + 1) / -step;
+            }
+          }
+        } else {
+          tz.pop();
+        }
+      }
+    }
+
+    // Remove any thresholds outside the domain.
+    var m = tz.length;
+    while (tz[0] <= x0) tz.shift(), --m;
+    while (tz[m - 1] > x1) tz.pop(), --m;
+
+    var bins = new Array(m + 1),
+        bin;
+
+    // Initialize bins.
+    for (i = 0; i <= m; ++i) {
+      bin = bins[i] = [];
+      bin.x0 = i > 0 ? tz[i - 1] : x0;
+      bin.x1 = i < m ? tz[i] : x1;
+    }
+
+    // Assign data to bins by value, ignoring any outside the domain.
+    for (i = 0; i < n; ++i) {
+      x = values[i];
+      if (x0 <= x && x <= x1) {
+        bins[bisectRight(tz, x, 0, m)].push(data[i]);
+      }
+    }
+
+    return bins;
+  }
+
+  histogram.value = function(_) {
+    return arguments.length ? (value = typeof _ === "function" ? _ : constant(_), histogram) : value;
+  };
+
+  histogram.domain = function(_) {
+    return arguments.length ? (domain = typeof _ === "function" ? _ : constant([_[0], _[1]]), histogram) : domain;
+  };
+
+  histogram.thresholds = function(_) {
+    return arguments.length ? (threshold = typeof _ === "function" ? _ : Array.isArray(_) ? constant(slice.call(_)) : constant(_), histogram) : threshold;
+  };
+
+  return histogram;
 }
 
 class EventEmitter {
@@ -310,36 +589,526 @@ function invokeHandler(handler, type, args){
     }
 }
 
-// This is the index.browser.js file from nanoid
-// couldn't get original code to work as npm import without crypro warnings -
-// seemed to be picking up node version, not browser version
+/*global fetch */
 
-const uuid = (size = 21) => {
-  let id = '';
-  let bytes = crypto.getRandomValues(new Uint8Array(size));
+const defaultUpdateConfig = {
+    applyUpdates: false,
+    applyInserts: false,
+    interval: 500
+};
 
-  // A compact alternative for `for (var i = 0; i < step; i++)`.
-  while (size--) {
-    // It is incorrect to use bytes exceeding the alphabet size.
-    // The following mask reduces the random byte in the 0-255 value
-    // range to the 0-63 value range. Therefore, adding hacks, such
-    // as empty string fallback or magic numbers, is unneccessary because
-    // the bitmask trims bytes down to the alphabet size.
-    let byte = bytes[size] & 63;
-    if (byte < 36) {
-      // `0-9a-z`
-      id += byte.toString(36);
-    } else if (byte < 62) {
-      // `A-Z`
-      id += (byte - 26).toString(36).toUpperCase();
-    } else if (byte < 63) {
-      id += '_';
+function buildColumnMap(columns){
+    if (columns){
+        const map = {IDX: 0, KEY: 1};
+        for (let i=0;i<columns.length;i++){
+            map[columns[i].name] = i+2;
+        }
+        return map;
     } else {
-      id += '-';
+        return null;
     }
   }
-  return id
+
+class Table$1 extends EventEmitter {
+
+    constructor(config){
+        super();
+        const {name, columns=null, primaryKey, dataPath, data, updates = {}} = config;
+        this.name = name;
+        this.primaryKey = primaryKey;
+        this.columns = columns;
+        this.keys = {};
+        this.index = {};
+        this.indices = [];
+        this.rows = [];
+        this.updateConfig = {
+            ...defaultUpdateConfig,
+            ...updates
+        };
+        this.inputColumnMap = undefined;
+        this.columnMap = buildColumnMap(columns);
+        this.columnCount = 0;
+        this.status = null;
+
+        if (data){
+            this.load(data);
+        } else if (dataPath){
+            this.fetchData(dataPath);
+        }
+
+        this.installDataGenerators(config);
+    }
+
+    update(rowIdx, ...updates){
+        const results = [];
+        let row = this.rows[rowIdx];
+        for (let i=0;i<updates.length;i+=2){
+            const colIdx = updates[i];
+            const value = updates[i+1];
+            results.push(colIdx, row[colIdx], value);
+            row[colIdx] = value;
+        }
+        this.emit('rowUpdated', rowIdx, results);
+    }
+
+    bulkUpdate(updates, doNotPublish){
+        const results = [];
+        for (let rowUpdate of updates){
+            const [idx] = rowUpdate;
+            const row = this.rows[idx];
+            const rowResult = [idx];
+            for (let i=1;i<rowUpdate.length;i+=2){
+                const colIdx = rowUpdate[i];
+                const value = rowUpdate[i+1];
+                rowResult.push(colIdx, row[colIdx], value);
+                row[colIdx] = value;
+            }
+            results.push(rowResult);
+        }
+        this.emit('rowsUpdated', results, doNotPublish);
+    }
+
+    // Don't think this is worth the overhead
+    // bulkUpdate(updates){
+        // const map = new Map();
+    // const results = [];
+    // let rowResult;
+    // for (let rowUpdate of updates){
+    //     const [idx] = rowUpdate;
+    //     const row = this.rows[idx];
+
+    //     if (map.has(idx)){
+    //         rowResult = map.get(idx);
+    //     } else {
+    //         results.push(rowResult = [idx]);
+    //         map.set(idx, rowResult)
+    //     }
+
+    //     for (let i=1;i<rowUpdate.length;i+=2){
+    //         const colIdx = rowUpdate[i];
+    //         const value = rowUpdate[i+1];
+    //         const pos = rowResult.indexOf(colIdx);
+    //         if (pos === -1 || (pos-1)%3){ // don't mistake a value for a column Index
+    //             rowResult.push(colIdx, row[colIdx], value);
+    //         } else {
+    //             // updates are in sequence so later update for same column replaces earlier value
+    //             rowResult.splice(pos+1, 2, row[colIdx], value);
+    //         }
+    //         row[colIdx] = value;
+    //     }
+    // }
+    // console.log(results)
+    // this.emit('rowsUpdated', results);
+    // }
+
+    insert(data){
+        let columnnameList = this.columns ? this.columns.map(c => c.name): null;
+        const idx = this.rows.length;
+        let row = this.rowFromData(idx, data, columnnameList);
+        this.rows.push(row);
+        this.emit('rowInserted', idx, row);
+    }
+
+    remove(key){
+        if (this.keys[key]){
+            const index = this.indices[key];
+            delete this.keys[key];
+            delete this.indices[key];
+            this.rows.splice(index,1);
+
+            for (let k in this.indices){
+                if (this.indices[k] > index){
+                    this.indices[k] -= 1;
+                }
+            }
+
+            this.emit('rowRemoved', this.name, key);
+
+        }
+    }
+
+    clear(){
+
+    }
+
+    toString(){
+        const out = ['\n' + this.name];
+        out.splice.apply(out, [1,0].concat(this.rows.map(function(row){return row.toString();})));
+        return out.join('\n');
+    }
+
+    async fetchData(url){
+        fetch(url,{
+
+        })
+            .then(data => data.json())
+            .then(json => {
+                console.log(`Table.loadData: got ${json.length} rows`);
+                this.load(json);
+            })
+            .catch(err => {
+                console.error(err);
+            });
+
+    }
+
+    load(data){
+        let columnnameList = this.columns ? this.columns.map(c => c.name): null;
+        const rows = [];
+        for (let i=0;i<data.length;i++){
+            let row = this.rowFromData(i, data[i], columnnameList);
+            rows.push(row);
+        }
+        this.rows = rows;
+
+        if (this.columns === null){
+            this.columns = columnsFromColumnMap(this.inputColumnMap);
+            this.columnMap = buildColumnMap(this.columns);
+        }
+        this.status = 'ready';
+        this.emit('ready');
+        if (this.updateConfig && this.updateConfig.applyUpdates !== false){
+            setTimeout(() => {
+                this.applyUpdates();
+            },1000);
+        }
+        // move this
+        if (this.updateConfig && this.updateConfig.applyInserts !== false){
+            setTimeout(() => {
+                this.applyInserts();
+            },10000);
+        }
+    }
+
+    // Build a row [idx, primaryKey, ...data values]
+    rowFromData(idx, data, columnnameList){
+        // 2 metadata items for each row, the idx and unique key
+        const {index, primaryKey=null, columnMap: map} = this;
+
+        if (Array.isArray(data)){
+            const key = data[map[this.primaryKey] - 2];
+            index[key] = idx;
+            return [idx, key, ...data];
+        } else {
+            // This allows us to load data from objects as rows, without predefined columns, where
+            // not every row may have every column. How would we handle primary key ?
+            const columnMap = map || (this.columnMap = {IDX:0, KEY:1});
+            const colnames = columnnameList || Object.getOwnPropertyNames(data);
+            // why start with idx in 0 ?
+            const row = [idx];
+            let colIdx;
+
+            for (let i=0; i<colnames.length; i++){
+                const name = colnames[i];
+                const value = data[name];
+                if ((colIdx = columnMap[name]) === undefined){
+                    colIdx = columnMap[name] = 2 + this.columnCount++;
+                }
+                row[colIdx] = value;
+                // If we don't know the primary key, assume it is the first column for now
+                if ((name === primaryKey) || (primaryKey === null && i === 0)){
+                    index[value] = idx;
+                    row[map.KEY] = value;
+                }
+            }
+            return row;
+        }
+    }
+
+    //TODO move all these methods into an external helper
+    applyInserts(){
+
+        const idx = this.rows.length;
+        const newRow = this.createRow(idx);
+        if (newRow){
+            this.insert(newRow);
+        } else {
+            console.log(`createRow did not return a new row`);
+        }
+
+        setTimeout(() => this.applyInserts(),this.updateConfig.insertInterval | 100);
+
+    }
+
+    applyUpdates(){
+        const {rows, columnMap} = this;
+        // const count = Math.round(rows.length / 50);
+        const count = 100;
+
+        for (let i=0; i<count; i++){
+            const rowIdx = getRandomInt(rows.length - 1);
+            const update = this.updateRow(rowIdx, rows[rowIdx], columnMap);
+            if (update){
+                this.update(rowIdx, ...update);
+            }
+        }
+
+        setTimeout(() => this.applyUpdates(),this.updateConfig.interval);
+
+    }
+
+    createRow(idx){
+        console.warn(`createRow ${idx} must be implemented as a plugin`);
+        return null;
+    }
+
+    updateRow(idx, row, columnMap){
+        return null;
+    }
+
+    async installDataGenerators(config){
+        //console.warn(`installDataGenerators must be implemented by a more specific subclass`);
+    }
+
+}
+
+function getRandomInt(max) {
+    return Math.floor(Math.random() * Math.floor(max));
+}
+
+function columnsFromColumnMap(columnMap){
+
+    const columnNames = Object.getOwnPropertyNames(columnMap);
+
+    return columnNames
+        .map(name => ({name, key: columnMap[name]}))
+        .sort(byKey$1)
+        .map(({name}) => ({name}));
+
+}
+
+function byKey$1(col1, col2){
+    return col1.key - col2.key;
+}
+
+const CHECKBOX = 'checkbox';
+const SINGLE_ROW = 'single-row';
+const MULTIPLE_ROW = 'multiple-row';
+
+const SelectionModelType = {
+  Checkbox: CHECKBOX,
+  SingleRow: SINGLE_ROW,
+  MultipleRow: MULTIPLE_ROW
 };
+
+const {Checkbox, SingleRow, MultipleRow} = SelectionModelType;
+
+const EMPTY$1 = [];
+
+class SelectionModel {
+
+    constructor(selectionModelType=MultipleRow){
+      this.modelType = selectionModelType;
+    }
+
+    select({rows:selection, lastTouchIdx}, idx, rangeSelect, keepExistingSelection){
+        
+        let selected, deselected;
+
+        if (this.modelType === SingleRow){
+            [selection, selected, deselected] = this.handleRegularSelection(selection, idx);
+            lastTouchIdx = idx;
+        } else if (rangeSelect){
+            [selection, selected, deselected] = this.handleRangeSelection(selection, lastTouchIdx, idx);
+        } else if (keepExistingSelection || this.modelType === Checkbox){
+            [selection, selected, deselected] = this.handleIncrementalSelection(selection, idx);
+            lastTouchIdx = idx;
+        } else {
+            [selection, selected, deselected] = this.handleRegularSelection(selection, idx);
+            lastTouchIdx = idx;
+        }
+
+        return {
+          focusedIdx: idx,
+          lastTouchIdx,
+          rows: selection,
+          selected,
+          deselected
+        };
+
+    }
+
+    handleRegularSelection(selected, idx){
+        const pos = selected.indexOf(idx);
+        if (pos === -1){
+            const selection = [idx];
+            return [selection, selection, selected];
+        } else if (selected.length === 1){
+            return [EMPTY$1, EMPTY$1, selected];
+        } else {
+          return [EMPTY$1, EMPTY$1, remove(selected,idx)];
+        }
+    }
+
+    handleIncrementalSelection(selected, idx){
+        const pos = selected.indexOf(idx);
+        const len = selected.length;
+        const selection = [idx];
+
+        if (pos === -1){
+          if (len === 0){
+              return [selection, selection,EMPTY$1];
+            } else {
+                return [insert(selected,idx), selection, EMPTY$1];
+            }
+        } else {
+            if (len === 1){
+                return [EMPTY$1, EMPTY$1, selected];
+            } else {
+                return [remove(selected,idx), EMPTY$1, selection];
+            }
+        }		
+    }
+
+    handleRangeSelection(selected, lastTouchIdx, idx){
+
+        const pos = selected.indexOf(idx);
+        const len = selected.length;
+
+        if (pos === -1){
+
+            if (len === 0){
+                const selection = makeRange(0,idx);
+                return [selection, selection, EMPTY$1];
+            } else if (len === 1){
+                const selection = makeRange(selected[0],idx);
+                selected = selected[0] < idx
+                  ? selection.slice(1)
+                  : selection.slice(0,-1);
+                return [selection, selected, EMPTY$1];
+            } else {
+                const selection = applyRange(selected,lastTouchIdx,idx);
+                return [selection, selection.filter(i => !selected.includes(i)), EMPTY$1];
+            }
+        }
+    }
+
+}
+function applyRange(arr, lo, hi){
+
+    if (lo > hi) {[lo, hi] = [hi, lo];}
+
+    const ranges = getRanges(arr);
+    const newRange = new Range(lo,hi);
+    let newRangeAdded = false;
+    const ret = [];
+
+    for (let i=0;i<ranges.length;i++){
+        const range = ranges[i];
+
+        if (!range.overlaps(newRange)){
+            if (range.start < newRange.start){
+                for (let idx=range.start;idx<=range.end;idx++){
+                    ret.push(idx);
+                }
+            } else {
+                for (let idx=newRange.start;idx<=newRange.end;idx++){
+                    ret.push(idx);
+                }
+                newRangeAdded = true;
+                for (let idx=range.start;idx<=range.end;idx++){
+                    ret.push(idx);
+                }
+            }
+        } else if (!newRangeAdded){
+            for (let idx=newRange.start;idx<=newRange.end;idx++){
+                ret.push(idx);
+            }
+            newRangeAdded = true;
+        }
+    }
+
+    if (!newRangeAdded){
+        for (let idx=newRange.start;idx<=newRange.end;idx++){
+            ret.push(idx);
+        }
+    }
+
+    return ret;
+}
+
+function getRanges(arr){
+
+    const ranges = [];
+    let range;
+
+    for (let i=0;i<arr.length;i++){
+        if (range && range.touches(arr[i])){
+            range.extend(arr[i]);
+        } else {
+            ranges.push(range = new Range(arr[i]));
+        }
+    }
+
+    return ranges;
+
+}
+
+class Range {
+
+    constructor(start, end=start){
+        this.start = start;
+        this.end = end;
+    }
+
+    extend(idx){
+        if (idx >= this.start && idx > this.end){
+            this.end = idx;
+        }
+    }
+
+    touches(idx){
+        return this.end === idx-1;
+    }
+
+    overlaps(that){
+        return !(this.end < that.start || this.start > that.end);
+    }
+
+    contains(idx){
+        return this.start <= idx && this.end >= idx;
+    }
+
+    toString(){
+        return `[${this.start}:${this.end}]`;
+    }
+}
+
+function makeRange(lo, hi){
+    if (lo > hi) {[lo, hi] = [hi, lo];}
+
+    const range = [];
+    for (let idx=lo;idx<=hi;idx++){
+        range.push(idx);
+    }
+    return range;
+}
+
+function remove(arr, idx){
+    const ret = [];
+    for (let i=0;i<arr.length;i++){
+        if (idx !== arr[i]){
+            ret.push(arr[i]);
+        }
+    }
+    return ret;
+}
+
+function insert(arr, idx){
+    const ret = [];
+    for (let i=0;i<arr.length;i++){
+        if (idx !== null && idx < arr[i]){
+            ret.push(idx);
+            idx = null;
+        }
+        ret.push(arr[i]);
+    }
+    if (idx !== null){
+        ret.push(idx);
+    }
+    return ret;
+
+}
 
 function arrayOfIndices(length){
   // not the neatest, but far and away the fastest way to do this ...
@@ -999,806 +1768,6 @@ function addRowsToIndex(rows, index, indexField){
   return index;
 }
 
-function ascending(a, b) {
-  return a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN;
-}
-
-function bisector(f) {
-  let delta = f;
-  let compare = f;
-
-  if (f.length === 1) {
-    delta = (d, x) => f(d) - x;
-    compare = ascendingComparator(f);
-  }
-
-  function left(a, x, lo, hi) {
-    if (lo == null) lo = 0;
-    if (hi == null) hi = a.length;
-    while (lo < hi) {
-      const mid = (lo + hi) >>> 1;
-      if (compare(a[mid], x) < 0) lo = mid + 1;
-      else hi = mid;
-    }
-    return lo;
-  }
-
-  function right(a, x, lo, hi) {
-    if (lo == null) lo = 0;
-    if (hi == null) hi = a.length;
-    while (lo < hi) {
-      const mid = (lo + hi) >>> 1;
-      if (compare(a[mid], x) > 0) hi = mid;
-      else lo = mid + 1;
-    }
-    return lo;
-  }
-
-  function center(a, x, lo, hi) {
-    if (lo == null) lo = 0;
-    if (hi == null) hi = a.length;
-    const i = left(a, x, lo, hi - 1);
-    return i > lo && delta(a[i - 1], x) > -delta(a[i], x) ? i - 1 : i;
-  }
-
-  return {left, center, right};
-}
-
-function ascendingComparator(f) {
-  return (d, x) => ascending(f(d), x);
-}
-
-function number(x) {
-  return x === null ? NaN : +x;
-}
-
-const ascendingBisect = bisector(ascending);
-const bisectRight = ascendingBisect.right;
-bisector(number).center;
-
-function count(values, valueof) {
-  let count = 0;
-  if (valueof === undefined) {
-    for (let value of values) {
-      if (value != null && (value = +value) >= value) {
-        ++count;
-      }
-    }
-  } else {
-    let index = -1;
-    for (let value of values) {
-      if ((value = valueof(value, ++index, values)) != null && (value = +value) >= value) {
-        ++count;
-      }
-    }
-  }
-  return count;
-}
-
-function extent(values, valueof) {
-  let min;
-  let max;
-  if (valueof === undefined) {
-    for (const value of values) {
-      if (value != null) {
-        if (min === undefined) {
-          if (value >= value) min = max = value;
-        } else {
-          if (min > value) min = value;
-          if (max < value) max = value;
-        }
-      }
-    }
-  } else {
-    let index = -1;
-    for (let value of values) {
-      if ((value = valueof(value, ++index, values)) != null) {
-        if (min === undefined) {
-          if (value >= value) min = max = value;
-        } else {
-          if (min > value) min = value;
-          if (max < value) max = value;
-        }
-      }
-    }
-  }
-  return [min, max];
-}
-
-function identity(x) {
-  return x;
-}
-
-var array = Array.prototype;
-
-var slice = array.slice;
-
-function constant(x) {
-  return function() {
-    return x;
-  };
-}
-
-var e10 = Math.sqrt(50),
-    e5 = Math.sqrt(10),
-    e2 = Math.sqrt(2);
-
-function ticks(start, stop, count) {
-  var reverse,
-      i = -1,
-      n,
-      ticks,
-      step;
-
-  stop = +stop, start = +start, count = +count;
-  if (start === stop && count > 0) return [start];
-  if (reverse = stop < start) n = start, start = stop, stop = n;
-  if ((step = tickIncrement(start, stop, count)) === 0 || !isFinite(step)) return [];
-
-  if (step > 0) {
-    let r0 = Math.round(start / step), r1 = Math.round(stop / step);
-    if (r0 * step < start) ++r0;
-    if (r1 * step > stop) --r1;
-    ticks = new Array(n = r1 - r0 + 1);
-    while (++i < n) ticks[i] = (r0 + i) * step;
-  } else {
-    step = -step;
-    let r0 = Math.round(start * step), r1 = Math.round(stop * step);
-    if (r0 / step < start) ++r0;
-    if (r1 / step > stop) --r1;
-    ticks = new Array(n = r1 - r0 + 1);
-    while (++i < n) ticks[i] = (r0 + i) / step;
-  }
-
-  if (reverse) ticks.reverse();
-
-  return ticks;
-}
-
-function tickIncrement(start, stop, count) {
-  var step = (stop - start) / Math.max(0, count),
-      power = Math.floor(Math.log(step) / Math.LN10),
-      error = step / Math.pow(10, power);
-  return power >= 0
-      ? (error >= e10 ? 10 : error >= e5 ? 5 : error >= e2 ? 2 : 1) * Math.pow(10, power)
-      : -Math.pow(10, -power) / (error >= e10 ? 10 : error >= e5 ? 5 : error >= e2 ? 2 : 1);
-}
-
-function nice(start, stop, count) {
-  let prestep;
-  while (true) {
-    const step = tickIncrement(start, stop, count);
-    if (step === prestep || step === 0 || !isFinite(step)) {
-      return [start, stop];
-    } else if (step > 0) {
-      start = Math.floor(start / step) * step;
-      stop = Math.ceil(stop / step) * step;
-    } else if (step < 0) {
-      start = Math.ceil(start * step) / step;
-      stop = Math.floor(stop * step) / step;
-    }
-    prestep = step;
-  }
-}
-
-function sturges(values) {
-  return Math.ceil(Math.log(count(values)) / Math.LN2) + 1;
-}
-
-function bin() {
-  var value = identity,
-      domain = extent,
-      threshold = sturges;
-
-  function histogram(data) {
-    if (!Array.isArray(data)) data = Array.from(data);
-
-    var i,
-        n = data.length,
-        x,
-        values = new Array(n);
-
-    for (i = 0; i < n; ++i) {
-      values[i] = value(data[i], i, data);
-    }
-
-    var xz = domain(values),
-        x0 = xz[0],
-        x1 = xz[1],
-        tz = threshold(values, x0, x1);
-
-    // Convert number of thresholds into uniform thresholds, and nice the
-    // default domain accordingly.
-    if (!Array.isArray(tz)) {
-      const max = x1, tn = +tz;
-      if (domain === extent) [x0, x1] = nice(x0, x1, tn);
-      tz = ticks(x0, x1, tn);
-
-      // If the last threshold is coincident with the domain’s upper bound, the
-      // last bin will be zero-width. If the default domain is used, and this
-      // last threshold is coincident with the maximum input value, we can
-      // extend the niced upper bound by one tick to ensure uniform bin widths;
-      // otherwise, we simply remove the last threshold. Note that we don’t
-      // coerce values or the domain to numbers, and thus must be careful to
-      // compare order (>=) rather than strict equality (===)!
-      if (tz[tz.length - 1] >= x1) {
-        if (max >= x1 && domain === extent) {
-          const step = tickIncrement(x0, x1, tn);
-          if (isFinite(step)) {
-            if (step > 0) {
-              x1 = (Math.floor(x1 / step) + 1) * step;
-            } else if (step < 0) {
-              x1 = (Math.ceil(x1 * -step) + 1) / -step;
-            }
-          }
-        } else {
-          tz.pop();
-        }
-      }
-    }
-
-    // Remove any thresholds outside the domain.
-    var m = tz.length;
-    while (tz[0] <= x0) tz.shift(), --m;
-    while (tz[m - 1] > x1) tz.pop(), --m;
-
-    var bins = new Array(m + 1),
-        bin;
-
-    // Initialize bins.
-    for (i = 0; i <= m; ++i) {
-      bin = bins[i] = [];
-      bin.x0 = i > 0 ? tz[i - 1] : x0;
-      bin.x1 = i < m ? tz[i] : x1;
-    }
-
-    // Assign data to bins by value, ignoring any outside the domain.
-    for (i = 0; i < n; ++i) {
-      x = values[i];
-      if (x0 <= x && x <= x1) {
-        bins[bisectRight(tz, x, 0, m)].push(data[i]);
-      }
-    }
-
-    return bins;
-  }
-
-  histogram.value = function(_) {
-    return arguments.length ? (value = typeof _ === "function" ? _ : constant(_), histogram) : value;
-  };
-
-  histogram.domain = function(_) {
-    return arguments.length ? (domain = typeof _ === "function" ? _ : constant([_[0], _[1]]), histogram) : domain;
-  };
-
-  histogram.thresholds = function(_) {
-    return arguments.length ? (threshold = typeof _ === "function" ? _ : Array.isArray(_) ? constant(slice.call(_)) : constant(_), histogram) : threshold;
-  };
-
-  return histogram;
-}
-
-/*global fetch */
-
-const defaultUpdateConfig = {
-    applyUpdates: false,
-    applyInserts: false,
-    interval: 500
-};
-
-function buildColumnMap(columns){
-    if (columns){
-        const map = {IDX: 0, KEY: 1};
-        for (let i=0;i<columns.length;i++){
-            map[columns[i].name] = i+2;
-        }
-        return map;
-    } else {
-        return null;
-    }
-  }
-
-class Table$1 extends EventEmitter {
-
-    constructor(config){
-        super();
-        const {name, columns=null, primaryKey, dataPath, data, updates = {}} = config;
-        this.name = name;
-        this.primaryKey = primaryKey;
-        this.columns = columns;
-        this.keys = {};
-        this.index = {};
-        this.indices = [];
-        this.rows = [];
-        this.updateConfig = {
-            ...defaultUpdateConfig,
-            ...updates
-        };
-        this.inputColumnMap = undefined;
-        this.columnMap = buildColumnMap(columns);
-        this.columnCount = 0;
-        this.status = null;
-
-        if (data){
-            this.load(data);
-        } else if (dataPath){
-            this.fetchData(dataPath);
-        }
-
-        this.installDataGenerators(config);
-    }
-
-    update(rowIdx, ...updates){
-        const results = [];
-        let row = this.rows[rowIdx];
-        for (let i=0;i<updates.length;i+=2){
-            const colIdx = updates[i];
-            const value = updates[i+1];
-            results.push(colIdx, row[colIdx], value);
-            row[colIdx] = value;
-        }
-        this.emit('rowUpdated', rowIdx, results);
-    }
-
-    bulkUpdate(updates, doNotPublish){
-        const results = [];
-        for (let rowUpdate of updates){
-            const [idx] = rowUpdate;
-            const row = this.rows[idx];
-            const rowResult = [idx];
-            for (let i=1;i<rowUpdate.length;i+=2){
-                const colIdx = rowUpdate[i];
-                const value = rowUpdate[i+1];
-                rowResult.push(colIdx, row[colIdx], value);
-                row[colIdx] = value;
-            }
-            results.push(rowResult);
-        }
-        this.emit('rowsUpdated', results, doNotPublish);
-    }
-
-    // Don't think this is worth the overhead
-    // bulkUpdate(updates){
-        // const map = new Map();
-    // const results = [];
-    // let rowResult;
-    // for (let rowUpdate of updates){
-    //     const [idx] = rowUpdate;
-    //     const row = this.rows[idx];
-
-    //     if (map.has(idx)){
-    //         rowResult = map.get(idx);
-    //     } else {
-    //         results.push(rowResult = [idx]);
-    //         map.set(idx, rowResult)
-    //     }
-
-    //     for (let i=1;i<rowUpdate.length;i+=2){
-    //         const colIdx = rowUpdate[i];
-    //         const value = rowUpdate[i+1];
-    //         const pos = rowResult.indexOf(colIdx);
-    //         if (pos === -1 || (pos-1)%3){ // don't mistake a value for a column Index
-    //             rowResult.push(colIdx, row[colIdx], value);
-    //         } else {
-    //             // updates are in sequence so later update for same column replaces earlier value
-    //             rowResult.splice(pos+1, 2, row[colIdx], value);
-    //         }
-    //         row[colIdx] = value;
-    //     }
-    // }
-    // console.log(results)
-    // this.emit('rowsUpdated', results);
-    // }
-
-    insert(data){
-        let columnnameList = this.columns ? this.columns.map(c => c.name): null;
-        const idx = this.rows.length;
-        let row = this.rowFromData(idx, data, columnnameList);
-        this.rows.push(row);
-        this.emit('rowInserted', idx, row);
-    }
-
-    remove(key){
-        if (this.keys[key]){
-            const index = this.indices[key];
-            delete this.keys[key];
-            delete this.indices[key];
-            this.rows.splice(index,1);
-
-            for (let k in this.indices){
-                if (this.indices[k] > index){
-                    this.indices[k] -= 1;
-                }
-            }
-
-            this.emit('rowRemoved', this.name, key);
-
-        }
-    }
-
-    clear(){
-
-    }
-
-    toString(){
-        const out = ['\n' + this.name];
-        out.splice.apply(out, [1,0].concat(this.rows.map(function(row){return row.toString();})));
-        return out.join('\n');
-    }
-
-    async fetchData(url){
-        fetch(url,{
-
-        })
-            .then(data => data.json())
-            .then(json => {
-                console.log(`Table.loadData: got ${json.length} rows`);
-                this.load(json);
-            })
-            .catch(err => {
-                console.error(err);
-            });
-
-    }
-
-    load(data){
-        let columnnameList = this.columns ? this.columns.map(c => c.name): null;
-        const rows = [];
-        for (let i=0;i<data.length;i++){
-            let row = this.rowFromData(i, data[i], columnnameList);
-            rows.push(row);
-        }
-        this.rows = rows;
-
-        if (this.columns === null){
-            this.columns = columnsFromColumnMap(this.inputColumnMap);
-            this.columnMap = buildColumnMap(this.columns);
-        }
-        this.status = 'ready';
-        this.emit('ready');
-        if (this.updateConfig && this.updateConfig.applyUpdates !== false){
-            setTimeout(() => {
-                this.applyUpdates();
-            },1000);
-        }
-        // move this
-        if (this.updateConfig && this.updateConfig.applyInserts !== false){
-            setTimeout(() => {
-                this.applyInserts();
-            },10000);
-        }
-    }
-
-    // Build a row [idx, primaryKey, ...data values]
-    rowFromData(idx, data, columnnameList){
-        // 2 metadata items for each row, the idx and unique key
-        const {index, primaryKey=null, columnMap: map} = this;
-
-        if (Array.isArray(data)){
-            const key = data[map[this.primaryKey] - 2];
-            index[key] = idx;
-            return [idx, key, ...data];
-        } else {
-            // This allows us to load data from objects as rows, without predefined columns, where
-            // not every row may have every column. How would we handle primary key ?
-            const columnMap = map || (this.columnMap = {IDX:0, KEY:1});
-            const colnames = columnnameList || Object.getOwnPropertyNames(data);
-            // why start with idx in 0 ?
-            const row = [idx];
-            let colIdx;
-
-            for (let i=0; i<colnames.length; i++){
-                const name = colnames[i];
-                const value = data[name];
-                if ((colIdx = columnMap[name]) === undefined){
-                    colIdx = columnMap[name] = 2 + this.columnCount++;
-                }
-                row[colIdx] = value;
-                // If we don't know the primary key, assume it is the first column for now
-                if ((name === primaryKey) || (primaryKey === null && i === 0)){
-                    index[value] = idx;
-                    row[map.KEY] = value;
-                }
-            }
-            return row;
-        }
-    }
-
-    //TODO move all these methods into an external helper
-    applyInserts(){
-
-        const idx = this.rows.length;
-        const newRow = this.createRow(idx);
-        if (newRow){
-            this.insert(newRow);
-        } else {
-            console.log(`createRow did not return a new row`);
-        }
-
-        setTimeout(() => this.applyInserts(),this.updateConfig.insertInterval | 100);
-
-    }
-
-    applyUpdates(){
-        const {rows, columnMap} = this;
-        // const count = Math.round(rows.length / 50);
-        const count = 100;
-
-        for (let i=0; i<count; i++){
-            const rowIdx = getRandomInt(rows.length - 1);
-            const update = this.updateRow(rowIdx, rows[rowIdx], columnMap);
-            if (update){
-                this.update(rowIdx, ...update);
-            }
-        }
-
-        setTimeout(() => this.applyUpdates(),this.updateConfig.interval);
-
-    }
-
-    createRow(idx){
-        console.warn(`createRow ${idx} must be implemented as a plugin`);
-        return null;
-    }
-
-    updateRow(idx, row, columnMap){
-        return null;
-    }
-
-    async installDataGenerators(config){
-        //console.warn(`installDataGenerators must be implemented by a more specific subclass`);
-    }
-
-}
-
-function getRandomInt(max) {
-    return Math.floor(Math.random() * Math.floor(max));
-}
-
-function columnsFromColumnMap(columnMap){
-
-    const columnNames = Object.getOwnPropertyNames(columnMap);
-
-    return columnNames
-        .map(name => ({name, key: columnMap[name]}))
-        .sort(byKey$1)
-        .map(({name}) => ({name}));
-
-}
-
-function byKey$1(col1, col2){
-    return col1.key - col2.key;
-}
-
-const CHECKBOX = 'checkbox';
-const SINGLE_ROW = 'single-row';
-const MULTIPLE_ROW = 'multiple-row';
-
-const SelectionModelType = {
-  Checkbox: CHECKBOX,
-  SingleRow: SINGLE_ROW,
-  MultipleRow: MULTIPLE_ROW
-};
-
-const {Checkbox, SingleRow, MultipleRow} = SelectionModelType;
-
-const EMPTY$1 = [];
-
-class SelectionModel {
-
-    constructor(selectionModelType=MultipleRow){
-      this.modelType = selectionModelType;
-    }
-
-    select({rows:selection, lastTouchIdx}, idx, rangeSelect, keepExistingSelection){
-        
-        let selected, deselected;
-
-        if (this.modelType === SingleRow){
-            [selection, selected, deselected] = this.handleRegularSelection(selection, idx);
-            lastTouchIdx = idx;
-        } else if (rangeSelect){
-            [selection, selected, deselected] = this.handleRangeSelection(selection, lastTouchIdx, idx);
-        } else if (keepExistingSelection || this.modelType === Checkbox){
-            [selection, selected, deselected] = this.handleIncrementalSelection(selection, idx);
-            lastTouchIdx = idx;
-        } else {
-            [selection, selected, deselected] = this.handleRegularSelection(selection, idx);
-            lastTouchIdx = idx;
-        }
-
-        return {
-          focusedIdx: idx,
-          lastTouchIdx,
-          rows: selection,
-          selected,
-          deselected
-        };
-
-    }
-
-    handleRegularSelection(selected, idx){
-        const pos = selected.indexOf(idx);
-        if (pos === -1){
-            const selection = [idx];
-            return [selection, selection, selected];
-        } else if (selected.length === 1){
-            return [EMPTY$1, EMPTY$1, selected];
-        } else {
-          return [EMPTY$1, EMPTY$1, remove(selected,idx)];
-        }
-    }
-
-    handleIncrementalSelection(selected, idx){
-        const pos = selected.indexOf(idx);
-        const len = selected.length;
-        const selection = [idx];
-
-        if (pos === -1){
-          if (len === 0){
-              return [selection, selection,EMPTY$1];
-            } else {
-                return [insert(selected,idx), selection, EMPTY$1];
-            }
-        } else {
-            if (len === 1){
-                return [EMPTY$1, EMPTY$1, selected];
-            } else {
-                return [remove(selected,idx), EMPTY$1, selection];
-            }
-        }		
-    }
-
-    handleRangeSelection(selected, lastTouchIdx, idx){
-
-        const pos = selected.indexOf(idx);
-        const len = selected.length;
-
-        if (pos === -1){
-
-            if (len === 0){
-                const selection = makeRange(0,idx);
-                return [selection, selection, EMPTY$1];
-            } else if (len === 1){
-                const selection = makeRange(selected[0],idx);
-                selected = selected[0] < idx
-                  ? selection.slice(1)
-                  : selection.slice(0,-1);
-                return [selection, selected, EMPTY$1];
-            } else {
-                const selection = applyRange(selected,lastTouchIdx,idx);
-                return [selection, selection.filter(i => !selected.includes(i)), EMPTY$1];
-            }
-        }
-    }
-
-}
-function applyRange(arr, lo, hi){
-
-    if (lo > hi) {[lo, hi] = [hi, lo];}
-
-    const ranges = getRanges(arr);
-    const newRange = new Range(lo,hi);
-    let newRangeAdded = false;
-    const ret = [];
-
-    for (let i=0;i<ranges.length;i++){
-        const range = ranges[i];
-
-        if (!range.overlaps(newRange)){
-            if (range.start < newRange.start){
-                for (let idx=range.start;idx<=range.end;idx++){
-                    ret.push(idx);
-                }
-            } else {
-                for (let idx=newRange.start;idx<=newRange.end;idx++){
-                    ret.push(idx);
-                }
-                newRangeAdded = true;
-                for (let idx=range.start;idx<=range.end;idx++){
-                    ret.push(idx);
-                }
-            }
-        } else if (!newRangeAdded){
-            for (let idx=newRange.start;idx<=newRange.end;idx++){
-                ret.push(idx);
-            }
-            newRangeAdded = true;
-        }
-    }
-
-    if (!newRangeAdded){
-        for (let idx=newRange.start;idx<=newRange.end;idx++){
-            ret.push(idx);
-        }
-    }
-
-    return ret;
-}
-
-function getRanges(arr){
-
-    const ranges = [];
-    let range;
-
-    for (let i=0;i<arr.length;i++){
-        if (range && range.touches(arr[i])){
-            range.extend(arr[i]);
-        } else {
-            ranges.push(range = new Range(arr[i]));
-        }
-    }
-
-    return ranges;
-
-}
-
-class Range {
-
-    constructor(start, end=start){
-        this.start = start;
-        this.end = end;
-    }
-
-    extend(idx){
-        if (idx >= this.start && idx > this.end){
-            this.end = idx;
-        }
-    }
-
-    touches(idx){
-        return this.end === idx-1;
-    }
-
-    overlaps(that){
-        return !(this.end < that.start || this.start > that.end);
-    }
-
-    contains(idx){
-        return this.start <= idx && this.end >= idx;
-    }
-
-    toString(){
-        return `[${this.start}:${this.end}]`;
-    }
-}
-
-function makeRange(lo, hi){
-    if (lo > hi) {[lo, hi] = [hi, lo];}
-
-    const range = [];
-    for (let idx=lo;idx<=hi;idx++){
-        range.push(idx);
-    }
-    return range;
-}
-
-function remove(arr, idx){
-    const ret = [];
-    for (let i=0;i<arr.length;i++){
-        if (idx !== arr[i]){
-            ret.push(arr[i]);
-        }
-    }
-    return ret;
-}
-
-function insert(arr, idx){
-    const ret = [];
-    for (let i=0;i<arr.length;i++){
-        if (idx !== null && idx < arr[i]){
-            ret.push(idx);
-            idx = null;
-        }
-        ret.push(arr[i]);
-    }
-    if (idx !== null){
-        ret.push(idx);
-    }
-    return ret;
-
-}
-
 function sortableFilterSet(filterSet){
     if (filterSet.length === 0){
         return filterSet;
@@ -1978,6 +1947,23 @@ function sortPosition(rows, sorter, row, positionWithinRange = 'last-available')
 
 }
 
+const {
+  IDX: IDX$1,
+  RENDER_IDX,
+  IS_LEAF,
+  IS_EXPANDED: IS_EXPANDED$1,
+  DEPTH: DEPTH$1,
+  COUNT,
+  KEY,
+  SELECTED: SELECTED$1,
+  PARENT_IDX,
+  IDX_POINTER,
+  // Don't think we have these any more
+  FILTER_COUNT,
+  NEXT_FILTER_IDX,
+  count: metadataOffset
+} = metadataKeys;
+
 const DEFAULT_OPTIONS = {
     startIdx: 0,
     rootIdx: null,
@@ -2031,19 +2017,19 @@ class SimpleTracker {
             }
         }
     }
-    
+
     hasParentPos(level){
         return this.levels[level+1] && this.levels[level+1].pos !== null
     }
-    
+
     parentPos(level){
         return this.levels[level+1].pos
     }
-    
+
     hasPreviousPos(level){
         return this.levels[level] && this.levels[level].pPos !== null
     }
-    
+
     previousPos(level){
         return this.levels[level].pPos;
     }
@@ -2142,29 +2128,28 @@ function groupRows(rows, sortSet, columns, columnMap, groupby, options = DEFAULT
     const groupedLeafRows = groupLeafRows(sortSet, rows, groupby, startIdx, length);
     fillNavSetsFromGroups(groupedLeafRows, sortSet, startIdx, filterSet, filterIdx, filterLength);
 
-    const levels = groupby.length;
-    const currentGroups = Array(levels).fill(null);
-    const { IDX, DEPTH, FILTER_COUNT, NEXT_FILTER_IDX, count: metadataOffset } = metadataKeys;
+    const groupCount = groupby.length;
+    const currentGroups = Array(groupCount).fill(null);
     let parentIdx = rootIdx;
     let leafCount = 0;
     for (let i = startIdx, len=startIdx+length; i < len; i++){
         const rowIdx = sortSet[i];
         const row = rows[rowIdx];
 
-        for (let level = 0; level < levels; level++) {
+        for (let level = 0; level < groupCount; level++) {
             const [columnIdx] = groupby[level];
             const currentGroup = currentGroups[level];
             const groupValue = row[columnIdx];
             // as soon as we identify a group change, each group at that level and below
-            // is then aggregated and new group(s) initiated. 
+            // is then aggregated and new group(s) initiated.
             // TODO how do we map from table idx (with 2 x metadata)
             if (currentGroup === null || currentGroup[metadataOffset + columnIdx - 2/* !!!!!!! */] !== groupValue) {
                 if (currentGroup !== null) {
                     // as soon as we know we're regrouping, aggregate the open groups, in reverse order
-                    for (let ii = levels - 1; ii >= level; ii--) {
+                    for (let ii = groupCount - 1; ii >= level; ii--) {
                         const group = currentGroups[ii];
                         aggregate(group, groups, sortSet, rows, aggregations, leafCount, filter);
-                        if (filterSet && Math.abs(group[DEPTH]) === 1 && group[FILTER_COUNT] > 0){
+                        if (filterSet && Math.abs(group[DEPTH$1]) === 1 && group[FILTER_COUNT] > 0){
                             group[NEXT_FILTER_IDX] = filterIdx;
                             filterIdx += group[FILTER_COUNT];
                         }
@@ -2172,12 +2157,12 @@ function groupRows(rows, sortSet, columns, columnMap, groupby, options = DEFAULT
 
                     leafCount = 0;
                 }
-                for (let ii = level; ii < levels; ii++) {
+                for (let ii = level; ii < groupCount; ii++) {
                     groupIdx += 1;
-                    parentIdx = ii === 0 ? rootIdx : currentGroups[ii - 1][IDX];
-                    const depth = levels - ii;
+                    parentIdx = ii === 0 ? rootIdx : currentGroups[ii - 1][IDX$1];
+                    const depth = ii + 1;
                     // for first-level groups, row pointer is a pointer into the sortSet
-                    const childIdx = depth === 1
+                    const childIdx = depth === groupCount
                         ? i
                         : groupIdx+1;
 
@@ -2191,11 +2176,11 @@ function groupRows(rows, sortSet, columns, columnMap, groupby, options = DEFAULT
         leafCount += 1;
     }
 
-    for (let i = levels - 1; i >= 0; i--) {
+    for (let i = groupCount - 1; i >= 0; i--) {
         if (currentGroups[i] !== null){
             const group = currentGroups[i];
             aggregate(group, groups, sortSet, rows, aggregations, leafCount, filter);
-            if (filterSet && Math.abs(group[DEPTH]) === 1 && group[FILTER_COUNT] > 0){
+            if (filterSet && Math.abs(group[DEPTH$1]) === 1 && group[FILTER_COUNT] > 0){
                 group[NEXT_FILTER_IDX] = filterIdx;
             }
         }
@@ -2204,7 +2189,7 @@ function groupRows(rows, sortSet, columns, columnMap, groupby, options = DEFAULT
 
 }
 
-// Checks very specifically for new cols added at end 
+// Checks very specifically for new cols added at end
 /** @type {import('./group-utils').groupbyExtendsExistingGroupby} */
 function groupbyExtendsExistingGroupby(groupBy, existingGroupBy) {
     return (groupBy.length > existingGroupBy.length &&
@@ -2296,25 +2281,23 @@ function getGroupStateChanges(groupState, existingGroupState = null, baseKey = '
 
 /** @type {import('./group-utils').allGroupsExpanded} */
 function allGroupsExpanded(groups, group ){
-    const {DEPTH, PARENT_IDX} = metadataKeys;
     do {
-        if (group[DEPTH] < 0){
+        if (group[DEPTH$1] < 0){
             return false;
         }
         group = groups[group[PARENT_IDX]];
 
     } while (group)
-    
+
     return true;
 }
 
 /** @type {import('./group-utils').adjustGroupIndices} */
 function adjustGroupIndices(groups, grpIdx, adjustment=1){
-    const {IDX, DEPTH, IDX_POINTER, PARENT_IDX} = metadataKeys;
     for (let i=0;i<groups.length;i++){
-        if (groups[i][IDX] >= grpIdx){
-            groups[i][IDX] += adjustment;
-            if (Math.abs(groups[i][DEPTH]) > 1){
+        if (groups[i][IDX$1] >= grpIdx){
+            groups[i][IDX$1] += adjustment;
+            if (Math.abs(groups[i][DEPTH$1]) > 1){
                 groups[i][IDX_POINTER] += adjustment;
             }
             let parentIdx = groups[i][PARENT_IDX];
@@ -2327,17 +2310,16 @@ function adjustGroupIndices(groups, grpIdx, adjustment=1){
 
 /** @type {import('./group-utils').adjustLeafIdxPointers} */
 function adjustLeafIdxPointers(groups, insertionPoint, adjustment=1){
-    const {DEPTH, IDX_POINTER} = metadataKeys;
     for (let i=0;i<groups.length;i++){
-        if (Math.abs(groups[i][DEPTH]) === 1 && groups[i][IDX_POINTER] >= insertionPoint){
+        if (Math.abs(groups[i][DEPTH$1]) === 1 && groups[i][IDX_POINTER] >= insertionPoint){
             groups[i][IDX_POINTER] += adjustment;
         }
     }
 }
 
-/** 
+/**
  * Find the groups that will be affectes by an inserted row.
- * 
+ *
  * @type {import('./group-utils').findGroupPositions} */
 function findGroupPositions(groups, groupby, dataRow) {
 
@@ -2351,7 +2333,7 @@ function findGroupPositions(groups, groupby, dataRow) {
         if (group === undefined) {
             break;
         }
-        // position is confirmed if all groupCol values in this comparison match values of row 
+        // position is confirmed if all groupCol values in this comparison match values of row
         // and other groupCol values  are null
         for (let j = 0; j < groupby.length; j++) {
             const colIdx = groupby[j][0];
@@ -2376,7 +2358,7 @@ function findGroupPositions(groups, groupby, dataRow) {
 const expandRow = (groupCols, row, meta) => {
     const r = row.slice();
     r[meta.IDX] = 0;
-    r[meta.DEPTH] = 0; 
+    r[meta.DEPTH] = 0;
     r[meta.COUNT] = 0;
     r[meta.KEY] = buildGroupKey(groupCols, row);
     r[meta.SELECTED] = 0;
@@ -2390,7 +2372,6 @@ function buildGroupKey(groupby, row){
 
 // Do we have to take columnMap out again ?
 function GroupRow(row, depth, idx, childIdx, parentIdx, groupby, columns, columnMap, baseGroupby = []) {
-    const { IDX, RENDER_IDX, DEPTH, COUNT, KEY, SELECTED, PARENT_IDX, IDX_POINTER, count: metadataOffset } = metadataKeys;
     // The group is a set of metadata values plus data values
     const group = Array(metadataOffset + columns.length);
     const groupIdx = groupby.length - depth;
@@ -2422,15 +2403,17 @@ function GroupRow(row, depth, idx, childIdx, parentIdx, groupby, columns, column
     //TODO build the composite key for the grouprow
     const baseKey = baseGroupby.length > 0
         ? buildKey(baseGroupby) + '/'
-        : '';
+        : '$root/';
     const groupKey = buildKey(groupby.slice(0, groupIdx + 1));
 
-    group[IDX] = idx;
+    group[IDX$1] = idx;
     group[RENDER_IDX] = 0;
-    group[DEPTH] = -depth;
+    group[IS_LEAF] = false;
+    group[IS_EXPANDED$1] = false;
+    group[DEPTH$1] = depth;
     group[COUNT] = 0;
     group[KEY] = baseKey + groupKey;
-    group[SELECTED] = 0;
+    group[SELECTED$1] = 0;
     group[PARENT_IDX] = parentIdx;
     group[IDX_POINTER] = childIdx;
 
@@ -2505,22 +2488,21 @@ function findAggregatedColumns(columns, columnMap, groupby) {
     }, []);
 }
 
-/** 
+/**
  * Called when we clear a filter
- * 
+ *
  * @type {import('./group-utils').aggregateGroup} */
 function aggregateGroup(groups, grpIdx, sortSet, rows, columns, aggregations) {
 
-    const {DEPTH, COUNT} = metadataKeys;
     const groupRow = groups[grpIdx];
-    let depth = groupRow[DEPTH];
+    let depth = groupRow[DEPTH$1];
     let absDepth = Math.abs(depth);
     let count = 0;
     let idx = grpIdx;
 
     // find the last nested group and work back - first build aggregates for level 1 groups,
     // then use those to aggregate to level 2 etc.
-    while (idx < groups.length - 1 && Math.abs(groups[idx+1][DEPTH]) < absDepth){
+    while (idx < groups.length - 1 && Math.abs(groups[idx+1][DEPTH$1]) < absDepth){
         idx += 1;
         count += 1;
     }
@@ -2528,7 +2510,7 @@ function aggregateGroup(groups, grpIdx, sortSet, rows, columns, aggregations) {
     for (let i=grpIdx+count; i >= grpIdx; i--){
         for (let aggIdx = 0; aggIdx < aggregations.length; aggIdx++) {
             const [colIdx] = aggregations[aggIdx];
-            const dataIdx =colIdx +  metadataKeys.count - 2; // <<<<<<<<<<<
+            const dataIdx = colIdx +  metadataOffset - 2; // <<<<<<<<<<<
             groups[i][dataIdx] = 0;
         }
         aggregate(groups[i], groups, sortSet, rows, aggregations, groups[i][COUNT]);
@@ -2537,8 +2519,7 @@ function aggregateGroup(groups, grpIdx, sortSet, rows, columns, aggregations) {
 }
 
 function aggregate(groupRow, groupRows, sortSet, rows, aggregations, leafCount, filter=null) {
-    const {DEPTH, COUNT, FILTER_COUNT, IDX_POINTER, count: metadataOffset} = metadataKeys;
-    let absDepth = Math.abs(groupRow[DEPTH]);
+    let absDepth = Math.abs(groupRow[DEPTH$1]);
     let count = 0;
     let filteredCount = filter === null ? undefined : 0;
 
@@ -2567,7 +2548,7 @@ function aggregate(groupRow, groupRows, sortSet, rows, aggregations, leafCount, 
         const startIdx = groupRows.indexOf(groupRow) + 1;
         for (let i=startIdx;i<groupRows.length;i++){
             const nestedGroupRow = groupRows[i];
-            const nestedRowDepth = nestedGroupRow[DEPTH];
+            const nestedRowDepth = nestedGroupRow[DEPTH$1];
             const nestedRowCount = nestedGroupRow[COUNT];
             const absNestedRowDepth = Math.abs(nestedRowDepth);
             if (absNestedRowDepth >= absDepth){
@@ -2600,9 +2581,9 @@ function aggregate(groupRow, groupRows, sortSet, rows, aggregations, leafCount, 
 
 function leafRow([idx,key, ...data]){
     // TODO find fastest way to do this
-    const row = Array(metadataKeys.count).fill(0).concat(data);
-    row[metadataKeys.IDX] = idx;
-    row[metadataKeys.KEY] = key;
+    const row = Array(metadataOffset).fill(0).concat(data);
+    row[IDX$1] = idx;
+    row[KEY] = key;
     return row;
 }
 
@@ -2614,7 +2595,7 @@ const NULL_RANGE = {lo: 0,hi: 0};
 //
 // |----------------------------------| _range
 //  ++++++|----------------------------------| prevRange
-//  
+//
 //
 //
 //  |------------------------------------| _range
@@ -2628,16 +2609,16 @@ function getDeltaRange(oldRange, newRange){
 
     if (newLo >= oldLo && newHi <= oldHi){
         // reduced range, no delta
-        return {lo: newHi, hi: newHi};
+        return {from: newHi, to: newHi};
 
     } else if (newLo >= oldHi || newHi < oldLo){
-        return {lo: newLo, hi: newHi};
+        return {from: newLo, to: newHi};
     } else if (newLo === oldLo && newHi === oldHi){
-        return {lo: oldHi,hi: oldHi};
+        return {from: oldHi, to: oldHi};
     } else {
         return {
-            lo: newLo < oldLo ? newLo: oldHi,
-            hi: newHi > oldHi ? newHi: oldLo
+            from: newLo < oldLo ? newLo: oldHi,
+            to: newHi > oldHi ? newHi: oldLo
         };
     }
 }
@@ -2722,7 +2703,7 @@ class BaseRowSet {
         this.type = undefined;
         this.index = undefined;
         /**
-         * data IDX of selected rows 
+         * data IDX of selected rows
          */
         this.selectedRowsIDX = [];
         this.selectionModel = this.createSelectionModel();
@@ -2753,7 +2734,7 @@ class BaseRowSet {
     }
 
     get stats(){
-        // TODO cache the stats and invalidate them in the event of any op that might change them 
+        // TODO cache the stats and invalidate them in the event of any op that might change them
         const {totalRowCount, filteredRowCount, selected, selectedRowsIDX} = this;
         const totalSelected = selectedRowsIDX.length;
         const filteredSelected = selected.rows.length;
@@ -2768,7 +2749,7 @@ class BaseRowSet {
 
     get totalRowCount(){
         return this.data.length;
-    } 
+    }
 
     get filteredRowCount(){
         return this.filterSet === null
@@ -2783,8 +2764,8 @@ class BaseRowSet {
 
     setRange(range=this.range, useDelta = true, includeStats=false) {
 
-        const { lo, hi } = useDelta ? getDeltaRange(this.range, range) : getFullRange(range);
-        const resultset = this.slice(lo, hi);
+        const { from, to } = useDelta ? getDeltaRange(this.range, range) : getFullRange(range);
+        const resultset = this.slice(from, to);
         this.range = range;
         const length = this.size;
         return {
@@ -2820,7 +2801,7 @@ class BaseRowSet {
             rangeSelect,
             keepExistingSelection
         );
-        
+
         this.selected = selectionState;
 
         if (filterSet){
@@ -2834,7 +2815,7 @@ class BaseRowSet {
         } else {
             const idxToIDX = idx => sortSet[idx][0];
             this.selectedRowsIDX = this.selected.rows.map(idxToIDX);
-        } 
+        }
 
         const updates = [];
         for (let i=0;i<selected.length;i++){
@@ -2849,7 +2830,7 @@ class BaseRowSet {
                 updates.push([idx+offset,SELECTED, 0]);
             }
         }
-        
+
         return updates;
     }
 
@@ -2858,7 +2839,7 @@ class BaseRowSet {
         const { SELECTED } = metadataKeys;
         const previouslySelectedRows = [...this.selected.rows];
         if (filterSet){
-            // selection of a filtered subset is added to existing selection 
+            // selection of a filtered subset is added to existing selection
             for (let i =0; i< filterSet.length; i++){
                 const rowIDX = filterSet[i];
                 if (!selectedRowsIDX.includes(rowIDX)){
@@ -2872,16 +2853,16 @@ class BaseRowSet {
             // need to replace this with a structure that tracks ranges
             this.selected = {rows: arrayOfIndices(data.length), focusedIdx: -1, lastTouchIdx: -1};
             this.selectedRowsIDX = [...this.selected.rows];
-        }   
+        }
 
         const updates = [];
         const max = Math.min(hi, (filterSet || data).length);
         for (let i=lo;i<max;i++){
-            if (this.selected.rows.includes(i) && !previouslySelectedRows.includes(i)){ 
+            if (this.selected.rows.includes(i) && !previouslySelectedRows.includes(i)){
                 updates.push([i+offset,SELECTED, 1]);
             }
         }
-        
+
         return updates;
 
     }
@@ -2934,7 +2915,7 @@ class BaseRowSet {
         const data = [];
         const dataRowCount = rows.length;
         const [/*columnFilter*/, otherFilters] = splitFilterOnColumn(currentFilter, column);
-        // this filter for column that we remove will provide our selected values   
+        // this filter for column that we remove will provide our selected values
         let dataRowAllFilters = 0;
 
         if (otherFilters === null) {
@@ -3168,7 +3149,7 @@ class RowSet extends BaseRowSet {
     }
 
     insert(idx, row) {
-        // TODO multi colun sort sort DSC 
+        // TODO multi colun sort sort DSC
         if (this.sortCols === null && this.currentFilter === null) {
             // simplest scenario, row will be at end of sortset ...
             this.sortSet.push([idx, null, null]);
@@ -3283,8 +3264,8 @@ class RowSet extends BaseRowSet {
 // TODO need to retain and return any searchText
 class SetFilterRowSet extends RowSet {
     constructor(table, columns, columnName, dataRowAllFilters, dataRowTotal) {
-        super(table, columns);       
-        this.type = DataTypes.FILTER_DATA; 
+        super(table, columns);
+        this.type = DataTypes.FILTER_DATA;
         this.columnName = columnName;
         this._searchText = null;
         this.dataRowFilter = null;
@@ -3307,7 +3288,7 @@ class SetFilterRowSet extends RowSet {
     clearRange(){
         this.range = {lo:0, hi: 0};
     }
-    
+
     get values() {
         const key = this.table.columnMap['name'];
         return this.filterSet.map(idx => this.data[idx][key])
@@ -3321,8 +3302,8 @@ class SetFilterRowSet extends RowSet {
            const rowIDX = typeof filterEntry === 'number'
              ? filterEntry
              : filterEntry[0];
-           return data[rowIDX][0];  
-           
+           return data[rowIDX][0];
+
         } else {
             return sortSet[idx][1];
         }
@@ -3335,7 +3316,7 @@ class SetFilterRowSet extends RowSet {
         const { data, filterSet, sortSet} = this;
 
         this.dataRowFilter = dataRowFilter;
-        
+
         if (columnFilter){
 
             const fn = functor(columnMap, overrideColName(columnFilter, 'name'));
@@ -3360,14 +3341,14 @@ class SetFilterRowSet extends RowSet {
                 }
 
             }
-          
+
             this.selected = {rows: selectedRows, focusedIdx: -1, lastTouchIdx: -1 };
             this.selectedRowsIDX = selectedRowsIDX;
 
-        
+
         } else {
 
-            this.selectAll();    
+            this.selectAll();
 
         }
 
@@ -3405,11 +3386,12 @@ class BinFilterRowSet extends RowSet {
 
 const RANGE_POS_TUPLE_SIZE = 4;
 const NO_RESULT = [null,null,null];
+const {IS_EXPANDED, DEPTH} = metadataKeys;
 
 const FORWARDS = 0;
 const BACKWARDS = 1;
 
-function GroupIterator(groups, navSet, data, NAV_IDX, NAV_COUNT) {
+function GroupIterator(groups, groupBy, navSet, data, NAV_IDX, NAV_COUNT) {
     let _idx = 0;
     let _grpIdx = null;
     let _rowIdx = null;
@@ -3417,6 +3399,7 @@ function GroupIterator(groups, navSet, data, NAV_IDX, NAV_COUNT) {
     let _range = NULL_RANGE;
     let _range_position_lo = [0, null, null];
     let _range_positions = [];
+    const groupCount = groupBy.length;
 
     return {
         get direction(){ return _direction },
@@ -3489,7 +3472,7 @@ function GroupIterator(groups, navSet, data, NAV_IDX, NAV_COUNT) {
         let i = _range.lo;
         do {
             _direction = FORWARDS;
-            ([row, _grpIdx, _rowIdx] = next(groups, data, _grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT));
+            ([row, _grpIdx, _rowIdx] = next(groups, groupCount, data, _grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT));
             if (row){
                 rows.push(row);
                 _idx += 1;
@@ -3501,7 +3484,7 @@ function GroupIterator(groups, navSet, data, NAV_IDX, NAV_COUNT) {
         if (row){
             _direction = FORWARDS;
             const [grpIdx, rowIdx] = [_grpIdx, _rowIdx];
-            [row, _grpIdx, _rowIdx] = next(groups, data, _grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT);
+            [row, _grpIdx, _rowIdx] = next(groups, groupCount, data, _grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT);
             _idx += 1;
             ([_grpIdx, _rowIdx] = [grpIdx, rowIdx]);
         }
@@ -3513,18 +3496,18 @@ function GroupIterator(groups, navSet, data, NAV_IDX, NAV_COUNT) {
 
     function setRange(range, useDelta=true){
         const rangeDiff = compareRanges(_range, range);
-        const { lo: resultLo, hi: resultHi } = useDelta ? getDeltaRange(_range, range) : getFullRange(range);
+        const { from: resultLo, to: resultHi } = useDelta ? getDeltaRange(_range, range) : getFullRange(range);
         const {IDX} = metadataKeys;
 
         /** @type {import('./group-iterator').RowsIndexTuple} */
         const result = [[], null];
         const [rows] = result;
-        
+
         if (rangeDiff === RangeFlags.NULL){
             _range_position_lo = [0,null,null];
             _range_positions.length = 0;
             return result;
-            
+
         } else if (range.lo === _range.lo && useDelta === false){
             // when we're asked for the same range again, rebuild the range
             ([_idx, _grpIdx, _rowIdx] = _range_position_lo);
@@ -3585,7 +3568,7 @@ function GroupIterator(groups, navSet, data, NAV_IDX, NAV_COUNT) {
                 startIdx = _idx;
                 do {
                     _direction = FORWARDS;
-                    ([row, _grpIdx, _rowIdx] = next(groups, data, _grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT));
+                    ([row, _grpIdx, _rowIdx] = next(groups, groupCount, data, _grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT));
                     if (row){
                         rows.push(row);
                         const absRowIdx = _rowIdx === null ? null : row[IDX];
@@ -3597,7 +3580,7 @@ function GroupIterator(groups, navSet, data, NAV_IDX, NAV_COUNT) {
                 if (row){
                     _direction = FORWARDS;
                     const [grpIdx, rowIdx] = [_grpIdx, _rowIdx];
-                    ([row, _grpIdx, _rowIdx] = next(groups, data ,_grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT));
+                    ([row, _grpIdx, _rowIdx] = next(groups, groupCount, data ,_grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT));
                     ([_grpIdx, _rowIdx] = [grpIdx, rowIdx]);
                 }
 
@@ -3605,7 +3588,7 @@ function GroupIterator(groups, navSet, data, NAV_IDX, NAV_COUNT) {
                 let i = resultHi - 1;
                 do {
                     _direction = BACKWARDS;
-                    ([row, _grpIdx, _rowIdx] = previous(groups, data, _grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT));
+                    ([row, _grpIdx, _rowIdx] = previous(groups, groupCount, data, _grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT));
                     if (row){
                         _idx -= 1;
                         rows.unshift(row);
@@ -3618,7 +3601,7 @@ function GroupIterator(groups, navSet, data, NAV_IDX, NAV_COUNT) {
                 if (row){
                     const [grpIdx, rowIdx] = [_grpIdx, _rowIdx];
                     _direction = BACKWARDS;
-                    [row, _grpIdx, _rowIdx] = previous(groups, data, _grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT);
+                    [row, _grpIdx, _rowIdx] = previous(groups, groupCount, data, _grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT);
                     _range_position_lo = [row ? _idx-1 : 0, _grpIdx, _rowIdx];
                     ([_grpIdx, _rowIdx] = [grpIdx, rowIdx]);
                 } else {
@@ -3652,7 +3635,7 @@ function GroupIterator(groups, navSet, data, NAV_IDX, NAV_COUNT) {
         let row;
 
         do {
-            [row, _grpIdx, _rowIdx] = fn(groups, data, _grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT);
+            [row, _grpIdx, _rowIdx] = fn(groups, groupCount, data, _grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT);
             if (fn === next){
                 _idx += 1;
             } else {
@@ -3672,7 +3655,7 @@ function getAbsRowIdx(group, relRowIdx, navSet, NAV_IDX){
     return navSet[group[NAV_IDX] + relRowIdx];
 }
 
-function next(groups, rows, grpIdx, rowIdx, navSet, NAV_IDX, NAV_COUNT){
+function next(groups, groupCount, rows, grpIdx, rowIdx, navSet, NAV_IDX, NAV_COUNT){
     if (grpIdx === null){
         grpIdx = -1;
         do {
@@ -3690,15 +3673,16 @@ function next(groups, rows, grpIdx, rowIdx, navSet, NAV_IDX, NAV_COUNT){
         return NO_RESULT;
     } else {
         let groupRow = groups[grpIdx];
-        const depth = groupRow[metadataKeys.DEPTH];
+        const {[IS_EXPANDED]:isExpanded, [DEPTH]:depth} = groupRow;
         const count = getCount(groupRow,NAV_COUNT);
         // Note: we're unlikely to be passed the row if row count is zero
-        if (depth === 1 && count !== 0 && (rowIdx === null || rowIdx < count - 1)){
+        // IF first level of grouping
+        if (depth === groupCount && isExpanded && count !== 0 && (rowIdx === null || rowIdx < count - 1)){
             rowIdx = rowIdx === null ? 0 : rowIdx + 1;
             const absRowIdx = getAbsRowIdx(groupRow, rowIdx, navSet, NAV_IDX);
             const row = leafRow(rows[absRowIdx]);
             return [row, grpIdx, rowIdx === null ? 0 : rowIdx];
-        } else if (depth > 0){
+        } else if (isExpanded){
 
             do {
                 grpIdx += 1;
@@ -3711,11 +3695,10 @@ function next(groups, rows, grpIdx, rowIdx, navSet, NAV_IDX, NAV_COUNT){
                 return [groups[grpIdx], grpIdx, null];
             }
         } else {
-            const absDepth = Math.abs(depth);
             do {
                 grpIdx += 1;
             } while (grpIdx < groups.length && (
-                (Math.abs(groups[grpIdx][metadataKeys.DEPTH]) < absDepth) ||
+                (Math.abs(groups[grpIdx][DEPTH]) > depth) ||
                 (getCount(groups[grpIdx],NAV_COUNT) === 0)
             ));
             if (grpIdx >= groups.length){
@@ -3727,8 +3710,8 @@ function next(groups, rows, grpIdx, rowIdx, navSet, NAV_IDX, NAV_COUNT){
     }
 }
 
-function previous(groups, data, grpIdx, rowIdx, navSet, NAV_IDX, NAV_COUNT){
-    if (grpIdx !== null && groups[grpIdx][metadataKeys.DEPTH] === 1 && typeof rowIdx === 'number'){
+function previous(groups, groupCount, data, grpIdx, rowIdx, navSet, NAV_IDX, NAV_COUNT){
+    if (grpIdx !== null && groups[grpIdx][DEPTH] === groupCount && typeof rowIdx === 'number'){
         let lastGroup = groups[grpIdx];
         if (rowIdx === 0){
             return [lastGroup, grpIdx, null];
@@ -3747,7 +3730,7 @@ function previous(groups, data, grpIdx, rowIdx, navSet, NAV_IDX, NAV_COUNT){
             grpIdx -= 1;
         }
         let lastGroup = groups[grpIdx];
-        if (lastGroup[metadataKeys.DEPTH] === 1){
+        if (lastGroup[DEPTH] === groupCount){
             rowIdx = getCount(lastGroup, NAV_COUNT) - 1;
             const absRowIdx = getAbsRowIdx(lastGroup, rowIdx, navSet, NAV_IDX);
             const row = leafRow(data[absRowIdx]);
@@ -3800,7 +3783,7 @@ class GroupRowSet extends BaseRowSet {
 
         const [navSet, IDX, COUNT] = this.selectNavigationSet(false);
         // TODO roll the IDX and COUNT overrides into meta
-        this.iter = GroupIterator(this.groupRows, navSet, this.data, IDX, COUNT);
+        this.iter = GroupIterator(this.groupRows, this.groupBy, navSet, this.data, IDX, COUNT);
 
         if (filter){
             this.filter(filter);
@@ -3873,7 +3856,7 @@ class GroupRowSet extends BaseRowSet {
         this.groupRows = groupRows(rows, this.sortSet, columns, this.table.columnMap, groupCols, {
             groups: this.groupRows, rowParents: this.rowParents
         });
-        this.currentLength = this.countVisibleRows(this.groupRows);
+        this.currentLength = this.countVisibleRows(this.groupRows, this.groupBy);
     }
 
     groupBy(groupby) {
@@ -3882,12 +3865,12 @@ class GroupRowSet extends BaseRowSet {
             this.sortGroupby(groupby);
         } else if (groupbyExtendsExistingGroupby(groupby, this.groupby)) {
             this.extendGroupby(groupby);
-            this.currentLength = this.countVisibleRows(this.groupRows, this.filterSet !== null);
+            this.currentLength = this.countVisibleRows(this.groupRows, this.groupBy, this.filterSet !== null);
         } else if (groupbyReducesExistingGroupby(groupby, this.groupby)) {
             this.reduceGroupby(groupby);
             this.range = NULL_RANGE;
             this.iter.clear();
-            this.currentLength = this.countVisibleRows(this.groupRows, this.filterSet !== null);
+            this.currentLength = this.countVisibleRows(this.groupRows, this.groupBy, this.filterSet !== null);
         } else {
             this.applyGroupby(groupby);
         }
@@ -3904,7 +3887,7 @@ class GroupRowSet extends BaseRowSet {
             const {groupRows} = this;
             if (key === '*') {
                 this.toggleAll(isExpanded);
-                this.currentLength = this.countVisibleRows(groupRows, false);
+                this.currentLength = this.countVisibleRows(groupRows, this.groupBy,false);
             } else {
                 const groupIdx= this.findGroupIdx(key);
                 if (groupIdx !== -1){
@@ -4080,7 +4063,7 @@ class GroupRowSet extends BaseRowSet {
                             aggregations[j][2] += row[colIdx];
                         }
                     }
-                    
+
                     // 2) store aggregates at lowest level of the group hierarchy
                     aggregations.forEach(aggregation => {
                         const [colIdx, type, sum] = aggregation;
@@ -4095,21 +4078,22 @@ class GroupRowSet extends BaseRowSet {
 
                 // update parent counts
                 if (rowCount > 0){
-                    while (groupRow[PARENT_IDX] !== null){
-                        groupRow = groups[groupRow[PARENT_IDX]];
+                  let parentGroupRow = groupRow;
+                    while (parentGroupRow[PARENT_IDX] !== null){
+                        groupRow = groups[parentGroupRow[PARENT_IDX]];
 
                         aggregations.forEach(aggregation => {
                             const [colIdx, type, sum] = aggregation;
                             const dataIdx =colIdx +  metadataKeys.count - 2; // <<<<<<<<<<<
                             if (type === 'sum') {
-                                groupRow[dataIdx] += sum;
+                              parentGroupRow[dataIdx] += sum;
                             } else if (type === 'avg') {
-                                const originalCount = groupRow[FILTER_COUNT];
-                                const originalSum = originalCount * groupRow[dataIdx];
-                                groupRow[dataIdx] = (originalSum + sum) / (originalCount + rowCount);
+                                const originalCount = parentGroupRow[FILTER_COUNT];
+                                const originalSum = originalCount * parentGroupRow[dataIdx];
+                                parentGroupRow[dataIdx] = (originalSum + sum) / (originalCount + rowCount);
                             }
                         });
-                        groupRow[FILTER_COUNT] += rowCount;
+                        parentGroupRow[FILTER_COUNT] += rowCount;
                     }
                 }
 
@@ -4151,7 +4135,7 @@ class GroupRowSet extends BaseRowSet {
             let grpIdx = rowParents[rowIdx];
             // this seems to return 0 an awful lot
             let ii = 0;
-            
+
             // If this column is being aggregated
             if (this.aggregatedColumn[colIdx]){
 
@@ -4199,7 +4183,7 @@ class GroupRowSet extends BaseRowSet {
             // onsole.log(`[GroupRowSet.update] updates for row idx ${idx} ${rangeIdx+offset} ${JSON.stringify(rowUpdates)}`)
             outgoingUpdates.push([lo+rangeIdx+offset, ...rowUpdates]);
         }
-        
+
         return outgoingUpdates;
     }
 
@@ -4232,7 +4216,7 @@ class GroupRowSet extends BaseRowSet {
             if (allGroupsExpanded(groups, groupRow)){
                 this.currentLength += 1;
             }
-            
+
         } else {
             let groupCols = mapSortCriteria(groupby, this.table.columnMap);
             newGroupIdx = sortPosition(groups, sortBy(GROUP_KEY_SORT), expandRow(groupCols, row, metadataKeys), 'last-available');
@@ -4254,7 +4238,7 @@ class GroupRowSet extends BaseRowSet {
             groups.splice.apply(groups,[newGroupIdx,0].concat(nestedGroups));
         }
 
-        // Note: we update the aggregates 
+        // Note: we update the aggregates
         this.updateAggregatedValues(groupPositions, row);
         this.incrementGroupCounts(groupPositions);
 
@@ -4262,7 +4246,7 @@ class GroupRowSet extends BaseRowSet {
         let rangeIdx = allGroupsExist
             ? iterator.getRangeIndexOfRow(newRowIdx)
             : iterator.getRangeIndexOfGroup(newGroupIdx);
-        
+
         if (rangeIdx !== -1){
             // New row is visible within viewport so we will force render all rows
             result = {replace: true};
@@ -4416,7 +4400,7 @@ class GroupRowSet extends BaseRowSet {
     }
 
     // there is a current assumption here that new col(s) are always added at the end of existing cols in the groupBy
-    // Need to think about a new col inserted at start or in between existing cols 
+    // Need to think about a new col inserted at start or in between existing cols
     //TODO we might want to do this on expanded nodes only and repat in a lazy fashion as more nodes are revealed
     extendGroupby(groupby) {
         const groupCols = mapSortCriteria(groupby, this.table.columnMap);
@@ -4547,7 +4531,7 @@ class GroupRowSet extends BaseRowSet {
 
         for (let i=idx; i< idx+count; i++){
             const rowIdx = sortSet[i];
-            rowParents[rowIdx] = newParentGroupIdx; 
+            rowParents[rowIdx] = newParentGroupIdx;
         }
 
     }
@@ -4577,20 +4561,20 @@ class GroupRowSet extends BaseRowSet {
 
     // Note: this assumes no leaf rows visible. Is that always valid ?
     // NOt after removing a groupBy ! Not after a filter
-    countVisibleRows(groupRows, usingFilter=false){
-        const {DEPTH, COUNT, FILTER_COUNT} = metadataKeys;
+    countVisibleRows(groupRows, groupCount, usingFilter=false){
+        const {IS_EXPANDED, DEPTH, COUNT, FILTER_COUNT} = metadataKeys;
         let count = 0;
         for (let i=0, len=groupRows.length;i<len;i++){
             const zeroCount = usingFilter && groupRows[i][FILTER_COUNT] === 0;
             if (!zeroCount){
                 count += 1;
             }
-            const depth = groupRows[i][DEPTH];
-            if (depth < 0 || zeroCount){
-                while (i<len-1 && Math.abs(groupRows[i+1][DEPTH]) < -depth){
+            const {[IS_EXPANDED]:isExpanded, [DEPTH]:depth} = groupRows[i];
+            if (!isExpanded || zeroCount){
+                while (i<len-1 && Math.abs(groupRows[i+1][DEPTH]) > depth){
                     i += 1;
                 }
-            } else if (depth === 1){
+            } else if (depth === groupCount){
                 count += (usingFilter ? groupRows[i][FILTER_COUNT] : groupRows[i][COUNT]);
             }
         }
@@ -5135,6 +5119,60 @@ class Table extends Table$1 {
 
 }
 
+const NO_COLUMNS = [];
+const NO_SORT = {sortDefs: []};
+
+const viewportChanges = (
+  {
+    columns: currentColumns = NO_COLUMNS,
+    filterSpec: currentFilterSpec,
+    groupBy: currentGroupBy=NO_COLUMNS,
+    sort: currentSort=NO_SORT,
+    },
+    {
+      columns: newColumns=NO_COLUMNS,
+      filterSpec: newFilterSpec,
+      groupBy: newGroupBy=NO_COLUMNS,
+      sort: newSort=NO_SORT,
+    }) => {
+
+      const result = {};
+      if (!sameColumns(currentColumns, newColumns)){
+        result.columns = true;
+      }
+
+      if (!sameSort(currentSort, newSort)){
+        result.sort = true;
+      }
+
+      if (!sameColumns(currentGroupBy, newGroupBy)){
+        result.groupBy = true;
+      }
+
+
+      return result;
+};
+
+function sameColumns(currentColumns, newColumns){
+  if (currentColumns.length !== newColumns.length){
+    return false;
+  }
+  if (currentColumns.some(({column,sortType}) => !newColumns.find(colDef =>
+      colDef.column === column && colDef.sortType === sortType
+    )) ){
+    return false;
+  }
+  return true;
+}
+
+function sameSort({sortDefs: currentSortDefs}, {sortDefs: newSortDefs}){
+  if (currentSortDefs.length !== newSortDefs.length){
+    return false;
+  }
+
+  return true;
+}
+
 const logger$1 = createLogger('DataStoreConnection', logColor.brown);
 
 async function connectDataStore(
@@ -5152,58 +5190,62 @@ async function connectDataStore(
   });
 }
 
+
 async function makeConnection(url, callback, connection) {
 
-    callback({ type: 'connection-status', status: 'connecting' });
-    const dataStore = await createDataStore(url);
+  callback({ type: 'connection-status', status: 'connecting' });
+  const dataStore = await createDataStore(url);
 
-    console.log(
-      `%c⚡ %c${url}`,
-      'font-size: 24px;color: green;font-weight: bold;',
-      'color:green; font-size: 14px;',
-    );
+  console.log(
+    `%c⚡ %c${url}`,
+    'font-size: 24px;color: green;font-weight: bold;',
+    'color:green; font-size: 14px;',
+  );
 
-    connection = new Connection(dataStore, url, callback);
-    const status = 'connected';
-    callback({ type: 'connection-status', status });
-    connection.status = status;
-    return connection;
+  connection = new DataStoreConnection(dataStore, url, callback);
+  const status = 'connected';
+  callback({ type: 'connection-status', status });
+  connection.status = status;
+  return connection;
 
 }
 
-const createDataStore = async(url) => {
+const createDataStore = async (url) => {
   console.log(`table config url ${url}`);
   const loadTableConfiguration = async () => await import(url);
 
-  const {config} = await loadTableConfiguration();
-  console.log(`got config ${JSON.stringify(config,null,2)}`);
-  const {generateData} = await import(config.dataUrl);
+  const { config } = await loadTableConfiguration();
+  console.log(`got config ${JSON.stringify(config, null, 2)}`);
+  const { generateData } = await import(config.dataUrl);
   const table = new Table(config);
   table.setData(generateData());
-  return new DataStore(table, {columns: config.columns}/*, updateQueue*/);
+  return new DataStore(table, { columns: config.columns }/*, updateQueue*/);
 
-  };
+};
 
-class Connection {
+class DataStoreConnection {
   constructor(dataStore, url, callback) {
     this.url = url;
     this.connectionCallback = callback;
-    this.viewPortId = uuid();
+    this.viewPortId = undefined;
     this.setDataStore(dataStore);
     this.status = 'ready';
+    this.viewportMeta = null;
   }
 
   setDataStore(dataStore) {
-    const {connectionCallback: callback, viewPortId} = this;
+    const { connectionCallback: callback, viewPortId } = this;
 
 
-    const send = ({requestId, body}) => {
-      console.log(`%c>>>  (DataStoreConnection)  ${JSON.stringify(body)}`,'color:blue;font-weight:bold;');
-      switch(body.type){
+    const send = ({ requestId, body }) => {
+      console.log(`%c>>>  (DataStoreConnection)  ${JSON.stringify(body)}`, 'color:blue;font-weight:bold;');
+      switch (body.type) {
         case "CREATE_VP":
-          const {columns, range, table} = body;
-          callback({requestId, body: { type: "CREATE_VP_SUCCESS", viewPortId, columns, range, table }});
-          const {rows, size: vpSize} = dataStore.setRange({lo: range.from, hi: range.to}, true);
+          console.log(`createVP`,{body});
+          const viewPortId = this.viewPortId = requestId;
+          const { columns, filterSpec, groupBy, sort, range, table } = body;
+          callback({ requestId, body: { type: "CREATE_VP_SUCCESS", viewPortId, columns, range, table } });
+          const { rows, size: vpSize } = dataStore.setRange({ lo: range.from, hi: range.to }, true);
           const ts = +(new Date());
           callback({
             requestId: "NA",
@@ -5211,18 +5253,20 @@ class Connection {
               type: "TABLE_ROW",
               timeStamp: ts,
               rows: [
-                {viewPortId, vpSize, rowIndex: -1, rowKey: "SIZE", updateType: "SIZE", sel:0, ts, data: []}
-              ].concat(rows.map(([rowIndex,,,,,,rowKey, sel, ...data]) => (
-                {viewPortId, vpSize, rowIndex, rowKey, updateType: "U", sel, ts, data }
+                { viewPortId, vpSize, rowIndex: -1, rowKey: "SIZE", updateType: "SIZE", sel: 0, ts, data: [] }
+              ].concat(rows.map(([rowIndex, , , , , , rowKey, sel, ...data]) => (
+                { viewPortId, vpSize, rowIndex, rowKey, updateType: "U", sel, ts, data }
               )))
             }
           });
+          this.viewportMeta = {columns, filterSpec, groupBy, sort};
           break;
 
         case "CHANGE_VP_RANGE": {
-          const {from, to} = body;
-          callback({requestId, body: { type: "CHANGE_VP_RANGE_SUCCESS", viewPortId, from, to }});
-          const {rows, size: vpSize} = dataStore.setRange({lo: from, hi: to}, true);
+          console.log(`changeVP`,{body});
+          const { from, to } = body;
+          callback({ requestId, body: { type: "CHANGE_VP_RANGE_SUCCESS", viewPortId, from, to } });
+          const { rows, size: vpSize } = dataStore.setRange({ lo: from, hi: to }, true);
           const ts = +(new Date());
           callback({
             requestId: "NA",
@@ -5230,16 +5274,60 @@ class Connection {
               type: "TABLE_ROW",
               timeStamp: ts,
               rows: [
-                {viewPortId, vpSize, rowIndex: -1, rowKey: "SIZE", updateType: "SIZE", sel:0, ts, data: []}
-              ].concat(rows.map(([rowIndex,,,,,,rowKey, sel, ...data]) => (
-                {viewPortId, vpSize, rowIndex, rowKey, updateType: "U", sel, ts, data }
+                { viewPortId, vpSize, rowIndex: -1, rowKey: "SIZE", updateType: "SIZE", sel: 0, ts, data: [] }
+              ].concat(rows.map(([rowIndex, , , , , , rowKey, sel, ...data]) => (
+                { viewPortId, vpSize, rowIndex, rowKey, updateType: "U", sel, ts, data }
               )))
             }
           });
 
         }
-
           break;
+
+        case "CHANGE_VP": {
+          const {viewPortId} = this;
+          const diff = viewportChanges(this.viewportMeta, body);
+          callback({ requestId, body: { type: "CHANGE_VP_SUCCESS", viewPortId } });
+          if (diff.sort){
+            const sortCriteria = body.sort.sortDefs.map(({column, sortType}) => [column, sortType === 'd' ? 'dsc' : 'asc']);
+            const {rows, size: vpSize} = dataStore.sort(sortCriteria);
+            const ts = +(new Date());
+            callback({
+              requestId: "NA",
+              body: {
+                type: "TABLE_ROW",
+                timeStamp: ts,
+                rows: rows.map(([rowIndex, , , , , , rowKey, sel, ...data]) => (
+                  { viewPortId, vpSize, rowIndex, rowKey, updateType: "U", sel, ts, data }
+                ))
+              }
+            });
+          } else if (diff.groupBy){
+            const {rows, size: vpSize} = dataStore.groupBy(body.groupBy);
+            const ts = +(new Date());
+            callback({
+              requestId: "NA",
+              body: {
+                type: "TABLE_ROW",
+                timeStamp: ts,
+                rows: [
+                  { viewPortId, vpSize, rowIndex: -1, rowKey: "SIZE", updateType: "SIZE", sel: 0, ts, data: [] }
+                ].concat(rows.map(([rowIndex, ,isLeaf,isExpanded,depth,count, rowKey, sel, ...data]) => (
+                  { viewPortId, vpSize, rowIndex, rowKey, updateType: "U", sel, ts, data: [
+                    Math.abs(depth), isExpanded, rowKey, isLeaf, "", count, ...data
+                  ] }
+                )))
+                }
+            });
+
+          }
+        }
+        break;
+
+        case "OPEN_TREE_NODE":
+        console.log(`OPEN_TREE_NODE`, body);
+        break;
+
         default:
           logger$1.log(`Unknown message type from client ${body.type}`);
 
@@ -5520,6 +5608,7 @@ class Viewport {
     this.clientViewportId = viewport;
     this.table = tablename;
     this.status = '';
+    this.disabled = false;
     this.suspended = false;
     this.columns = columns;
     this.clientRange = range;
@@ -5545,6 +5634,9 @@ class Viewport {
   }
 
   get hasUpdatesToProcess() {
+    if (this.suspended){
+      return false;
+    }
     return this.rowCountChanged || this.hasUpdates;
   }
 
@@ -5637,9 +5729,9 @@ class Viewport {
     } else if (type === 'selection') {
       this.selection = data;
     } else if (type === 'disable') {
-      this.suspended = true; // assuming its _SUCCESS, of cource
+      this.disabled = true; // assuming its _SUCCESS, of cource
     } else if (type === 'enable') {
-      this.suspended = false;
+      this.disabled = false;
     } else if (type === CREATE_VISUAL_LINK){
       const [colName, parentViewportId, parentColName] = params;
       this.linkedParent = {
@@ -5730,6 +5822,24 @@ class Viewport {
     this.awaitOperation(requestId, message);
     return message;
   }
+
+  suspend(){
+    this.suspended = true;
+  }
+
+  resume(){
+    this.suspended = false;
+    const records = this.dataWindow.getData();
+    const { keys } = this;
+    const toClient = this.isTree ? toClientRowTree(this.groupBy, this.columns) : toClientRow;
+    const out = [];
+    for (let row of records) {
+      if (row) {
+        out.push(toClient(row, keys));
+      }
+    }
+    return out;
+}
 
   enable(requestId) {
     this.awaitOperation(requestId, { type: 'enable' });
@@ -6018,6 +6128,22 @@ class ServerProxy {
         }
         break;
 
+      case 'suspend':
+        viewport.suspend();
+        break
+
+      case 'resume': {
+        const rows = viewport.resume();
+        const clientMessage = {
+          type: 'viewport-updates',
+          viewports: {
+            [viewport.clientViewportId]: { rows },
+          },
+        };
+        this.postMessageToClient(clientMessage);
+
+      }
+        break
       case 'disable':
         {
           console.log(`%cDISABLE`, 'color:red;font-weight: bold;');
@@ -6085,15 +6211,18 @@ class ServerProxy {
         break;
 
       case RPC_CALL: {
-        const requestId = nextRequestId();
         const [service, module] = getRpcService();
-        this.sendMessageToServer({
-          type,
-          service,
-          method: message.method,
-          params: [viewport.serverViewportId],
-          namedParams: {}
-        }, requestId, module);
+        this.sendMessageToServer(
+          {
+            type,
+            service,
+            method: message.method,
+            params: [viewport.serverViewportId],
+            namedParams: {}
+          },
+          message.requestId,
+          module
+        );
       }
 
         break;
@@ -6118,7 +6247,7 @@ class ServerProxy {
     return isReady;
   }
 
-  sendMessageToServer(body, requestId = _requestId++, module="CORE") {
+  sendMessageToServer(body, requestId = _requestId++, module = "CORE") {
     // const { clientId } = this.connection;
     this.connection.send({
       requestId,
@@ -6159,8 +6288,10 @@ class ServerProxy {
         if (viewports.has(requestId)) {
           const viewport = viewports.get(requestId);
           const { viewPortId: serverViewportId } = body;
-          viewports.set(serverViewportId, viewport);
-          viewports.delete(requestId);
+          if (requestId !== serverViewportId){
+            viewports.delete(requestId);
+            viewports.set(serverViewportId, viewport);
+          }
           this.mapClientToServerViewport.set(requestId, serverViewportId);
           const response = viewport.handleSubscribed(body);
           if (response) {
@@ -6272,18 +6403,18 @@ class ServerProxy {
         break;
 
       case RPC_RESP: {
-        const {method, result} = body;
+        const { method, result } = body;
         // check to see if the orderEntry is already open on the page
         let orderEntryOpen = false;
-        for (let viewport of this.viewports.values()){
-          if (!viewport.suspended && viewport.table === 'orderEntry'){
+        for (let viewport of this.viewports.values()) {
+          if (!viewport.suspended && viewport.table === 'orderEntry') {
             orderEntryOpen = true;
             break;
           }
         }
-        this.postMessageToClient({type, method, result, orderEntryOpen});
+        this.postMessageToClient({ type, method, result, orderEntryOpen, requestId });
       }
-      break;
+        break;
 
       case "ERROR":
         console.error(body.msg);

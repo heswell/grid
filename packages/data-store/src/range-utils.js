@@ -6,7 +6,7 @@ export const NULL_RANGE = {lo: 0,hi: 0};
 //
 // |----------------------------------| _range
 //  ++++++|----------------------------------| prevRange
-//  
+//
 //
 //
 //  |------------------------------------| _range
@@ -20,22 +20,22 @@ export function getDeltaRange(oldRange, newRange){
 
     if (newLo >= oldLo && newHi <= oldHi){
         // reduced range, no delta
-        return {lo: newHi, hi: newHi};
+        return {from: newHi, to: newHi};
 
     } else if (newLo >= oldHi || newHi < oldLo){
-        return {lo: newLo, hi: newHi};
+        return {from: newLo, to: newHi};
     } else if (newLo === oldLo && newHi === oldHi){
-        return {lo: oldHi,hi: oldHi};
+        return {from: oldHi, to: oldHi};
     } else {
         return {
-            lo: newLo < oldLo ? newLo: oldHi,
-            hi: newHi > oldHi ? newHi: oldLo
+            from: newLo < oldLo ? newLo: oldHi,
+            to: newHi > oldHi ? newHi: oldLo
         };
     }
 }
 
 /**
- * 
+ *
  * @type {import('./range-utils').resetRange}
  */
 export function resetRange({lo,hi,bufferSize=0}){

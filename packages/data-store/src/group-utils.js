@@ -1,6 +1,23 @@
 import { sortBy, sortPosition, GROUP_ROW_TEST } from './sort';
 import { indexOfCol, metadataKeys } from '@heswell/utils';
 
+const {
+  IDX,
+  RENDER_IDX,
+  IS_LEAF,
+  IS_EXPANDED,
+  DEPTH,
+  COUNT,
+  KEY,
+  SELECTED,
+  PARENT_IDX,
+  IDX_POINTER,
+  // Don't think we have these any more
+  FILTER_COUNT,
+  NEXT_FILTER_IDX,
+  count: metadataOffset
+} = metadataKeys;
+
 const DEFAULT_OPTIONS = {
     startIdx: 0,
     rootIdx: null,
@@ -54,19 +71,19 @@ export class SimpleTracker {
             }
         }
     }
-    
+
     hasParentPos(level){
         return this.levels[level+1] && this.levels[level+1].pos !== null
     }
-    
+
     parentPos(level){
         return this.levels[level+1].pos
     }
-    
+
     hasPreviousPos(level){
         return this.levels[level] && this.levels[level].pPos !== null
     }
-    
+
     previousPos(level){
         return this.levels[level].pPos;
     }
@@ -165,26 +182,25 @@ export function groupRows(rows, sortSet, columns, columnMap, groupby, options = 
     const groupedLeafRows = groupLeafRows(sortSet, rows, groupby, startIdx, length)
     fillNavSetsFromGroups(groupedLeafRows, sortSet, startIdx, filterSet, filterIdx, filterLength);
 
-    const levels = groupby.length;
-    const currentGroups = Array(levels).fill(null);
-    const { IDX, DEPTH, FILTER_COUNT, NEXT_FILTER_IDX, count: metadataOffset } = metadataKeys;
+    const groupCount = groupby.length;
+    const currentGroups = Array(groupCount).fill(null);
     let parentIdx = rootIdx;
     let leafCount = 0;
     for (let i = startIdx, len=startIdx+length; i < len; i++){
         const rowIdx = sortSet[i];
         const row = rows[rowIdx];
 
-        for (let level = 0; level < levels; level++) {
+        for (let level = 0; level < groupCount; level++) {
             const [columnIdx] = groupby[level];
             const currentGroup = currentGroups[level];
             const groupValue = row[columnIdx];
             // as soon as we identify a group change, each group at that level and below
-            // is then aggregated and new group(s) initiated. 
+            // is then aggregated and new group(s) initiated.
             // TODO how do we map from table idx (with 2 x metadata)
             if (currentGroup === null || currentGroup[metadataOffset + columnIdx - 2/* !!!!!!! */] !== groupValue) {
                 if (currentGroup !== null) {
                     // as soon as we know we're regrouping, aggregate the open groups, in reverse order
-                    for (let ii = levels - 1; ii >= level; ii--) {
+                    for (let ii = groupCount - 1; ii >= level; ii--) {
                         const group = currentGroups[ii];
                         aggregate(group, groups, sortSet, rows, aggregations, leafCount, filter);
                         if (filterSet && Math.abs(group[DEPTH]) === 1 && group[FILTER_COUNT] > 0){
@@ -195,12 +211,12 @@ export function groupRows(rows, sortSet, columns, columnMap, groupby, options = 
 
                     leafCount = 0;
                 }
-                for (let ii = level; ii < levels; ii++) {
+                for (let ii = level; ii < groupCount; ii++) {
                     groupIdx += 1;
                     parentIdx = ii === 0 ? rootIdx : currentGroups[ii - 1][IDX];
-                    const depth = levels - ii;
+                    const depth = ii + 1;
                     // for first-level groups, row pointer is a pointer into the sortSet
-                    const childIdx = depth === 1
+                    const childIdx = depth === groupCount
                         ? i
                         : groupIdx+1;
 
@@ -214,7 +230,7 @@ export function groupRows(rows, sortSet, columns, columnMap, groupby, options = 
         leafCount += 1;
     }
 
-    for (let i = levels - 1; i >= 0; i--) {
+    for (let i = groupCount - 1; i >= 0; i--) {
         if (currentGroups[i] !== null){
             const group = currentGroups[i];
             aggregate(group, groups, sortSet, rows, aggregations, leafCount, filter);
@@ -227,7 +243,7 @@ export function groupRows(rows, sortSet, columns, columnMap, groupby, options = 
 
 }
 
-// Checks very specifically for new cols added at end 
+// Checks very specifically for new cols added at end
 /** @type {import('./group-utils').groupbyExtendsExistingGroupby} */
 export function groupbyExtendsExistingGroupby(groupBy, existingGroupBy) {
     return (groupBy.length > existingGroupBy.length &&
@@ -345,7 +361,6 @@ export function expanded(group, groupby, groupState) {
 
 /** @type {import('./group-utils').allGroupsExpanded} */
 export function allGroupsExpanded(groups, group ){
-    const {DEPTH, PARENT_IDX} = metadataKeys;
     do {
         if (group[DEPTH] < 0){
             return false;
@@ -353,13 +368,12 @@ export function allGroupsExpanded(groups, group ){
         group = groups[group[PARENT_IDX]];
 
     } while (group)
-    
+
     return true;
 }
 
 /** @type {import('./group-utils').adjustGroupIndices} */
 export function adjustGroupIndices(groups, grpIdx, adjustment=1){
-    const {IDX, DEPTH, IDX_POINTER, PARENT_IDX} = metadataKeys;
     for (let i=0;i<groups.length;i++){
         if (groups[i][IDX] >= grpIdx){
             groups[i][IDX] += adjustment;
@@ -376,7 +390,6 @@ export function adjustGroupIndices(groups, grpIdx, adjustment=1){
 
 /** @type {import('./group-utils').adjustLeafIdxPointers} */
 export function adjustLeafIdxPointers(groups, insertionPoint, adjustment=1){
-    const {DEPTH, IDX_POINTER} = metadataKeys;
     for (let i=0;i<groups.length;i++){
         if (Math.abs(groups[i][DEPTH]) === 1 && groups[i][IDX_POINTER] >= insertionPoint){
             groups[i][IDX_POINTER] += adjustment;
@@ -384,9 +397,9 @@ export function adjustLeafIdxPointers(groups, insertionPoint, adjustment=1){
     }
 }
 
-/** 
+/**
  * Find the groups that will be affectes by an inserted row.
- * 
+ *
  * @type {import('./group-utils').findGroupPositions} */
 export function findGroupPositions(groups, groupby, dataRow) {
 
@@ -400,7 +413,7 @@ export function findGroupPositions(groups, groupby, dataRow) {
         if (group === undefined) {
             break;
         }
-        // position is confirmed if all groupCol values in this comparison match values of row 
+        // position is confirmed if all groupCol values in this comparison match values of row
         // and other groupCol values  are null
         for (let j = 0; j < groupby.length; j++) {
             const colIdx = groupby[j][0];
@@ -425,7 +438,7 @@ export function findGroupPositions(groups, groupby, dataRow) {
 export const expandRow = (groupCols, row, meta) => {
     const r = row.slice();
     r[meta.IDX] = 0;
-    r[meta.DEPTH] = 0; 
+    r[meta.DEPTH] = 0;
     r[meta.COUNT] = 0;
     r[meta.KEY] = buildGroupKey(groupCols, row);
     r[meta.SELECTED] = 0;
@@ -439,7 +452,6 @@ function buildGroupKey(groupby, row){
 
 // Do we have to take columnMap out again ?
 export function GroupRow(row, depth, idx, childIdx, parentIdx, groupby, columns, columnMap, baseGroupby = []) {
-    const { IDX, RENDER_IDX, DEPTH, COUNT, KEY, SELECTED, PARENT_IDX, IDX_POINTER, count: metadataOffset } = metadataKeys;
     // The group is a set of metadata values plus data values
     const group = Array(metadataOffset + columns.length);
     const groupIdx = groupby.length - depth;
@@ -471,12 +483,14 @@ export function GroupRow(row, depth, idx, childIdx, parentIdx, groupby, columns,
     //TODO build the composite key for the grouprow
     const baseKey = baseGroupby.length > 0
         ? buildKey(baseGroupby) + '/'
-        : '';
+        : '$root/';
     const groupKey = buildKey(groupby.slice(0, groupIdx + 1));
 
     group[IDX] = idx;
     group[RENDER_IDX] = 0;
-    group[DEPTH] = -depth;
+    group[IS_LEAF] = false;
+    group[IS_EXPANDED] = false;
+    group[DEPTH] = depth;
     group[COUNT] = 0;
     group[KEY] = baseKey + groupKey;
     group[SELECTED] = 0;
@@ -590,13 +604,12 @@ export function findAggregatedColumns(columns, columnMap, groupby) {
     }, []);
 }
 
-/** 
+/**
  * Called when we clear a filter
- * 
+ *
  * @type {import('./group-utils').aggregateGroup} */
 export function aggregateGroup(groups, grpIdx, sortSet, rows, columns, aggregations) {
 
-    const {DEPTH, COUNT} = metadataKeys;
     const groupRow = groups[grpIdx];
     let depth = groupRow[DEPTH];
     let absDepth = Math.abs(depth);
@@ -613,7 +626,7 @@ export function aggregateGroup(groups, grpIdx, sortSet, rows, columns, aggregati
     for (let i=grpIdx+count; i >= grpIdx; i--){
         for (let aggIdx = 0; aggIdx < aggregations.length; aggIdx++) {
             const [colIdx] = aggregations[aggIdx];
-            const dataIdx =colIdx +  metadataKeys.count - 2; // <<<<<<<<<<<
+            const dataIdx = colIdx +  metadataOffset - 2; // <<<<<<<<<<<
             groups[i][dataIdx] = 0;
         }
         aggregate(groups[i], groups, sortSet, rows, aggregations, groups[i][COUNT])
@@ -622,7 +635,6 @@ export function aggregateGroup(groups, grpIdx, sortSet, rows, columns, aggregati
 }
 
 function aggregate(groupRow, groupRows, sortSet, rows, aggregations, leafCount, filter=null) {
-    const {DEPTH, COUNT, FILTER_COUNT, IDX_POINTER, count: metadataOffset} = metadataKeys;
     let absDepth = Math.abs(groupRow[DEPTH]);
     let count = 0;
     let filteredCount = filter === null ? undefined : 0;
@@ -685,8 +697,8 @@ function aggregate(groupRow, groupRows, sortSet, rows, aggregations, leafCount, 
 
 export function leafRow([idx,key, ...data]){
     // TODO find fastest way to do this
-    const row = Array(metadataKeys.count).fill(0).concat(data)
-    row[metadataKeys.IDX] = idx;
-    row[metadataKeys.KEY] = key;
+    const row = Array(metadataOffset).fill(0).concat(data)
+    row[IDX] = idx;
+    row[KEY] = key;
     return row;
 }

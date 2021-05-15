@@ -6,7 +6,7 @@ import Table from '../table';
 import SelectionModel, {SelectionModelType} from '../selection-model';
 import { sort, sortExtend, sortReversed, sortBy, sortPosition, sortableFilterSet } from '../sort';
 import { groupbyExtendsExistingGroupby } from '../group-utils';
-import { 
+import {
     addRowsToIndex,
     arrayOfIndices,
     BIN_FILTER_DATA_COLUMNS,
@@ -46,7 +46,7 @@ export default class BaseRowSet {
         this.type = undefined;
         this.index = undefined;
         /**
-         * data IDX of selected rows 
+         * data IDX of selected rows
          */
         this.selectedRowsIDX = [];
         this.selectionModel = this.createSelectionModel();
@@ -77,7 +77,7 @@ export default class BaseRowSet {
     }
 
     get stats(){
-        // TODO cache the stats and invalidate them in the event of any op that might change them 
+        // TODO cache the stats and invalidate them in the event of any op that might change them
         const {totalRowCount, filteredRowCount, selected, selectedRowsIDX} = this;
         const totalSelected = selectedRowsIDX.length;
         const filteredSelected = selected.rows.length;
@@ -92,7 +92,7 @@ export default class BaseRowSet {
 
     get totalRowCount(){
         return this.data.length;
-    } 
+    }
 
     get filteredRowCount(){
         return this.filterSet === null
@@ -107,8 +107,8 @@ export default class BaseRowSet {
 
     setRange(range=this.range, useDelta = true, includeStats=false) {
 
-        const { lo, hi } = useDelta ? getDeltaRange(this.range, range) : getFullRange(range);
-        const resultset = this.slice(lo, hi);
+        const { from, to } = useDelta ? getDeltaRange(this.range, range) : getFullRange(range);
+        const resultset = this.slice(from, to);
         this.range = range;
         const length = this.size;
         return {
@@ -144,7 +144,7 @@ export default class BaseRowSet {
             rangeSelect,
             keepExistingSelection
         );
-        
+
         this.selected = selectionState;
 
         if (filterSet){
@@ -158,7 +158,7 @@ export default class BaseRowSet {
         } else {
             const idxToIDX = idx => sortSet[idx][0];
             this.selectedRowsIDX = this.selected.rows.map(idxToIDX)
-        } 
+        }
 
         const updates = [];
         for (let i=0;i<selected.length;i++){
@@ -173,7 +173,7 @@ export default class BaseRowSet {
                 updates.push([idx+offset,SELECTED, 0]);
             }
         }
-        
+
         return updates;
     }
 
@@ -182,7 +182,7 @@ export default class BaseRowSet {
         const { SELECTED } = metadataKeys;
         const previouslySelectedRows = [...this.selected.rows];
         if (filterSet){
-            // selection of a filtered subset is added to existing selection 
+            // selection of a filtered subset is added to existing selection
             for (let i =0; i< filterSet.length; i++){
                 const rowIDX = filterSet[i];
                 if (!selectedRowsIDX.includes(rowIDX)){
@@ -196,16 +196,16 @@ export default class BaseRowSet {
             // need to replace this with a structure that tracks ranges
             this.selected = {rows: arrayOfIndices(data.length), focusedIdx: -1, lastTouchIdx: -1};
             this.selectedRowsIDX = [...this.selected.rows];
-        }   
+        }
 
         const updates = [];
         const max = Math.min(hi, (filterSet || data).length)
         for (let i=lo;i<max;i++){
-            if (this.selected.rows.includes(i) && !previouslySelectedRows.includes(i)){ 
+            if (this.selected.rows.includes(i) && !previouslySelectedRows.includes(i)){
                 updates.push([i+offset,SELECTED, 1]);
             }
         }
-        
+
         return updates;
 
     }
@@ -258,7 +258,7 @@ export default class BaseRowSet {
         const data = [];
         const dataRowCount = rows.length;
         const [/*columnFilter*/, otherFilters] = splitFilterOnColumn(currentFilter, column)
-        // this filter for column that we remove will provide our selected values   
+        // this filter for column that we remove will provide our selected values
         let dataRowAllFilters = 0;
 
         if (otherFilters === null) {
@@ -492,7 +492,7 @@ export class RowSet extends BaseRowSet {
     }
 
     insert(idx, row) {
-        // TODO multi colun sort sort DSC 
+        // TODO multi colun sort sort DSC
         if (this.sortCols === null && this.currentFilter === null) {
             // simplest scenario, row will be at end of sortset ...
             this.sortSet.push([idx, null, null]);
@@ -607,8 +607,8 @@ export class RowSet extends BaseRowSet {
 // TODO need to retain and return any searchText
 export class SetFilterRowSet extends RowSet {
     constructor(table, columns, columnName, dataRowAllFilters, dataRowTotal) {
-        super(table, columns);       
-        this.type = DataTypes.FILTER_DATA; 
+        super(table, columns);
+        this.type = DataTypes.FILTER_DATA;
         this.columnName = columnName;
         this._searchText = null;
         this.dataRowFilter = null;
@@ -631,7 +631,7 @@ export class SetFilterRowSet extends RowSet {
     clearRange(){
         this.range = {lo:0, hi: 0};
     }
-    
+
     get values() {
         const key = this.table.columnMap['name'];
         return this.filterSet.map(idx => this.data[idx][key])
@@ -645,8 +645,8 @@ export class SetFilterRowSet extends RowSet {
            const rowIDX = typeof filterEntry === 'number'
              ? filterEntry
              : filterEntry[0];
-           return data[rowIDX][0];  
-           
+           return data[rowIDX][0];
+
         } else {
             return sortSet[idx][1];
         }
@@ -659,7 +659,7 @@ export class SetFilterRowSet extends RowSet {
         const { data, filterSet, sortSet} = this;
 
         this.dataRowFilter = dataRowFilter;
-        
+
         if (columnFilter){
 
             const fn = filterPredicate(columnMap, overrideColName(columnFilter, 'name'));
@@ -684,14 +684,14 @@ export class SetFilterRowSet extends RowSet {
                 }
 
             }
-          
+
             this.selected = {rows: selectedRows, focusedIdx: -1, lastTouchIdx: -1 };
             this.selectedRowsIDX = selectedRowsIDX;
 
-        
+
         } else {
 
-            this.selectAll();    
+            this.selectAll();
 
         }
 

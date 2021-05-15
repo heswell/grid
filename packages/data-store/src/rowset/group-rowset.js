@@ -62,7 +62,7 @@ export class GroupRowSet extends BaseRowSet {
 
         const [navSet, IDX, COUNT] = this.selectNavigationSet(false);
         // TODO roll the IDX and COUNT overrides into meta
-        this.iter = GroupIterator(this.groupRows, navSet, this.data, IDX, COUNT);
+        this.iter = GroupIterator(this.groupRows, this.groupBy, navSet, this.data, IDX, COUNT);
 
         if (filter){
             this.filter(filter);
@@ -135,7 +135,7 @@ export class GroupRowSet extends BaseRowSet {
         this.groupRows = groupRows(rows, this.sortSet, columns, this.table.columnMap, groupCols, {
             groups: this.groupRows, rowParents: this.rowParents
         })
-        this.currentLength = this.countVisibleRows(this.groupRows);
+        this.currentLength = this.countVisibleRows(this.groupRows, this.groupBy);
     }
 
     groupBy(groupby) {
@@ -144,12 +144,12 @@ export class GroupRowSet extends BaseRowSet {
             this.sortGroupby(groupby);
         } else if (groupbyExtendsExistingGroupby(groupby, this.groupby)) {
             this.extendGroupby(groupby)
-            this.currentLength = this.countVisibleRows(this.groupRows, this.filterSet !== null);
+            this.currentLength = this.countVisibleRows(this.groupRows, this.groupBy, this.filterSet !== null);
         } else if (groupbyReducesExistingGroupby(groupby, this.groupby)) {
             this.reduceGroupby(groupby);
             this.range = NULL_RANGE
             this.iter.clear();
-            this.currentLength = this.countVisibleRows(this.groupRows, this.filterSet !== null);
+            this.currentLength = this.countVisibleRows(this.groupRows, this.groupBy, this.filterSet !== null);
         } else {
             this.applyGroupby(groupby);
         }
@@ -166,7 +166,7 @@ export class GroupRowSet extends BaseRowSet {
             const {groupRows} = this;
             if (key === '*') {
                 this.toggleAll(isExpanded);
-                this.currentLength = this.countVisibleRows(groupRows, false);
+                this.currentLength = this.countVisibleRows(groupRows, this.groupBy,false);
             } else {
                 const groupIdx= this.findGroupIdx(key);
                 if (groupIdx !== -1){
@@ -342,7 +342,7 @@ export class GroupRowSet extends BaseRowSet {
                             aggregations[j][2] += row[colIdx];
                         }
                     }
-                    
+
                     // 2) store aggregates at lowest level of the group hierarchy
                     aggregations.forEach(aggregation => {
                         const [colIdx, type, sum] = aggregation;
@@ -357,21 +357,22 @@ export class GroupRowSet extends BaseRowSet {
 
                 // update parent counts
                 if (rowCount > 0){
-                    while (groupRow[PARENT_IDX] !== null){
-                        groupRow = groups[groupRow[PARENT_IDX]];
+                  let parentGroupRow = groupRow;
+                    while (parentGroupRow[PARENT_IDX] !== null){
+                        groupRow = groups[parentGroupRow[PARENT_IDX]];
 
                         aggregations.forEach(aggregation => {
                             const [colIdx, type, sum] = aggregation;
                             const dataIdx =colIdx +  metadataKeys.count - 2; // <<<<<<<<<<<
                             if (type === 'sum') {
-                                groupRow[dataIdx] += sum;
+                              parentGroupRow[dataIdx] += sum;
                             } else if (type === 'avg') {
-                                const originalCount = groupRow[FILTER_COUNT];
-                                const originalSum = originalCount * groupRow[dataIdx];
-                                groupRow[dataIdx] = (originalSum + sum) / (originalCount + rowCount);
+                                const originalCount = parentGroupRow[FILTER_COUNT];
+                                const originalSum = originalCount * parentGroupRow[dataIdx];
+                                parentGroupRow[dataIdx] = (originalSum + sum) / (originalCount + rowCount);
                             }
                         })
-                        groupRow[FILTER_COUNT] += rowCount;
+                        parentGroupRow[FILTER_COUNT] += rowCount;
                     }
                 }
 
@@ -413,7 +414,7 @@ export class GroupRowSet extends BaseRowSet {
             let grpIdx = rowParents[rowIdx];
             // this seems to return 0 an awful lot
             let ii = 0;
-            
+
             // If this column is being aggregated
             if (this.aggregatedColumn[colIdx]){
 
@@ -461,7 +462,7 @@ export class GroupRowSet extends BaseRowSet {
             // onsole.log(`[GroupRowSet.update] updates for row idx ${idx} ${rangeIdx+offset} ${JSON.stringify(rowUpdates)}`)
             outgoingUpdates.push([lo+rangeIdx+offset, ...rowUpdates]);
         }
-        
+
         return outgoingUpdates;
     }
 
@@ -494,7 +495,7 @@ export class GroupRowSet extends BaseRowSet {
             if (allGroupsExpanded(groups, groupRow)){
                 this.currentLength += 1;
             }
-            
+
         } else {
             let groupCols = mapSortCriteria(groupby, this.table.columnMap);
             newGroupIdx = sortPosition(groups, sortBy(GROUP_KEY_SORT), expandRow(groupCols, row, metadataKeys), 'last-available');
@@ -516,7 +517,7 @@ export class GroupRowSet extends BaseRowSet {
             groups.splice.apply(groups,[newGroupIdx,0].concat(nestedGroups));
         }
 
-        // Note: we update the aggregates 
+        // Note: we update the aggregates
         this.updateAggregatedValues(groupPositions, row);
         this.incrementGroupCounts(groupPositions);
 
@@ -524,7 +525,7 @@ export class GroupRowSet extends BaseRowSet {
         let rangeIdx = allGroupsExist
             ? iterator.getRangeIndexOfRow(newRowIdx)
             : iterator.getRangeIndexOfGroup(newGroupIdx);
-        
+
         if (rangeIdx !== -1){
             // New row is visible within viewport so we will force render all rows
             result = {replace: true}
@@ -678,7 +679,7 @@ export class GroupRowSet extends BaseRowSet {
     }
 
     // there is a current assumption here that new col(s) are always added at the end of existing cols in the groupBy
-    // Need to think about a new col inserted at start or in between existing cols 
+    // Need to think about a new col inserted at start or in between existing cols
     //TODO we might want to do this on expanded nodes only and repat in a lazy fashion as more nodes are revealed
     extendGroupby(groupby) {
         const groupCols = mapSortCriteria(groupby, this.table.columnMap);
@@ -809,7 +810,7 @@ export class GroupRowSet extends BaseRowSet {
 
         for (let i=idx; i< idx+count; i++){
             const rowIdx = sortSet[i];
-            rowParents[rowIdx] = newParentGroupIdx; 
+            rowParents[rowIdx] = newParentGroupIdx;
         }
 
     }
@@ -839,20 +840,20 @@ export class GroupRowSet extends BaseRowSet {
 
     // Note: this assumes no leaf rows visible. Is that always valid ?
     // NOt after removing a groupBy ! Not after a filter
-    countVisibleRows(groupRows, usingFilter=false){
-        const {DEPTH, COUNT, FILTER_COUNT} = metadataKeys;
+    countVisibleRows(groupRows, groupCount, usingFilter=false){
+        const {IS_EXPANDED, DEPTH, COUNT, FILTER_COUNT} = metadataKeys;
         let count = 0;
         for (let i=0, len=groupRows.length;i<len;i++){
             const zeroCount = usingFilter && groupRows[i][FILTER_COUNT] === 0;
             if (!zeroCount){
                 count += 1;
             }
-            const depth = groupRows[i][DEPTH];
-            if (depth < 0 || zeroCount){
-                while (i<len-1 && Math.abs(groupRows[i+1][DEPTH]) < -depth){
+            const {[IS_EXPANDED]:isExpanded, [DEPTH]:depth} = groupRows[i];
+            if (!isExpanded || zeroCount){
+                while (i<len-1 && Math.abs(groupRows[i+1][DEPTH]) > depth){
                     i += 1;
                 }
-            } else if (depth === 1){
+            } else if (depth === groupCount){
                 count += (usingFilter ? groupRows[i][FILTER_COUNT] : groupRows[i][COUNT])
             }
         }

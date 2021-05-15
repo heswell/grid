@@ -297,8 +297,10 @@ export class ServerProxy {
         if (viewports.has(requestId)) {
           const viewport = viewports.get(requestId);
           const { viewPortId: serverViewportId } = body;
-          viewports.set(serverViewportId, viewport);
-          viewports.delete(requestId);
+          if (requestId !== serverViewportId){
+            viewports.delete(requestId);
+            viewports.set(serverViewportId, viewport);
+          }
           this.mapClientToServerViewport.set(requestId, serverViewportId);
           const response = viewport.handleSubscribed(body);
           if (response) {

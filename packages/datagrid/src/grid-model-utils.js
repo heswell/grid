@@ -455,6 +455,7 @@ export const getGroupValueAndOffset = (columns, row) => {
   const { [DEPTH]: depth, [IS_LEAF]: isLeaf } = row;
   // Depth can be greater tha group columns when we have just removed a column from groupby
   // but new data has not yet been received.
+  console.log(`getGroupValueAndOffset depth:${depth}, isLeaf: ${isLeaf}`, columns, row)
   if (isLeaf || depth > columns.length) {
     return [null, null]
   } else if (depth === 0) {

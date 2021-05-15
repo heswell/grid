@@ -4,11 +4,12 @@ import {getCount, leafRow} from './group-utils';
 
 const RANGE_POS_TUPLE_SIZE = 4;
 const NO_RESULT = [null,null,null]
+const {IS_EXPANDED, DEPTH} = metadataKeys;
 
 export const FORWARDS = 0;
 export const BACKWARDS = 1;
 
-export default function GroupIterator(groups, navSet, data, NAV_IDX, NAV_COUNT) {
+export default function GroupIterator(groups, groupBy, navSet, data, NAV_IDX, NAV_COUNT) {
     let _idx = 0;
     let _grpIdx = null;
     let _rowIdx = null;
@@ -17,6 +18,7 @@ export default function GroupIterator(groups, navSet, data, NAV_IDX, NAV_COUNT) 
     let _range_position_lo = [0, null, null];
     let _range_positions = [];
     let _range_position_hi = [null, null, null];
+    const groupCount = groupBy.length;
 
     return {
         get direction(){ return _direction },
@@ -90,7 +92,7 @@ export default function GroupIterator(groups, navSet, data, NAV_IDX, NAV_COUNT) 
         let i = _range.lo;
         do {
             _direction = FORWARDS;
-            ([row, _grpIdx, _rowIdx] = next(groups, data, _grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT));
+            ([row, _grpIdx, _rowIdx] = next(groups, groupCount, data, _grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT));
             if (row){
                 rows.push(row);
                 _idx += 1;
@@ -102,7 +104,7 @@ export default function GroupIterator(groups, navSet, data, NAV_IDX, NAV_COUNT) 
         if (row){
             _direction = FORWARDS;
             const [grpIdx, rowIdx] = [_grpIdx, _rowIdx];
-            [row, _grpIdx, _rowIdx] = next(groups, data, _grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT);
+            [row, _grpIdx, _rowIdx] = next(groups, groupCount, data, _grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT);
             _idx += 1;
             _range_position_hi = [row ? _idx : null, _grpIdx, _rowIdx];
             ([_grpIdx, _rowIdx] = [grpIdx, rowIdx]);
@@ -117,19 +119,19 @@ export default function GroupIterator(groups, navSet, data, NAV_IDX, NAV_COUNT) 
 
     function setRange(range, useDelta=true){
         const rangeDiff = compareRanges(_range, range);
-        const { lo: resultLo, hi: resultHi } = useDelta ? getDeltaRange(_range, range) : getFullRange(range);
+        const { from: resultLo, to: resultHi } = useDelta ? getDeltaRange(_range, range) : getFullRange(range);
         const {IDX} = metadataKeys;
 
         /** @type {import('./group-iterator').RowsIndexTuple} */
         const result = [[], null];
         const [rows] = result;
-        
+
         if (rangeDiff === RangeFlags.NULL){
             _range_position_lo = [0,null,null];
             _range_position_hi = [null,null,null];
             _range_positions.length = 0;
             return result;
-            
+
         } else if (range.lo === _range.lo && useDelta === false){
             // when we're asked for the same range again, rebuild the range
             ([_idx, _grpIdx, _rowIdx] = _range_position_lo);
@@ -190,7 +192,7 @@ export default function GroupIterator(groups, navSet, data, NAV_IDX, NAV_COUNT) 
                 startIdx = _idx;
                 do {
                     _direction = FORWARDS;
-                    ([row, _grpIdx, _rowIdx] = next(groups, data, _grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT));
+                    ([row, _grpIdx, _rowIdx] = next(groups, groupCount, data, _grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT));
                     if (row){
                         rows.push(row);
                         const absRowIdx = _rowIdx === null ? null : row[IDX];
@@ -202,7 +204,7 @@ export default function GroupIterator(groups, navSet, data, NAV_IDX, NAV_COUNT) 
                 if (row){
                     _direction = FORWARDS;
                     const [grpIdx, rowIdx] = [_grpIdx, _rowIdx];
-                    ([row, _grpIdx, _rowIdx] = next(groups, data ,_grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT));
+                    ([row, _grpIdx, _rowIdx] = next(groups, groupCount, data ,_grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT));
                     _range_position_hi = [row ? _idx : null, _grpIdx, _rowIdx];
                     ([_grpIdx, _rowIdx] = [grpIdx, rowIdx]);
                 } else {
@@ -213,7 +215,7 @@ export default function GroupIterator(groups, navSet, data, NAV_IDX, NAV_COUNT) 
                 let i = resultHi - 1;
                 do {
                     _direction = BACKWARDS;
-                    ([row, _grpIdx, _rowIdx] = previous(groups, data, _grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT));
+                    ([row, _grpIdx, _rowIdx] = previous(groups, groupCount, data, _grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT));
                     if (row){
                         _idx -= 1;
                         rows.unshift(row);
@@ -226,7 +228,7 @@ export default function GroupIterator(groups, navSet, data, NAV_IDX, NAV_COUNT) 
                 if (row){
                     const [grpIdx, rowIdx] = [_grpIdx, _rowIdx];
                     _direction = BACKWARDS;
-                    [row, _grpIdx, _rowIdx] = previous(groups, data, _grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT);
+                    [row, _grpIdx, _rowIdx] = previous(groups, groupCount, data, _grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT);
                     _range_position_lo = [row ? _idx-1 : 0, _grpIdx, _rowIdx];
                     ([_grpIdx, _rowIdx] = [grpIdx, rowIdx]);
                 } else {
@@ -260,7 +262,7 @@ export default function GroupIterator(groups, navSet, data, NAV_IDX, NAV_COUNT) 
         let row;
 
         do {
-            [row, _grpIdx, _rowIdx] = fn(groups, data, _grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT);
+            [row, _grpIdx, _rowIdx] = fn(groups, groupCount, data, _grpIdx, _rowIdx, navSet, NAV_IDX, NAV_COUNT);
             if (fn === next){
                 _idx += 1;
             } else {
@@ -282,7 +284,7 @@ function getAbsRowIdx(group, relRowIdx, navSet, NAV_IDX){
     return navSet[group[NAV_IDX] + relRowIdx];
 }
 
-function next(groups, rows, grpIdx, rowIdx, navSet, NAV_IDX, NAV_COUNT){
+function next(groups, groupCount, rows, grpIdx, rowIdx, navSet, NAV_IDX, NAV_COUNT){
     if (grpIdx === null){
         grpIdx = -1;
         do {
@@ -300,15 +302,16 @@ function next(groups, rows, grpIdx, rowIdx, navSet, NAV_IDX, NAV_COUNT){
         return NO_RESULT;
     } else {
         let groupRow = groups[grpIdx];
-        const depth = groupRow[metadataKeys.DEPTH];
+        const {[IS_EXPANDED]:isExpanded, [DEPTH]:depth} = groupRow;
         const count = getCount(groupRow,NAV_COUNT);
         // Note: we're unlikely to be passed the row if row count is zero
-        if (depth === 1 && count !== 0 && (rowIdx === null || rowIdx < count - 1)){
+        // IF first level of grouping
+        if (depth === groupCount && isExpanded && count !== 0 && (rowIdx === null || rowIdx < count - 1)){
             rowIdx = rowIdx === null ? 0 : rowIdx + 1;
             const absRowIdx = getAbsRowIdx(groupRow, rowIdx, navSet, NAV_IDX)
             const row = leafRow(rows[absRowIdx])
             return [row, grpIdx, rowIdx === null ? 0 : rowIdx];
-        } else if (depth > 0){
+        } else if (isExpanded){
 
             do {
                 grpIdx += 1;
@@ -321,11 +324,10 @@ function next(groups, rows, grpIdx, rowIdx, navSet, NAV_IDX, NAV_COUNT){
                 return [groups[grpIdx], grpIdx, null];
             }
         } else {
-            const absDepth = Math.abs(depth);
             do {
                 grpIdx += 1;
             } while (grpIdx < groups.length && (
-                (Math.abs(groups[grpIdx][metadataKeys.DEPTH]) < absDepth) ||
+                (Math.abs(groups[grpIdx][DEPTH]) > depth) ||
                 (getCount(groups[grpIdx],NAV_COUNT) === 0)
             ));
             if (grpIdx >= groups.length){
@@ -337,8 +339,8 @@ function next(groups, rows, grpIdx, rowIdx, navSet, NAV_IDX, NAV_COUNT){
     }
 }
 
-function previous(groups, data, grpIdx, rowIdx, navSet, NAV_IDX, NAV_COUNT){
-    if (grpIdx !== null && groups[grpIdx][metadataKeys.DEPTH] === 1 && typeof rowIdx === 'number'){
+function previous(groups, groupCount, data, grpIdx, rowIdx, navSet, NAV_IDX, NAV_COUNT){
+    if (grpIdx !== null && groups[grpIdx][DEPTH] === groupCount && typeof rowIdx === 'number'){
         let lastGroup = groups[grpIdx];
         if (rowIdx === 0){
             return [lastGroup, grpIdx, null];
@@ -357,7 +359,7 @@ function previous(groups, data, grpIdx, rowIdx, navSet, NAV_IDX, NAV_COUNT){
             grpIdx -= 1;
         }
         let lastGroup = groups[grpIdx];
-        if (lastGroup[metadataKeys.DEPTH] === 1){
+        if (lastGroup[DEPTH] === groupCount){
             rowIdx = getCount(lastGroup, NAV_COUNT) - 1;
             const absRowIdx = getAbsRowIdx(lastGroup, rowIdx, navSet, NAV_IDX)
             const row = leafRow(data[absRowIdx])
