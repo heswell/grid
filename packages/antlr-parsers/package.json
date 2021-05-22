@@ -1,0 +1,15 @@
+{
+  "name": "@heswell/antlr-parsers",
+  "version": "0.0.1",
+  "main": "src/index.js",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "generate:filter": "npm run antlr4-filter",
+    "antlr4-filter": "java -Xmx500M -cp '/Users/steve/java/antlr-4.9.2-complete.jar:$CLASSPATH' org.antlr.v4.Tool -Dlanguage=JavaScript ./src/grammars/Filter.g4 -o generated/parsers/filter -visitor -Xexact-output-dir"
+  },
+  "dependencies": {
+    "antlr4": "^4.9.2",
+    "antlr4-c3": "^1.1.16"
+  }
+}

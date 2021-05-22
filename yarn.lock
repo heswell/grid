@@ -4873,6 +4873,23 @@ ansi-to-html@^0.6.11:
   dependencies:
     entities "^1.1.2"
 
+antlr4-c3@^1.1.16:
+  version "1.1.16"
+  resolved "https://registry.npmjs.org/antlr4-c3/-/antlr4-c3-1.1.16.tgz#5331ce33016f5643e225d660b8884b69c7fbbc49"
+  integrity sha512-3CZQ54JPyo6lkZYDOXaKUsy5KNFucveocvRy+03R7zJQbYOUr4Z6lFeBWzkxJXLitc7yQYe7OHbB6snyp7IJvQ==
+  dependencies:
+    antlr4ts "^0.5.0-alpha.3"
+
+antlr4@^4.9.2:
+  version "4.9.2"
+  resolved "https://registry.npmjs.org/antlr4/-/antlr4-4.9.2.tgz#abbc53d275954b1b6f4d8b3468b4a2cb258121fc"
+  integrity sha512-UjMSlenUORL+a+6g4RNZxRh5LcFWybRi2g0ASDBpgXBY6nlavg0BRVAVEQF0dz8jH6SyX3lV7uP5y/krJzc+Hw==
+
+antlr4ts@^0.5.0-alpha.3:
+  version "0.5.0-alpha.4"
+  resolved "https://registry.npmjs.org/antlr4ts/-/antlr4ts-0.5.0-alpha.4.tgz#71702865a87478ed0b40c0709f422cf14d51652a"
+  integrity sha512-WPQDt1B74OfPv/IMS2ekXAKkTZIHl88uMetg6q3OTqgFxZ/dxDXI0EWLyZid/1Pe6hTftyg5N7gel5wNAGxXyQ==
+
 anymatch@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/anymatch/-/anymatch-2.0.0.tgz#bcb24b4f37934d9aa7ac17b4adaf89e7c76ef2eb"
