@@ -23,11 +23,17 @@ or_expression : and_expression (OR or_expression)*;
 
 and_expression : term (AND term)*;
 
-term : ID operator atom | LPAREN or_expression RPAREN | ID operator LBRACK atom (',' atom)* RBRACK ;
+term : col_val_expression | col_set_expression | LPAREN or_expression RPAREN;
+
+col_set_expression: column IN LBRACK atom (',' atom)* RBRACK;
+
+col_val_expression: column operator atom;
 
 atom : ID | INT | FLOAT | STRING | TRUE | FALSE;
 
-operator : LT | GT | EQ | NEQ | IN | STARTS | ENDS;
+column: ID;
+
+operator : LT | GT | EQ | NEQ | STARTS | ENDS;
 
 INT : '0'..'9'+;
 FLOAT : ('0'..'9')+ '.' ('0'..'9')*;
