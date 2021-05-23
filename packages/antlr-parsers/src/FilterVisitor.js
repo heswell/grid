@@ -1,7 +1,5 @@
 import {Token} from 'antlr4ts/Token';
 import { AbstractParseTreeVisitor } from 'antlr4ts/tree/AbstractParseTreeVisitor'
-import { transitionNext } from '../../datagrid-nav/src/state-machinery/machines/machine-utils';
-// import {FilterVisitor} from '../generated/parsers/filter/FilterVisitor.ts';
 
 // This class defines a complete generic visitor for a parse tree produced by FilterParser.
 
@@ -19,61 +17,74 @@ export default class CustomFilterVisitor extends AbstractParseTreeVisitor {
 	// Visit a parse tree produced by FilterParser#expression.
 	visitExpression(ctx) {
     const result = this.visitChildren(ctx);
-
 	  // const expression = this.visitChildren(ctx)?.map(withLiterals(ctx));
-		console.log({expression: result});
 		return result;
 	}
 
 
 	// Visit a parse tree produced by FilterParser#or_expression.
 	visitOr_expression(ctx) {
-    const result = this.visitChildren(ctx);
-	  // const orExpression = this.visitChildren(ctx)?.map(withLiterals(ctx));
-		console.log({orExpression: result})
-		return result;
+    const [term1, type, term2 ] = this.visitChildren(ctx);
+    if (term2){
+      return { type, filters: [term1, term2] };
+    } else {
+      return term1
+    }
 	}
 
 
 	// Visit a parse tree produced by FilterParser#and_expression.
 	visitAnd_expression(ctx) {
-    const result = this.visitChildren(ctx);
-	  // const andExpression = this.visitChildren(ctx)?.map(withLiterals(ctx));
-		console.log({andExpression: result});
-		return result;
+    const [term1, type, term2 ] = this.visitChildren(ctx);
+    if (term2){
+      return { type, filters: [term1, term2] };
+    } else {
+      return term1
+    }
 	}
 
 
 	// Visit a parse tree produced by FilterParser#term.
 	visitTerm(ctx) {
-    const result = this.visitChildren(ctx);
-		console.log({term: result});
-    // const term = ctx.text;
-		// const terms = this.visitChildren(ctx)?.map(withLiterals(ctx));
-		// console.log({terms})
-	  // return terms;
-    return result;
+    return this.visitChildren(ctx);
 	}
 
+	/**
+	 * Visit a parse tree produced by `FilterParser.col_set_expression`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+   visitCol_set_expression(ctx){
+    const [column, type, value] = this.visitChildren(ctx);
+    return { column, type, value };
+   };
+
+   /**
+    * Visit a parse tree produced by `FilterParser.col_val_expression`.
+    * @param ctx the parse tree
+    * @return the visitor result
+    */
+   visitCol_val_expression(ctx){
+    const [column, type, value] = this.visitChildren(ctx);
+    return { column, type, value };
+  }
 
 	// Visit a parse tree produced by FilterParser#column.
 	visitColumn(ctx) {
-    const column = ctx.text;
-		console.log({column});
-	  return column;
+	  return ctx.text;
 	}
 
   // Visit a parse tree produced by FilterParser#atom.
-	visitAtom(ctx) {
-    const atom = ctx.text;
-		console.log({atom});
-	  return atom;
+	visitAtoms(ctx) {
+	  return this.visitChildren(ctx);
 	}
 
+  visitAtom(ctx) {
+	  return ctx.text;
+	}
 
 	// Visit a parse tree produced by FilterParser#operator.
 	visitOperator(ctx) {
-		console.log(`visitOperator ${ctx.text}`)
 	  return ctx.text;
 	}
 
@@ -81,10 +92,7 @@ export default class CustomFilterVisitor extends AbstractParseTreeVisitor {
     if (ctx.symbol.type === Token.EOF){
       return EMPTY;
     } else {
-      const terminal = ctx.text;
-      console.log(`visit terminal ${terminal}`)
-      return terminal;
-
+	    return ctx.text;
     }
   }
 

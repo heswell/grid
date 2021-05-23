@@ -3,16 +3,8 @@ import * as c3 from 'antlr4-c3';
 import { FilterParser } from '../generated/parsers/filter/FilterParser.ts';
 import { FilterLexer } from '../generated/parsers/filter/FilterLexer.ts';
 import FilterVisitor from './FilterVisitor.js';
-import { computeTokenIndex } from './parse-utils';
+import { computeTokenPosition } from './parse-utils';
 
-const suggestColumnNames = (text) => {
-  const columnNames = ['ccy', 'price', 'quantity', 'timestamp'];
-  if (text) {
-    return columnNames.filter(col => col.startsWith(text))
-  } else {
-    return columnNames;
-  }
-}
 
 const maybeSuggest = (completion, text, suggestions) => {
   if (tokenMatches(completion, text)) {
@@ -33,6 +25,7 @@ const textValue = text => text.startsWith("'") ? text.slice(1, -1).toLowerCase()
 // const input = 'ccy = SEK'
 // const input = 'ccy = GBP and price = 100 and lotsize = 10 or exchange = LON';
 // const input = '(ccy = GBP or ccy = SEK) and price = 100';
+
 
 
 class ExprErrorListener {
@@ -69,19 +62,36 @@ export const parseFilter = (input) => {
     state.getTransitions = () => state.transitions;
   });
 
-
   const core = new c3.CodeCompletionCore(parser);
   const caretPosition = { line: 1, column: input.length };
-  core.preferredRules = new Set([FilterParser.RULE_column]);
+  core.preferredRules = new Set([FilterParser.RULE_column, FilterParser.RULE_atom]);
   core.ignoredTokens = new Set([FilterParser.LPAREN]);
-  let tokenPosition = computeTokenIndex(parseTree, caretPosition);
-  console.log({ tokenPosition })
+  let tokenPosition = computeTokenPosition(parseTree, tokenStream, caretPosition);
+
+  if (tokenPosition.index === -1){
+    tokenPosition.index = 3;
+    tokenPosition.text = '';
+  }
+
+  console.log({tokenPosition})
   let candidates = core.collectCandidates(tokenPosition.index);
+
 
   let suggestions = [];
 
   if (candidates.rules.has(FilterParser.RULE_column)) {
-    suggestions.push(...suggestColumnNames(tokenPosition.text))
+    console.log(`matches column ${tokenPosition.text}`)
+    suggestions.push({token: "COLUMN-NAME", text: tokenPosition.text})
+  }
+
+  if (candidates.rules.has(FilterParser.RULE_atoms)) {
+    console.log(`matches atoms ${tokenPosition.text}`)
+    suggestions.push({token: "COLUMN-VALUE", text: tokenPosition.text})
+  }
+
+  if (candidates.rules.has(FilterParser.RULE_atom)) {
+    console.log(`matches atom ${tokenPosition.text}`)
+    suggestions.push({token: "COLUMN-VALUE", text: tokenPosition.text})
   }
 
   candidates.tokens.forEach((_, key) => {
@@ -96,17 +106,6 @@ export const parseFilter = (input) => {
       maybeSuggest(candidate, tokenPosition.text, suggestions)
     }
   })
-
-  // for (let candidate of candidates.rules){
-  //   switch(candidate[0]){
-  //     case FilterParser.RULE_column:
-  //       console.log(`got a Column`);
-  //       break;
-  //     default:
-  //       console.log(`got some other rule`);
-
-  //   }
-  // }
 
   return [result, errors, suggestions];
 }

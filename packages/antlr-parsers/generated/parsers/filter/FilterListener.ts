@@ -9,6 +9,7 @@ import { And_expressionContext } from "./FilterParser";
 import { TermContext } from "./FilterParser";
 import { Col_set_expressionContext } from "./FilterParser";
 import { Col_val_expressionContext } from "./FilterParser";
+import { AtomsContext } from "./FilterParser";
 import { AtomContext } from "./FilterParser";
 import { ColumnContext } from "./FilterParser";
 import { OperatorContext } from "./FilterParser";
@@ -84,6 +85,17 @@ export interface FilterListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitCol_val_expression?: (ctx: Col_val_expressionContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `FilterParser.atoms`.
+	 * @param ctx the parse tree
+	 */
+	enterAtoms?: (ctx: AtomsContext) => void;
+	/**
+	 * Exit a parse tree produced by `FilterParser.atoms`.
+	 * @param ctx the parse tree
+	 */
+	exitAtoms?: (ctx: AtomsContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `FilterParser.atom`.

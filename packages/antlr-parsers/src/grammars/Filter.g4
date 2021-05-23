@@ -25,9 +25,11 @@ and_expression : term (AND term)*;
 
 term : col_val_expression | col_set_expression | LPAREN or_expression RPAREN;
 
-col_set_expression: column IN LBRACK atom (',' atom)* RBRACK;
+col_set_expression: column IN LBRACK atoms RBRACK;
 
-col_val_expression: column operator atom;
+col_val_expression: column (operator atom)?;
+
+atoms: atom (',' atom)*;
 
 atom : ID | INT | FLOAT | STRING | TRUE | FALSE;
 
