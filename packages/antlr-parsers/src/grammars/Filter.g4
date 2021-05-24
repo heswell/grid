@@ -16,6 +16,7 @@ LBRACK : '[';
 RBRACK : ']';
 LPAREN : '(';
 RPAREN : ')';
+COMMA : ',';
 
 expression : or_expression EOF;
 
@@ -29,7 +30,7 @@ col_set_expression: column IN LBRACK atoms RBRACK;
 
 col_val_expression: column (operator atom)?;
 
-atoms: atom (',' atom)*;
+atoms: atom (COMMA atom)*;
 
 atom : ID | INT | FLOAT | STRING | TRUE | FALSE;
 

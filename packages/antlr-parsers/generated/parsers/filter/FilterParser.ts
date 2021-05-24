@@ -28,23 +28,23 @@ import { FilterVisitor } from "./FilterVisitor";
 
 
 export class FilterParser extends Parser {
-	public static readonly T__0 = 1;
-	public static readonly TRUE = 2;
-	public static readonly FALSE = 3;
-	public static readonly AND = 4;
-	public static readonly OR = 5;
-	public static readonly LT = 6;
-	public static readonly GT = 7;
-	public static readonly EQ = 8;
-	public static readonly NEQ = 9;
-	public static readonly IN = 10;
-	public static readonly STARTS = 11;
-	public static readonly ENDS = 12;
-	public static readonly PATHSEP = 13;
-	public static readonly LBRACK = 14;
-	public static readonly RBRACK = 15;
-	public static readonly LPAREN = 16;
-	public static readonly RPAREN = 17;
+	public static readonly TRUE = 1;
+	public static readonly FALSE = 2;
+	public static readonly AND = 3;
+	public static readonly OR = 4;
+	public static readonly LT = 5;
+	public static readonly GT = 6;
+	public static readonly EQ = 7;
+	public static readonly NEQ = 8;
+	public static readonly IN = 9;
+	public static readonly STARTS = 10;
+	public static readonly ENDS = 11;
+	public static readonly PATHSEP = 12;
+	public static readonly LBRACK = 13;
+	public static readonly RBRACK = 14;
+	public static readonly LPAREN = 15;
+	public static readonly RPAREN = 16;
+	public static readonly COMMA = 17;
 	public static readonly INT = 18;
 	public static readonly FLOAT = 19;
 	public static readonly STRING = 20;
@@ -67,14 +67,14 @@ export class FilterParser extends Parser {
 	];
 
 	private static readonly _LITERAL_NAMES: Array<string | undefined> = [
-		undefined, "','", "'true'", "'false'", "'and'", "'or'", "'<'", "'>'", 
-		"'='", "'!='", "'in'", "'starts'", "'ends'", "'/'", "'['", "']'", "'('", 
-		"')'",
+		undefined, "'true'", "'false'", "'and'", "'or'", "'<'", "'>'", "'='", 
+		"'!='", "'in'", "'starts'", "'ends'", "'/'", "'['", "']'", "'('", "')'", 
+		"','",
 	];
 	private static readonly _SYMBOLIC_NAMES: Array<string | undefined> = [
-		undefined, undefined, "TRUE", "FALSE", "AND", "OR", "LT", "GT", "EQ", 
-		"NEQ", "IN", "STARTS", "ENDS", "PATHSEP", "LBRACK", "RBRACK", "LPAREN", 
-		"RPAREN", "INT", "FLOAT", "STRING", "ID", "WS",
+		undefined, "TRUE", "FALSE", "AND", "OR", "LT", "GT", "EQ", "NEQ", "IN", 
+		"STARTS", "ENDS", "PATHSEP", "LBRACK", "RBRACK", "LPAREN", "RPAREN", "COMMA", 
+		"INT", "FLOAT", "STRING", "ID", "WS",
 	];
 	public static readonly VOCABULARY: Vocabulary = new VocabularyImpl(FilterParser._LITERAL_NAMES, FilterParser._SYMBOLIC_NAMES, []);
 
@@ -350,11 +350,11 @@ export class FilterParser extends Parser {
 			this.state = 64;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la === FilterParser.T__0) {
+			while (_la === FilterParser.COMMA) {
 				{
 				{
 				this.state = 60;
-				this.match(FilterParser.T__0);
+				this.match(FilterParser.COMMA);
 				this.state = 61;
 				this.atom();
 				}
@@ -487,27 +487,27 @@ export class FilterParser extends Parser {
 		"\x06\x03\x06\x03\x06\x03\x07\x03\x07\x03\x07\x03\x07\x05\x07<\n\x07\x03" +
 		"\b\x03\b\x03\b\x07\bA\n\b\f\b\x0E\bD\v\b\x03\t\x03\t\x03\n\x03\n\x03\v" +
 		"\x03\v\x03\v\x02\x02\x02\f\x02\x02\x04\x02\x06\x02\b\x02\n\x02\f\x02\x0E" +
-		"\x02\x10\x02\x12\x02\x14\x02\x02\x04\x04\x02\x04\x05\x14\x17\x04\x02\b" +
-		"\v\r\x0E\x02G\x02\x16\x03\x02\x02\x02\x04\x19\x03\x02\x02\x02\x06!\x03" +
-		"\x02\x02\x02\b/\x03\x02\x02\x02\n1\x03\x02\x02\x02\f7\x03\x02\x02\x02" +
-		"\x0E=\x03\x02\x02\x02\x10E\x03\x02\x02\x02\x12G\x03\x02\x02\x02\x14I\x03" +
-		"\x02\x02\x02\x16\x17\x05\x04\x03\x02\x17\x18\x07\x02\x02\x03\x18\x03\x03" +
-		"\x02\x02\x02\x19\x1E\x05\x06\x04\x02\x1A\x1B\x07\x07\x02\x02\x1B\x1D\x05" +
-		"\x04\x03\x02\x1C\x1A\x03\x02\x02\x02\x1D \x03\x02\x02\x02\x1E\x1C\x03" +
-		"\x02\x02\x02\x1E\x1F\x03\x02\x02\x02\x1F\x05\x03\x02\x02\x02 \x1E\x03" +
-		"\x02\x02\x02!&\x05\b\x05\x02\"#\x07\x06\x02\x02#%\x05\b\x05\x02$\"\x03" +
-		"\x02\x02\x02%(\x03\x02\x02\x02&$\x03\x02\x02\x02&\'\x03\x02\x02\x02\'" +
-		"\x07\x03\x02\x02\x02(&\x03\x02\x02\x02)0\x05\f\x07\x02*0\x05\n\x06\x02" +
-		"+,\x07\x12\x02\x02,-\x05\x04\x03\x02-.\x07\x13\x02\x02.0\x03\x02\x02\x02" +
-		"/)\x03\x02\x02\x02/*\x03\x02\x02\x02/+\x03\x02\x02\x020\t\x03\x02\x02" +
-		"\x0212\x05\x12\n\x0223\x07\f\x02\x0234\x07\x10\x02\x0245\x05\x0E\b\x02" +
-		"56\x07\x11\x02\x026\v\x03\x02\x02\x027;\x05\x12\n\x0289\x05\x14\v\x02" +
-		"9:\x05\x10\t\x02:<\x03\x02\x02\x02;8\x03\x02\x02\x02;<\x03\x02\x02\x02" +
-		"<\r\x03\x02\x02\x02=B\x05\x10\t\x02>?\x07\x03\x02\x02?A\x05\x10\t\x02" +
-		"@>\x03\x02\x02\x02AD\x03\x02\x02\x02B@\x03\x02\x02\x02BC\x03\x02\x02\x02" +
-		"C\x0F\x03\x02\x02\x02DB\x03\x02\x02\x02EF\t\x02\x02\x02F\x11\x03\x02\x02" +
-		"\x02GH\x07\x17\x02\x02H\x13\x03\x02\x02\x02IJ\t\x03\x02\x02J\x15\x03\x02" +
-		"\x02\x02\x07\x1E&/;B";
+		"\x02\x10\x02\x12\x02\x14\x02\x02\x04\x04\x02\x03\x04\x14\x17\x04\x02\x07" +
+		"\n\f\r\x02G\x02\x16\x03\x02\x02\x02\x04\x19\x03\x02\x02\x02\x06!\x03\x02" +
+		"\x02\x02\b/\x03\x02\x02\x02\n1\x03\x02\x02\x02\f7\x03\x02\x02\x02\x0E" +
+		"=\x03\x02\x02\x02\x10E\x03\x02\x02\x02\x12G\x03\x02\x02\x02\x14I\x03\x02" +
+		"\x02\x02\x16\x17\x05\x04\x03\x02\x17\x18\x07\x02\x02\x03\x18\x03\x03\x02" +
+		"\x02\x02\x19\x1E\x05\x06\x04\x02\x1A\x1B\x07\x06\x02\x02\x1B\x1D\x05\x04" +
+		"\x03\x02\x1C\x1A\x03\x02\x02\x02\x1D \x03\x02\x02\x02\x1E\x1C\x03\x02" +
+		"\x02\x02\x1E\x1F\x03\x02\x02\x02\x1F\x05\x03\x02\x02\x02 \x1E\x03\x02" +
+		"\x02\x02!&\x05\b\x05\x02\"#\x07\x05\x02\x02#%\x05\b\x05\x02$\"\x03\x02" +
+		"\x02\x02%(\x03\x02\x02\x02&$\x03\x02\x02\x02&\'\x03\x02\x02\x02\'\x07" +
+		"\x03\x02\x02\x02(&\x03\x02\x02\x02)0\x05\f\x07\x02*0\x05\n\x06\x02+,\x07" +
+		"\x11\x02\x02,-\x05\x04\x03\x02-.\x07\x12\x02\x02.0\x03\x02\x02\x02/)\x03" +
+		"\x02\x02\x02/*\x03\x02\x02\x02/+\x03\x02\x02\x020\t\x03\x02\x02\x0212" +
+		"\x05\x12\n\x0223\x07\v\x02\x0234\x07\x0F\x02\x0245\x05\x0E\b\x0256\x07" +
+		"\x10\x02\x026\v\x03\x02\x02\x027;\x05\x12\n\x0289\x05\x14\v\x029:\x05" +
+		"\x10\t\x02:<\x03\x02\x02\x02;8\x03\x02\x02\x02;<\x03\x02\x02\x02<\r\x03" +
+		"\x02\x02\x02=B\x05\x10\t\x02>?\x07\x13\x02\x02?A\x05\x10\t\x02@>\x03\x02" +
+		"\x02\x02AD\x03\x02\x02\x02B@\x03\x02\x02\x02BC\x03\x02\x02\x02C\x0F\x03" +
+		"\x02\x02\x02DB\x03\x02\x02\x02EF\t\x02\x02\x02F\x11\x03\x02\x02\x02GH" +
+		"\x07\x17\x02\x02H\x13\x03\x02\x02\x02IJ\t\x03\x02\x02J\x15\x03\x02\x02" +
+		"\x02\x07\x1E&/;B";
 	public static __ATN: ATN;
 	public static get _ATN(): ATN {
 		if (!FilterParser.__ATN) {
@@ -773,6 +773,15 @@ export class AtomsContext extends ParserRuleContext {
 			return this.getRuleContexts(AtomContext);
 		} else {
 			return this.getRuleContext(i, AtomContext);
+		}
+	}
+	public COMMA(): TerminalNode[];
+	public COMMA(i: number): TerminalNode;
+	public COMMA(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(FilterParser.COMMA);
+		} else {
+			return this.getToken(FilterParser.COMMA, i);
 		}
 	}
 	constructor(parent: ParserRuleContext | undefined, invokingState: number) {

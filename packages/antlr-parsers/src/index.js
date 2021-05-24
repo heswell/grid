@@ -68,12 +68,7 @@ export const parseFilter = (input) => {
   core.ignoredTokens = new Set([FilterParser.LPAREN]);
   let tokenPosition = computeTokenPosition(parseTree, tokenStream, caretPosition);
 
-  if (tokenPosition.index === -1){
-    tokenPosition.index = 3;
-    tokenPosition.text = '';
-  }
-
-  console.log({tokenPosition})
+  console.log({tokenPosition: tokenPosition.index})
   let candidates = core.collectCandidates(tokenPosition.index);
 
 

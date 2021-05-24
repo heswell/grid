@@ -1,6 +1,12 @@
 /* eslint-disable eqeqeq */
 
 import { TerminalNode } from "antlr4ts/tree";
+import { FilterParser } from '../generated/parsers/filter/FilterParser.ts';
+
+const characterSymbols = new Set([
+  FilterParser.COMMA,
+  FilterParser.LBRACK
+])
 
 export function computeTokenPosition(parseTree, tokens, caretPosition, identifierTokenTypes = []) {
   if (parseTree instanceof TerminalNode) {
@@ -15,14 +21,23 @@ function positionOfToken(token, text, caretPosition, identifierTokenTypes, parse
   let stop = token.charPositionInLine + text.length;
   if (token.line == caretPosition.line && start <= caretPosition.column && stop >= caretPosition.column) {
     let index = token.tokenIndex;
-    if (identifierTokenTypes.includes(token.type)) {
-      index--;
+    if (characterSymbols.has(token.type)){
+      return {
+        index: index+1,
+        context: parseTree,
+        text: ""
+      };
+
+    } else {
+      if (identifierTokenTypes.includes(token.type)) {
+        index--;
+      }
+      return {
+        index: index,
+        context: parseTree,
+        text: text.substring(0, caretPosition.column - start)
+      };
     }
-    return {
-      index: index,
-      context: parseTree,
-      text: text.substring(0, caretPosition.column - start)
-    };
   } else {
     return undefined;
   }
