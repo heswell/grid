@@ -4,7 +4,7 @@ import { parseFilter } from "@heswell/antlr-parsers";
 import './App.css';
 
 const suggestColumnNames = (text) => {
-  const columnNames = ['ccy', 'price', 'quantity', 'timestamp'];
+  const columnNames = ['ccy', 'price', 'quantity', 'status', 'timestamp'];
   if (text) {
     return columnNames.filter(col => col.startsWith(text))
   } else {
@@ -23,6 +23,15 @@ const suggestColumnValues = (column, text) => {
         return values;
       }
     }
+    case 'status': {
+      const values = ['cancelled', 'complete', 'partial', 'error', 'suspended']
+      if (text) {
+        const lcText = text.toLowerCase();
+        return values.filter(col => col.toLowerCase().startsWith(lcText))
+      } else {
+        return values;
+      }
+    }
     case 'price': return ['enter a monetary value']
     case 'timestamp': return ['enter a timestamp']
     case 'quantity': return ['enter an integer value']
@@ -31,12 +40,17 @@ const suggestColumnValues = (column, text) => {
   }
 }
 
-const getCurrentColumn = (filter) => {
-  if (!filter){
+const getCurrentColumn = (filters, idx=0) => {
+  const f = filters[idx]
+  if (!f) {
     return undefined;
   } else {
-    const [{column}] = filter;
-    return column;
+    if (f.op === 'or' || f.op === 'and'){
+      return getCurrentColumn(f.filters, f.filters.length - 1);
+    } else {
+      return f.column
+    }
+
   }
 }
 
@@ -45,22 +59,24 @@ function App() {
 
   const [isValid, setIsValid] = React.useState(true);
   const [completions, setCompletions] = React.useState([]);
-  const filterRef = React.useRef(null);
+  const [filter, setFilter] = React.useState({})
 
   const handleInput = e => {
     const input = e.target.value;
     const start = performance.now();
     const [result, errors, suggestions] = parseFilter(input);
-    console.log(JSON.stringify(result,null,2))
-    filterRef.current = result;
     const end = performance.now();
     console.log(`parse took ${end - start}ms`);
+
+    console.log(JSON.stringify(result, null, 2))
     console.log(JSON.stringify(suggestions))
-    setSuggestions(suggestions);
+
+    setSuggestions(suggestions, result);
+    setFilter(result);
     setIsValid(input === '' || errors.length === 0)
   }
 
-  const setSuggestions = (suggestions) => {
+  const setSuggestions = (suggestions, result = filter) => {
     const expandedSuggestions = suggestions.reduce((acc, suggestion) => {
       if (typeof suggestion === 'string') {
         acc.push(suggestion)
@@ -71,7 +87,7 @@ function App() {
             acc = acc.concat(suggestColumnNames(text));
             break;
           case 'COLUMN-VALUE':
-            acc = acc.concat(suggestColumnValues(getCurrentColumn(filterRef.current), text));
+            acc = acc.concat(suggestColumnValues(getCurrentColumn(result), text));
             break;
           default:
             console.log(`unknown token type ${token} in completion suggestion`)
@@ -98,17 +114,23 @@ function App() {
   return (
     <div className="App">
 
-      <input
-        className={cx("hwInput", { 'hwInput-invalid': !isValid })}
-        onChange={handleInput}
-        onKeyDown={handleKeyDown}
-        spellCheck={false}></input>
+        <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <input
+            className={cx("hwInput", { 'hwInput-invalid': !isValid })}
+            onChange={handleInput}
+            onKeyDown={handleKeyDown}
+            spellCheck={false}></input>
+        <ul className="hwSuggestions">
+          {completions.map(suggestion =>
+            <li key={suggestion}>{suggestion}</li>
+          )}
+        </ul>
+        </div>
+        <textarea value={JSON.stringify(filter, 0, 2)} readOnly style={{height: 400, width: 300}}/>
+      </div>
 
-      <ul className="hwSuggestions">
-        {completions.map(suggestion =>
-          <li key={suggestion}>{suggestion}</li>
-        )}
-      </ul>
+
     </div>
   );
 }

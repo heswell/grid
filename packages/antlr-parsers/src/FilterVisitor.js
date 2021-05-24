@@ -1,5 +1,6 @@
 import {Token} from 'antlr4ts/Token';
-import { AbstractParseTreeVisitor } from 'antlr4ts/tree/AbstractParseTreeVisitor'
+import { AbstractParseTreeVisitor } from 'antlr4ts/tree/AbstractParseTreeVisitor';
+import {FilterParser} from '../generated/parsers/filter/FilterParser';
 
 // This class defines a complete generic visitor for a parse tree produced by FilterParser.
 
@@ -24,9 +25,9 @@ export default class CustomFilterVisitor extends AbstractParseTreeVisitor {
 
 	// Visit a parse tree produced by FilterParser#or_expression.
 	visitOr_expression(ctx) {
-    const [term1, type, term2 ] = this.visitChildren(ctx);
+    const [term1, op, term2 ] = this.visitChildren(ctx);
     if (term2){
-      return { type, filters: [term1, term2] };
+      return { op, filters: [term1, term2] };
     } else {
       return term1
     }
@@ -35,9 +36,9 @@ export default class CustomFilterVisitor extends AbstractParseTreeVisitor {
 
 	// Visit a parse tree produced by FilterParser#and_expression.
 	visitAnd_expression(ctx) {
-    const [term1, type, term2 ] = this.visitChildren(ctx);
+    const [term1, op, term2 ] = this.visitChildren(ctx);
     if (term2){
-      return { type, filters: [term1, term2] };
+      return { op, filters: [term1, term2] };
     } else {
       return term1
     }
@@ -55,8 +56,8 @@ export default class CustomFilterVisitor extends AbstractParseTreeVisitor {
 	 * @return the visitor result
 	 */
    visitCol_set_expression(ctx){
-    const [column, type, value] = this.visitChildren(ctx);
-    return { column, type, value };
+    const [column, op, ...values] = this.visitChildren(ctx);
+    return { column, op, values };
    };
 
    /**
@@ -65,8 +66,8 @@ export default class CustomFilterVisitor extends AbstractParseTreeVisitor {
     * @return the visitor result
     */
    visitCol_val_expression(ctx){
-    const [column, type, value] = this.visitChildren(ctx);
-    return { column, type, value };
+    const [column, op, value] = this.visitChildren(ctx);
+    return { column, op, value };
   }
 
 	// Visit a parse tree produced by FilterParser#column.
@@ -76,7 +77,8 @@ export default class CustomFilterVisitor extends AbstractParseTreeVisitor {
 
   // Visit a parse tree produced by FilterParser#atom.
 	visitAtoms(ctx) {
-	  return this.visitChildren(ctx);
+	  const results = this.visitChildren(ctx);
+    return results.filter(r => r !== ',');
 	}
 
   visitAtom(ctx) {
@@ -89,10 +91,13 @@ export default class CustomFilterVisitor extends AbstractParseTreeVisitor {
 	}
 
   visitTerminal(ctx){
-    if (ctx.symbol.type === Token.EOF){
-      return EMPTY;
-    } else {
-	    return ctx.text;
+    switch(ctx.symbol.type){
+      case Token.EOF :
+      case FilterParser.LBRACK:
+      case FilterParser.RBRACK:
+        return EMPTY;
+      default:
+        return ctx.text;
     }
   }
 
