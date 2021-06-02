@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@heswell/layout": "3.4.21",
-    "@heswell/theme": "1.1.2",
-    "@heswell/ui-controls": "2.0.25"
+    "@heswell/layout": "3.4.22",
+    "@heswell/parsed-input": "0.0.1",
+    "@heswell/theme": "1.1.3",
+    "@heswell/ui-controls": "2.0.26"
   },
   "browserslist": {
     "production": [

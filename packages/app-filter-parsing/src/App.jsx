@@ -1,113 +1,44 @@
 import * as React from 'react';
 import cx from 'classnames';
-import { parseFilter } from "@heswell/antlr-parsers";
+import { parseFilter } from "@heswell/antlr-input";
+import filterSuggestions from './filter-suggestion-factory';
 import './App.css';
 
-const suggestColumnNames = (text) => {
-  const columnNames = ['ccy', 'price', 'quantity', 'status', 'timestamp'];
-  if (text) {
-    return columnNames.filter(col => col.startsWith(text))
-  } else {
-    return columnNames;
+const sameSuggestions = (s1, s2) => {
+  if (s1.length === s2.length){
+    return s1.every(s => s2.includes(s))
   }
 }
-
-const suggestColumnValues = (column, text) => {
-  switch (column) {
-    case 'ccy': {
-      const values = ['GBP', 'USD', 'SEK', 'EUR', 'JPY']
-      if (text) {
-        const lcText = text.toLowerCase();
-        return values.filter(col => col.toLowerCase().startsWith(lcText))
-      } else {
-        return values;
-      }
-    }
-    case 'status': {
-      const values = ['cancelled', 'complete', 'partial', 'error', 'suspended']
-      if (text) {
-        const lcText = text.toLowerCase();
-        return values.filter(col => col.toLowerCase().startsWith(lcText))
-      } else {
-        return values;
-      }
-    }
-    case 'price': return ['enter a monetary value']
-    case 'timestamp': return ['enter a timestamp']
-    case 'quantity': return ['enter an integer value']
-    default:
-      return [];
-  }
-}
-
-const getCurrentColumn = (filters, idx=0) => {
-  const f = filters[idx]
-  if (!f) {
-    return undefined;
-  } else {
-    if (f.op === 'or' || f.op === 'and'){
-      return getCurrentColumn(f.filters, f.filters.length - 1);
-    } else {
-      return f.column
-    }
-
-  }
-}
-
 
 function App() {
 
-  const [isValid, setIsValid] = React.useState(true);
+  const [{isValid, filter}, setFilterState] = React.useState({isValid: true, filter: {}})
   const [completions, setCompletions] = React.useState([]);
-  const [filter, setFilter] = React.useState({})
 
-  const handleInput = e => {
+  const handleInput = async e => {
     const input = e.target.value;
     const start = performance.now();
-    const [result, errors, suggestions] = parseFilter(input);
+    const [result, errors, suggestions, tokens] = parseFilter(input, filterSuggestions);
     const end = performance.now();
     console.log(`parse took ${end - start}ms`);
 
-    console.log(JSON.stringify(result, null, 2))
-    console.log(JSON.stringify(suggestions))
+    console.log({errors})
 
-    setSuggestions(suggestions, result);
-    setFilter(result);
-    setIsValid(input === '' || errors.length === 0)
+    setFilterState({filter: result, isValid: input === '' || errors.length === 0});
+
+    const newSuggestions = await suggestions;
+    if (!sameSuggestions(completions, newSuggestions)){
+      setCompletions(newSuggestions);
+    }
   }
 
-  const setSuggestions = (suggestions, result = filter) => {
-    const expandedSuggestions = suggestions.reduce((acc, suggestion) => {
-      if (typeof suggestion === 'string') {
-        acc.push(suggestion)
-      } else {
-        const { token, text } = suggestion;
-        switch (token) {
-          case 'COLUMN-NAME':
-            acc = acc.concat(suggestColumnNames(text));
-            break;
-          case 'COLUMN-VALUE':
-            acc = acc.concat(suggestColumnValues(getCurrentColumn(result), text));
-            break;
-          default:
-            console.log(`unknown token type ${token} in completion suggestion`)
-        }
-
-      }
-      return acc;
-    }, [])
-
-    setCompletions(expandedSuggestions);
-  }
-
-  const handleKeyDown = e => {
+  const handleKeyDown = async e => {
     const value = e.target.value;
-    if (value === '' && completions.length === 0) {
-      const [result, errors, suggestions] = parseFilter('');
-      if (suggestions.length) {
-        setSuggestions(suggestions);
-      }
-      setIsValid(value === '' || errors.length === 0)
+    const key = e.key;
+    if (e.key === 'ArrowDown' && value === '' && completions.length === 0) {
+      const [, errors, suggestions] = parseFilter('', filterSuggestions);
+      setCompletions(await suggestions);
+      setFilterState({filter:{}, isValid: true})
     }
   }
   console.log(`render with `, completions)
