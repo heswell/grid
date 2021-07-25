@@ -1505,12 +1505,12 @@
   dependencies:
     "@hapi/hoek" "^8.3.0"
 
-"@heswell/layout@3.4.22":
-  version "3.4.22"
-  resolved "https://registry.npmjs.org/@heswell/layout/-/layout-3.4.22.tgz#9c422b27ea336e67ba6d40f10da7811a198aaabf"
-  integrity sha512-pIojmVcmR/rCRU0tRTTW8XhFK5n4de6W+2hbG9Ov5hicdQG4opUCVSTyEgwrlpzs6e+uAs+8ooKsPpR0aUdPYA==
+"@heswell/layout@4.0.0":
+  version "4.0.0"
+  resolved "https://registry.npmjs.org/@heswell/layout/-/layout-4.0.0.tgz#4485a048b85acac8a084fad9c85d39e9f2d96c57"
+  integrity sha512-JtZwuz0LcLLJx9exl2iO1oHFmN+3nKEi8qAdyYg2qxP88drJZnUx6zGhMJOAI2XuNVv4t32CR9c2ne3ZkULd6Q==
   dependencies:
-    "@heswell/ui-controls" "2.0.26"
+    "@heswell/ui-controls" "4.0.0"
     classnames "^2.2.6"
 
 "@heswell/parsed-input@0.0.1":
@@ -1529,10 +1529,10 @@
   resolved "https://registry.yarnpkg.com/@heswell/popup/-/popup-2.1.16.tgz#c0f406c1588eefdee2d457172acd0a2263f9d67e"
   integrity sha512-lbC5pgI1OBQ5oJS3BzS1wUX5aj67WIPaVva+wYVyRSVbzkWq97JnsNDvmNLYo6rICdWYA0Mjt6LHrS+StWpp1w==
 
-"@heswell/theme@1.1.3":
-  version "1.1.3"
-  resolved "https://registry.npmjs.org/@heswell/theme/-/theme-1.1.3.tgz#379a99ad06f8b08c583cbf6a4260b97abc6fcef7"
-  integrity sha512-rAg4gtHGKffEP+Ayjy+tGrK4n9Oe/xk3yG6e95yfXXT5XnMd6ClEvPh3rvYfgXA+Gg3TMiEbsByKUwPRX0F6IA==
+"@heswell/theme@4.0.0":
+  version "4.0.0"
+  resolved "https://registry.npmjs.org/@heswell/theme/-/theme-4.0.0.tgz#6e4caf659ebfda6bc7b0ebaa6ff8cbee6f21c69a"
+  integrity sha512-mvldBJr2i8XVJZg1ylt3XRJhzu/h2PUbULafYhnFdNleoOG45dHaVhFcl0rOp8rnnda6T2uL5kobeXM2zvoQNg==
   dependencies:
     react "^17.0.1"
 
@@ -1544,6 +1544,16 @@
     "@heswell/react-utils" "0.1.0"
     date-fns "^2.19.0"
     xstate "^4.18.0"
+
+"@heswell/ui-controls@4.0.0":
+  version "4.0.0"
+  resolved "https://registry.npmjs.org/@heswell/ui-controls/-/ui-controls-4.0.0.tgz#93863a0a0c534625d74538785aa42ff9cde45145"
+  integrity sha512-0vSgWiKY0VVTSVqi6LGyjQ86Ma8BciU59I5TjSaRGT/5WP+UnRwAOTWKLbdf59Ih6aEu7lTs6qdP5Pl+YlGOZg==
+  dependencies:
+    "@heswell/react-utils" "0.1.0"
+    "@heswell/theme" "4.0.0"
+    date-fns "^2.19.0"
+    xstate "4.20.0"
 
 "@heswell/utils@4.2.0":
   version "4.2.0"
@@ -4883,11 +4893,6 @@ antlr4-c3@^1.1.12:
   integrity sha512-3CZQ54JPyo6lkZYDOXaKUsy5KNFucveocvRy+03R7zJQbYOUr4Z6lFeBWzkxJXLitc7yQYe7OHbB6snyp7IJvQ==
   dependencies:
     antlr4ts "^0.5.0-alpha.3"
-
-antlr4ts-cli@^0.5.0-alpha.4:
-  version "0.5.0-alpha.4"
-  resolved "https://registry.npmjs.org/antlr4ts-cli/-/antlr4ts-cli-0.5.0-alpha.4.tgz#f3bfc37f10131e78d7b981c397a2aaa0450b67f6"
-  integrity sha512-lVPVBTA2CVHRYILSKilL6Jd4hAumhSZZWA7UbQNQrmaSSj7dPmmYaN4bOmZG79cOy0lS00i4LY68JZZjZMWVrw==
 
 antlr4ts@^0.5.0-alpha.3:
   version "0.5.0-alpha.4"
@@ -17264,6 +17269,11 @@ xmlchars@^2.2.0:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/xmlchars/-/xmlchars-2.2.0.tgz#060fe1bcb7f9c76fe2a17db86a9bc3ab894210cb"
   integrity sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw==
+
+xstate@4.20.0:
+  version "4.20.0"
+  resolved "https://registry.npmjs.org/xstate/-/xstate-4.20.0.tgz#6f241f2b49c840cb6e05b32544a6048362f558e2"
+  integrity sha512-u5Ou1CMo/oWApasmv1TYTHgj38k69DJdTqQdBBwt+/ooNhPJQiSIKTB3Y3HvX0h5tulwfSo6xAwZgBgjRsK3LA==
 
 xstate@^4.18.0:
   version "4.19.0"

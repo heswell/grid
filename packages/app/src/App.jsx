@@ -9,7 +9,8 @@ import useViewserver, {buildRpcMenuOptions, RpcCall}  from "./useViewserver";
 
 import { Chest, Dialog, DraggableLayout, Drawer, FlexboxLayout as Flexbox, registerComponent, View } from "@heswell/layout";
 
-import { TableList } from "./table-list";
+import { AppPalette } from "./app-palette";
+// import { TableList } from "./table-list";
 import { FilteredGrid } from "./filtered-grid"
 
 import './App.css';
@@ -78,8 +79,8 @@ function App() {
           </div>
           <Chest style={{ flex: 1 }}>
             <Drawer position="left" inline peekaboo clickToOpen sizeOpen={150} toggleButton="end">
-              <View title="Tables" header style={{ height: '100%' }}>
-                <TableList style={{ flex: 1, width: 120 }} />
+              <View title="Views" header style={{ height: '100%' }}>
+                <AppPalette style={{ flex: 1, width: 120 }} />
               </View>
             </Drawer>
             <DraggableLayout dropTarget style={{ width: '100%', height: '100%' }}>

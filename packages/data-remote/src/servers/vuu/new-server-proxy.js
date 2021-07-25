@@ -391,6 +391,7 @@ export class ServerProxy {
           type,
           table: body.table,
           columns: body.columns,
+          dataTypes: body.dataTypes,
           requestId,
         });
         break;

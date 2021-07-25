@@ -385,7 +385,7 @@ export class ServerProxy {
         this.postMessageToClient({ type: "TABLE_LIST_RESP", tables: body.tables, requestId });
         break;
       case "TABLE_META_RESP":
-        this.postMessageToClient({ type: "TABLE_META_RESP", table: body.table, columns: body.columns, requestId });
+        this.postMessageToClient({ type: "TABLE_META_RESP", table: body.table, columns: body.columns, dataTypes: body.dataTypes, requestId });
         break;
       case "VP_VISUAL_LINKS_RESP": {
         const links = this.getActiveLinks(body.links);

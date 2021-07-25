@@ -64,10 +64,14 @@ const columnConfig = {
   }
 }
 
-const extendSchema = schema => {
+const extendSchema = ({columns, dataTypes, table}) => {
   return {
-    ...schema,
-    columns: schema.columns.map(col => columnConfig[col] ?? col)
+    table,
+    columns: columns.map((col,idx) =>
+      columnConfig[col]
+        ? {...columnConfig[col], serverDataType: dataTypes[idx]}
+        : {name: col, serverDataType: dataTypes[idx]}
+    )
   }
 }
 
@@ -98,6 +102,7 @@ const useViewserver = ({openDialog}={}) => {
     schemas.forEach(schema => {
       _tables[schema.table] = extendSchema(schema);
     });
+    console.log(JSON.stringify(_tables,null,2))
     forceUpdate({});
     _status = "tables-loaded";
   }
